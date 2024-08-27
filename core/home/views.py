@@ -15,7 +15,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User , Group
 from common_utils.login_utilities import LoginValidator
 from common_utils.jwt_manager import JwtUtility
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 
 
@@ -29,6 +29,8 @@ def contact(request):
     return render(request, "Login_Page/contact.html")
 
 def SignIn(request):
+    if request.user is None:
+        return redirect('/clerk/')
     if request.method == 'POST':
         data = request.POST
         user = authenticate(username=data.get("username"), password=data.get("password"))
@@ -46,6 +48,7 @@ def SignIn(request):
             return redirect("/SignIn/")
     return render(request, "Login_Page/SignIn.html", {"page_name": "Ludiflex | Login & Registration"})
 
+@login_required
 def register(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -66,7 +69,9 @@ def register(request):
             return redirect('/register/')
 
         # Create new user
-        user = User.objects.create_user(username=username, password=password1)
+        user = User.objects.create_user(username=username)
+        user.set_password(password1)
+        user.save()
 
         # Determine which group and model to associate based on the logged-in user's role
         if request.user.groups.filter(name='Director_General').exists():
@@ -118,17 +123,28 @@ def user_logout(request):
 def index(request):
     return render(request, "Login_Page/index.html")
 
+@login_required
 def clerk(request):
     if login_validator.is_user_logged_in(request) and request.user.is_authenticated:
         return render(request, "clerk/clerk.html", {"page_name": "NCC (National Cadet Corps)"})
     else:
         return redirect("/SignIn/")
 
+@login_required
 def Preview_Admit_Card(request):
     if login_validator.is_user_logged_in(request) and request.user.is_authenticated:
         # Retrieve all pending students ordered by ID
-        pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None).order_by('id')
-
+        print(request.user.id)
+        pending_students = []
+        if request.user.groups.filter(name='Director_General').exists():
+            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, director_general__id=request.user.id).order_by('id')
+        elif request.user.groups.filter(name='Brigadier').exists():
+            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, brigadier__id=request.user.id ).order_by('id')
+        elif request.user.groups.filter(name='Colonel').exists():
+            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, colonel=Colonel.objects.filter(user_id=request.user.id)[0].id ).order_by('id')
+        else:
+            messages.error(request, "You do not have permission to perform this action.")
+            return redirect('/clerk/')
         if not pending_students.exists():
             # If no students are left to preview, render the "All Students Previewed" page
             return render(request, "clerk/All_Students_Previewed.html")
@@ -167,11 +183,10 @@ def Preview_Admit_Card(request):
     else:
         return redirect("/SignIn/")
 
-
+@login_required
 def Print_Admit_Cards(request):
     
     return render(request, "clerk/Print_Admit_Cards.html")
-
 
 def generate_admit_card(student):
     # Load the template image using OpenCV
@@ -249,13 +264,14 @@ def generate_admit_card(student):
 
     return final_image_path
 
-
+@login_required
 def approve_admit_card(request, cbse_no):
     student = get_object_or_404(Student, CBSE_No=cbse_no)
     student.admit_card_approved = True
     student.save()
     return redirect('Preview_Admit_Card')
 
+@login_required
 def reject_admit_card(request, cbse_no):
     if request.method == 'POST':
         student = get_object_or_404(Student, CBSE_No=cbse_no)
@@ -265,11 +281,12 @@ def reject_admit_card(request, cbse_no):
         student.save()
     return redirect('Preview_Admit_Card')
 
+@login_required
 def Register_Students(request):
     if request.method == 'POST':
         data_file = request.FILES.get('excel_file')
         photos_folder = request.FILES.getlist('photos_folder')
-
+        print(request.user.id)
         if data_file:
             file_extension = os.path.splitext(data_file.name)[1].lower()
 
@@ -309,7 +326,10 @@ def Register_Students(request):
             # Process each row in the DataFrame
             for _, row in df.iterrows():
                 student_data = {field: row[idx] for field, idx in column_indices.items()}
-                
+                student_data["clerk"] = clerk
+                student_data["colonel"] = clerk.colonel
+                student_data["brigadier"] = clerk.colonel.brigadier
+                student_data["director_general"] = clerk.colonel.brigadier.director_general
                 # Ensure CBSE_No is not missing
                 if pd.isna(student_data['CBSE_No']):
                     return HttpResponseBadRequest("CBSE_No is missing for some records.")
@@ -330,6 +350,7 @@ def Register_Students(request):
 
     return render(request, "clerk/Register_Students.html")
 
+@login_required
 def Rejected_Admit_Cards(request):
     # Query to get students with rejected admit cards
     rejected_students = Student.objects.filter(admit_card_approved=False, rejection_reason__isnull=False)
@@ -339,11 +360,16 @@ def Rejected_Admit_Cards(request):
         'rejected_students': rejected_students
     }
     return render(request, "clerk/Rejected_Admit_Cards.html", context)
+
+@login_required
 def Student_Details(request):
     return render(request, "clerk/Student_Details.html")
+
+@login_required
 def All_Students_Previewed(request):
     return render(request,"/All Students Previewed/")
 
+@login_required
 def update_student(request, student_id):
     student = get_object_or_404(Student, id=student_id)
     if request.method == 'POST':
@@ -392,6 +418,7 @@ def update_student(request, student_id):
 
     return render(request, 'clerk/Student_Details.html', {'student': student})
 
+@login_required
 def search_student(request):
     student = None
     if 'cbse_no' in request.GET and request.GET.get('cbse_no'):

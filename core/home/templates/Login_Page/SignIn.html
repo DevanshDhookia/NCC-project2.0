@@ -1,6 +1,13 @@
 {% extends "Login_Page/login_base_template.html" %}
-{% block start %}
 {% load static %}
+
+{% block css_block %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% endblock css_block %}
+{% block title %}
+    Ludiflex | Login
+{% endblock %}
+{% block start %}
  
 <div class="form-box">
     <div class="login-container" id="login">

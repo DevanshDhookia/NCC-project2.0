@@ -1,5 +1,9 @@
 {% extends "Login_Page/login_base_template.html" %}
-{% block start %}
 {% load static %}
+{% block css_block %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% endblock %}
+
+{% block start %}
   This is clerk page
 {% endblock %}

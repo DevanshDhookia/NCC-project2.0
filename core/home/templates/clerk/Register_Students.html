@@ -1,71 +1,40 @@
+{% extends "Login_Page/login_base_template.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="{% static 'css/register_students.css' %}">
-    <title>NCC(National Cadet Cops)</title>
-</head>
-<body>
- <div class="wrapper">
-    <nav class="nav">
-        <div class="nav-logo">
-          <img src="{% static 'images/logo4.png' %}" alt="" />
-        </div>
-        <div class="nav-menu" id="navMenu">
-          <ul class="ul1">
-            <li><a href="/clerk/" class="link">Home</a></li>
-            <li>
-              <a href="/Register Students/" class="link">Register Students</a>
-            </li>
-            <li class="nav2">
-              <a class="link" href="#">Admit Cards</a>
-              <div class="dropdown">
-                <ul class="ul2">
-                  <li>
-                    <a class="dropdown-i" href="/Preview Admit Card/"
-                      >Preview Admit Cards</a
-                    >
-                  </li>
-                  <li>
-                    <a class="dropdown-i" href="/Print Admit Cards/"
-                      >Print Admit Cards</a
-                    >
-                  </li>
-                  <li>
-                    <a class="dropdown-i" href="/Rejected Admit Cards/"
-                      >Rejected Admit Cards</a
-                    >
-                  </li>
-                </ul>
-              </div>
-            </li>
-            <li>
-              <a href="/Student Details/" class="link active"
-                >Student Details</a
-              >
-            </li>
-            <!-- <li><a href="/Create Admit Card/" class="link">Create Admit Cards</a></li>
-                <li><a href="/Print Admit Cards/" class="link">Print Admit Cards</a></li>
-                <li><a href="/Rejected Admit Cards/" class="link">Rejected Admit Cards</a></li> -->
-          </ul>
-        </div>
-        <div class="nav-button">
-          <button
-            class="btn white-btn"
-            id="loginBtn"
-            onclick="window.location.href='/SignIn/'"
-          >
-            Logout
-          </button>
-        </div>
-        <div class="nav-menu-btn">
-          <i class="bx bx-menu" onclick="myMenuFunction()"></i>
-        </div>
-      </nav>
+
+{% block css_block %}
+  <link rel="stylesheet" href="{% static 'css/register_students.css' %}">
+{% endblock %}
+
+{% block title %}
+    NCC (National Cadet Corps)
+{% endblock %}
+
+{% block script %}
+<script>
+    
+  function updateLabel(input) {
+      const label = document.querySelector(`label[for="${input.id}"]`);
+      if (input.files.length > 0) {
+          label.textContent = input.files[0].name; // Update label with file name
+      } else {
+          label.textContent = input.id === "inputGroupFile01" ? "Upload Excel File" : "Upload Photos Folder";
+      }
+  }
+
+  function updateFolderLabel(input) {
+      const label = document.querySelector(`label[for="${input.id}"]`);
+      if (input.files.length > 0) {
+          const fullPath = input.files[0].webkitRelativePath;
+          const folderName = fullPath.split('/')[0]; // Extract folder name
+          label.textContent = folderName; // Update label with folder name
+      } else {
+          label.textContent = "Upload Photos Folder";
+      }
+  }
+</script>
+{% endblock script %}
+
+{% block start %}
     <div class="center-area">
         <form class="register-students" method="post" enctype="multipart/form-data" action="{% url 'Register_Students' %}">
             {% csrf_token %}
@@ -90,30 +59,4 @@
             <div> Photos folder must have photos in the name "cbseNo.png" format.</div>
         </div>
     </div>
-    
-</div>
-
-</body>
-<script>
-    
-    function updateLabel(input) {
-        const label = document.querySelector(`label[for="${input.id}"]`);
-        if (input.files.length > 0) {
-            label.textContent = input.files[0].name; // Update label with file name
-        } else {
-            label.textContent = input.id === "inputGroupFile01" ? "Upload Excel File" : "Upload Photos Folder";
-        }
-    }
-
-    function updateFolderLabel(input) {
-        const label = document.querySelector(`label[for="${input.id}"]`);
-        if (input.files.length > 0) {
-            const fullPath = input.files[0].webkitRelativePath;
-            const folderName = fullPath.split('/')[0]; // Extract folder name
-            label.textContent = folderName; // Update label with folder name
-        } else {
-            label.textContent = "Upload Photos Folder";
-        }
-    }
-</script>
-</html>
+{% endblock %}

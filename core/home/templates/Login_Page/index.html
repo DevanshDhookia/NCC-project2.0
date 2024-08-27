@@ -1,79 +1,14 @@
+{% extends "Login_Page/login_base_template.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+{% block css_block %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <title>Ludiflex | Login & Registration</title>
-</head>
-<body>
- <div class="wrapper">
-    <nav class="nav">
-        <div class="nav-logo">
-            <img src="{% static 'images/logo4.png' %}" alt="">
-        </div>
-        <div class="nav-menu" id="navMenu">
-            <ul>
-                <li><a href="/index/" class="link">Home</a></li>
-                <li><a href="/contact/" class="link">Contacts</a></li>
-                <!-- <li><a href="#" class="link">Services</a></li>
-                <li><a href="#" class="link">About</a></li> -->
-            </ul>
-        </div>
-        <div class="nav-button">
-            <button class="btn white-btn" id="loginBtn" onclick="window.location.href='/SignIn/'">Sign In</button>
-            <!-- <button class="btn" id="registerBtn" onclick="register()">Sign Up</button> -->
-        </div>
-        <div class="nav-menu-btn">
-            <i class="bx bx-menu" onclick="myMenuFunction()"></i>
-        </div>
-    </nav>  
-</div>  
+{% endblock %}
 
+{% block title %}
+    Ludiflex | Login
+{% endblock %}
 
-<script>
-   
-   function myMenuFunction() {
-    var i = document.getElementById("navMenu");
-
-    if(i.className === "nav-menu") {
-        i.className += " responsive";
-    } else {
-        i.className = "nav-menu";
-    }
-   }
- 
-</script>
-
-<script>
-
-    var a = document.getElementById("loginBtn");
-    var b = document.getElementById("registerBtn");
-    var x = document.getElementById("login");
-    var y = document.getElementById("register");
-
-    function login() {
-        x.style.left = "4px";
-        y.style.right = "-520px";
-        a.className += " white-btn";
-        b.className = "btn";
-        x.style.opacity = 1;
-        y.style.opacity = 0;
-    }
-
-    // function register() {
-    //     x.style.left = "-510px";
-    //     y.style.right = "5px";
-    //     a.className = "btn";
-    //     b.className += " white-btn";
-    //     x.style.opacity = 0;
-    //     y.style.opacity = 1;
-    // }
-
-</script>
-
-</body>
-</html>
+{% block start %}
+This is the index page
+{% endblock %}

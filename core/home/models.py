@@ -43,15 +43,9 @@ class Student(models.Model):
     admit_card_approved = models.BooleanField(default=False)
     rejection_reason = models.TextField(null=True, blank=True)
     clerk = models.ForeignKey(Clerk, on_delete=models.CASCADE, related_name="students", null=True, blank=True)
-
-    @property
-    def colonel(self):
-        return self.clerk.colonel if self.clerk else None
-
-    @property
-    def brigadier(self):
-        return self.colonel.brigadier if self.colonel else None
-
-    @property
-    def director_general(self):
-        return self.brigadier.director_general if self.brigadier else None
+    colonel = models.ForeignKey(Colonel, on_delete=models.CASCADE, null=True, blank=True)
+    brigadier = models.ForeignKey(Brigadier, on_delete=models.CASCADE, null=True, blank=True)
+    director_general = models.ForeignKey(Director_General, on_delete=models.CASCADE, null=True, blank=True)
+    approved_by_colonel = models.BooleanField(default=False)
+    approved_by_brigadier = models.BooleanField(default=False)
+    approved_by_director_general = models.BooleanField(default=False)
