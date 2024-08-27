@@ -1,0 +1,108 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{% static 'css/preview.css' %}">
+    <title>NCC (National Cadet Corps)</title>
+</head>
+<body>
+ <div class="wrapper">
+    <nav class="nav">
+        <div class="nav-logo">
+          <img src="{% static 'images/logo4.png' %}" alt="" />
+        </div>
+        <div class="nav-menu" id="navMenu">
+          <ul class="ul1">
+            <li><a href="/clerk/" class="link">Home</a></li>
+            <li>
+              <a href="/Register Students/" class="link">Register Students</a>
+            </li>
+            <li class="nav2">
+              <a class="link" href="#">Admit Cards</a>
+              <div class="dropdown">
+                <ul class="ul2">
+                  <li>
+                    <a class="dropdown-i" href="/Preview Admit Card/"
+                      >Preview Admit Cards</a
+                    >
+                  </li>
+                  <li>
+                    <a class="dropdown-i" href="/Print Admit Cards/"
+                      >Print Admit Cards</a
+                    >
+                  </li>
+                  <li>
+                    <a class="dropdown-i" href="/Rejected Admit Cards/"
+                      >Rejected Admit Cards</a
+                    >
+                  </li>
+                </ul>
+              </div>
+            </li>
+            <li>
+              <a href="/Student Details/" class="link active"
+                >Student Details</a
+              >
+            </li>
+            <!-- <li><a href="/Create Admit Card/" class="link">Create Admit Cards</a></li>
+                <li><a href="/Print Admit Cards/" class="link">Print Admit Cards</a></li>
+                <li><a href="/Rejected Admit Cards/" class="link">Rejected Admit Cards</a></li> -->
+          </ul>
+        </div>
+        <div class="nav-button">
+          <button
+            class="btn white-btn"
+            id="loginBtn"
+            onclick="window.location.href='/SignIn/'"
+          >
+            Logout
+          </button>
+        </div>
+        <div class="nav-menu-btn">
+          <i class="bx bx-menu" onclick="myMenuFunction()"></i>
+        </div>
+      </nav>
+
+    <div class="content">
+        <!-- Admit Card Preview Section -->
+        <div class="admit-card-preview">
+            <h1>Preview Admit Card for {{ student.Name }}</h1>
+            <img src="{% get_media_prefix %}Admit_Cards/{{ student.CBSE_No }}_admit_card.png" alt="Admit Card" class="admit-card-image">
+
+            <!-- Approval and Rejection Buttons -->
+            <div class="admit-card-actions">
+                <!-- Approval Form -->
+                <form action="{% url 'approve_admit_card' student.CBSE_No %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn green-btn">Approve Admit Card</button>
+                </form>
+            
+                <!-- Rejection Form -->
+                <form action="{% url 'reject_admit_card' student.CBSE_No %}" method="post" class="reject-form">
+                    {% csrf_token %}
+                    <div class="reject-bar">
+                        <textarea name="rejection_reason" placeholder="Enter reason for rejection" class="reject-textarea"></textarea>
+                        <button type="submit" class="btn red-btn reject-btn">Reject</button>
+                    </div>
+                </form>
+                
+            </div>
+            <!-- Navigation Buttons -->
+            <div class="admit-card-navigation">
+                {% if prev_student %}
+                    <a href="{% url 'Preview_Admit_Card' %}?student_id={{ prev_student.id }}&action=prev" class="btn">Previous</a>
+                {% endif %}
+                {% if next_student %}
+                    <a href="{% url 'Preview_Admit_Card' %}?student_id={{ next_student.id }}&action=next" class="btn">Next</a>
+                {% endif %}
+            </div>            
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

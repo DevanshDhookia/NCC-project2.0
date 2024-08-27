@@ -1,0 +1,40 @@
+{% extends "Login_Page/login_base_template.html" %}
+{% block start %}
+{% load static %}
+ 
+<div class="form-box">
+    <div class="login-container" id="login">
+        <form method='POST'>
+            {% csrf_token %}
+            {% if messages %}
+                <div class="alert alert-primary">
+                    {% for message in messages %}
+                        {{message}}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <div class="input-box">
+                <input type="text" class="input-field" placeholder="Username or Email" name="username">
+                <i class="bx bx-user"></i>
+            </div>
+            <div class="input-box">
+                <input type="password" class="input-field" placeholder="Password" name="password">
+                <i class="bx bx-lock-alt"></i>
+            </div>
+            <div class="input-box">
+                <input type="submit" class="submit" value="Sign In">
+            </div>
+            <div class="two-col">
+                <div class="one">
+                    <input type="checkbox" id="login-check">
+                    <label for="login-check"> Remember Me</label>
+                </div>
+                <div class="two">
+                    <label><a href="#">Forgot password?</a></label>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

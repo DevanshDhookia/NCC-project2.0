@@ -1,0 +1,39 @@
+{% extends "Login_Page/login_base_template.html" %}
+{% block start %}
+{% load static %}
+
+<div class="form-box">
+    <div class="login-container" id="register">
+        <form method='POST'>
+            {% csrf_token %}
+            {% if messages %}
+                <div class="alert alert-primary">
+                    {% for message in messages %}
+                        {{message}}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <div class="input-box">
+                <input type="text" class="input-field" placeholder="Username" name="username" required>
+                <i class="bx bx-user"></i>
+            </div>
+            <div class="input-box">
+                <input type="email" class="input-field" placeholder="Email" name="email" required>
+                <i class="bx bx-envelope"></i>
+            </div>
+            <div class="input-box">
+                <input type="password" class="input-field" placeholder="Password" name="password1" required>
+                <i class="bx bx-lock-alt"></i>
+            </div>
+            <div class="input-box">
+                <input type="password" class="input-field" placeholder="Confirm Password" name="password2" required>
+                <i class="bx bx-lock-alt"></i>
+            </div>
+            <div class="input-box">
+                <input type="submit" class="submit" value="Register">
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

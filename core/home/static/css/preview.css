@@ -1,0 +1,295 @@
+/* POPPINS FONT */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+
+*{  
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+body{
+    background: url('/static/images/1_copy.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    /* overflow: hidden; */
+}
+.wrapper{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 110vh;
+    background: rgba(39, 39, 39, 0.4);
+}
+.nav{
+    position: fixed;
+    top: 0;
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    height: 80px;
+    line-height: 80px;
+    background:rgba(255, 255, 255, 1);
+    z-index: 100;
+}
+.nav-logo img{
+    margin-top: 7px;
+    height: 70px;
+    width: 70px;
+}
+.nav-menu ul{
+    display: flex;
+}
+.nav-menu ul li{
+    list-style-type: none;
+}
+.nav-menu ul li .link{
+    text-decoration: none;
+    font-weight: 500;
+    color: #000000;
+    padding-bottom: 15px;
+    margin: 0px 25px;
+}
+.link:hover, .active{
+    border-bottom: 2px solid #000000;
+}
+.nav-button .btn{
+    width: 130px;
+    height: 40px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.4);
+    border: 2px solid black;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: .3s ease;
+}
+.btn:hover{
+    background: rgba(255, 255, 255, 0.3);
+}
+#registerBtn{
+    margin-left: 15px;
+}
+.btn.white-btn{
+    background: rgba(255, 255, 255, 0.7);
+}
+.btn.btn.white-btn:hover{
+    background: rgba(255, 255, 255, 0.5);
+}
+.nav-menu-btn{
+    display: none;
+}
+/* Dropdown Menu Styles */
+.nav2 {
+    position: relative;
+}
+
+.nav2 .dropdown {
+    display: none;
+    position: absolute;
+    left: 20px;
+    margin:0px;
+    padding: 0px;
+    list-style: none;
+    z-index: 200;
+    background-color: rgba(255, 255, 255,1);
+    
+}
+.nav-menu .ul2{
+    display: block;
+    line-height: 50px;
+}
+
+.nav2:hover .dropdown {
+    display: block;
+}
+
+.dropdown-i {
+    display: block;
+    height: 50px;
+    width: 180px;
+    text-align: center;
+    color: rgb(0, 0, 0); /* Ensures text stays black */
+    text-decoration: none; /* Removes underline */
+    align-items: center;
+    justify-items: center;
+    font-weight: 500;
+    margin: 0 10px;
+}
+.dropdown-i:hover, .active{
+    border-bottom: 2px solid #000000;
+    color: #000000; /* Keeps text color black on hover */
+    text-decoration: none; /* Ensures no underline on hover */
+    border-bottom: 2px solid #000000;
+}
+/* Mobile Menu Styles */
+.nav-menu-btn {
+    display: none;
+}
+@media only screen and (max-width: 786px) {
+    .nav-menu {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        height: 100vh;
+        background: rgba(255, 255, 255, 0.9);
+        position: fixed;
+        top: 0;
+        left: 0;
+        transition: top 0.3s;
+    }
+    .nav-menu.responsive {
+        display: flex;
+    }
+    .nav-menu ul {
+        flex-direction: column;
+        text-align: center;
+    }
+    .nav-menu-btn {
+        display: block;
+    }
+    .nav-menu-btn i {
+        font-size: 25px;
+        color: #fff;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+    .nav-menu-btn i:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+}
+
+/* Content Styles */
+.content {
+    padding-top: 80px; /* Adjust this to account for the height of the fixed navbar */
+    flex: 1;
+    overflow: auto; /* Allow scrolling if content overflows */
+}
+
+/* Admit Card Preview Section */
+.admit-card-preview {
+    text-align: center;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 800px;
+}
+
+.admit-card-preview h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.admit-card-image {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.admit-card-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.admit-card-actions form {
+    display: inline-block;
+}
+
+.admit-card-actions .btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+}
+
+.green-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+.textarea {
+    width: 100%;
+    max-width: 300px;
+    height: 45px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.admit-card-navigation {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.admit-card-navigation .btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.3s ease;
+}
+
+.admit-card-navigation .btn:hover {
+    background-color: #0056b3;
+}
+
+.reject-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 70%;
+    margin:0px;
+}
+
+.reject-bar {
+    display: flex;
+    width: 100%;
+    max-width: 600px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    overflow: hidden;
+    background-color: white;
+}
+
+.reject-textarea {
+    flex: 1;
+    border: none;
+    padding: 10px;
+    font-size: 14px;
+    resize: none;
+    height: 45px;
+    outline: none;
+}
+
+.reject-btn {
+    background-color: #e74c3c; /* Red background */
+    color: white;
+    border: none;
+    padding: 10px 40px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.reject-btn:hover {
+    background-color: #c0392b; /* Darker red on hover */
+}
+
+
