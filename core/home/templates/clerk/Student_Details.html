@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block css_block %}
-<link rel="stylesheet" href="{% static 'css/CBSE.css' %}" />
+<link rel="stylesheet" href="{% static 'css/student_details.css' %}" />
 {% endblock %}
 
 {% block title %}
@@ -11,18 +11,78 @@
 {% block start %}
       <div></div>
       <div class="rectangular-box">
-        <form class="form-inline" method="GET" action="{% url 'search_student' %}">
+        <form class="form " method="GET" action="{% url 'search_student' %}">
             <input
               class="form-control mr-sm-2"
               type="search"
               name="cbse_no"
               placeholder="Enter CBSE No."
               aria-label="Enter CBSE No."
-              required
-            />
+              required/>
             <button class="ctm-btn" type="submit">Search</button>
           </form>
       </div>
+      <div class="table-container">
+      <table class="table table-bordered table2">
+        <thead>
+          <tr>
+            <th scope="col">Sr.No.</th>
+            <th scope="col">Student ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">Fathers's Name</th>
+            <th scope="col">Date Of Birth</th>
+            <th scope="col">School/College</th>
+            <th scope="col">Address</th>
+            <th scope="col">Admit Card No.</th>
+            <th scope="col">Unit</th>
+            <th scope="col">Rank</th>
+            <th scope="col">Fresh/Faliure</th>
+            <th scope="col">Year of Passing B Certificate</th>
+            <th scope="col">Attendance 1st year</th>
+            <th scope="col">Attendance 2nd year</th>
+            <th scope="col">Attendance 3rd year</th>
+            <th scope="col">Name of Camp 1</th>
+            <th scope="col">DD/MM/YYYY</th>
+            <th scope="col">Location</th>
+            <th scope="col">Name of Camp 2</th>
+            <th scope="col">DD/MM/YYYY</th>
+            <th scope="col">Location</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr><th scope="row">{{ forloop.counter }}</th>
+                <td>{{ student.CBSE_No }}</td>
+                <td>{{ student.Name }}</td>
+                <td>{{ student.Fathers_Name }}</td>
+                <td>{{ student.DOB }}</td>
+                <td>{{ student.School_College_Class}}</td>
+                <td>{{ student.Home_Address}}</td>
+                <td>{{ student.Admit_Card_No }}</td>
+                <td>{{ student.Unit }}</td>
+                <td>{{ student.Rank }}</td>
+                <td>{{ student.Fresh_Faliure }}</td>
+                <td>{{ student.Year_of_passing_B_Certificate }}</td>
+                <td>{{ student.Attendance_1st_year}}</td>
+                <td>{{ student.Attendance_2nd_year}}</td>
+                <td>{{ student.Attendance_3rd_year}}</td>
+                <td>{{ student.Name_of_camp_attended_1}}</td>
+                <td>{{ student.Date_camp_1}}</td>
+                <td>{{ student.Location_camp_1}}</td>
+                <td>{{ student.Name_of_camp_attended_2}}</td>
+                <td>{{ student.Date_camp_2}}</td>
+                <td>{{ student.Location_camp_2}}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">No studnets are registered .</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+
       {% if student %}
       <div class="container">
         <div class="row flex-lg-nowrap">

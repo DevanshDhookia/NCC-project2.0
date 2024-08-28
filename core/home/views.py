@@ -367,7 +367,25 @@ def Rejected_Admit_Cards(request):
 
 @login_required
 def Student_Details(request):
-    return render(request, "clerk/Student_Details.html")
+    view_students = Student.objects.none()  # Default to an empty queryset
+
+    if request.user.groups.filter(name='Clerk').exists():
+        clerk_instance = Clerk.objects.get(user=request.user)
+        view_students = Student.objects.filter(clerk=clerk_instance)
+    elif request.user.groups.filter(name='Colonel').exists():
+        colonel_instance = Colonel.objects.get(user=request.user)
+        view_students = Student.objects.filter(colonel=colonel_instance)
+    elif request.user.groups.filter(name='Brigadier').exists():
+        brigadier_instance = Brigadier.objects.get(user=request.user)
+        view_students = Student.objects.filter(brigadier=brigadier_instance)
+    elif request.user.groups.filter(name='Director_General').exists():
+        director_general_instance = Director_General.objects.get(user=request.user)
+        view_students = Student.objects.filter(director_general=director_general_instance)
+
+    context = {
+        'students': view_students
+    }
+    return render(request, "clerk/Student_Details.html", context)
 
 @login_required
 def All_Students_Previewed(request):
