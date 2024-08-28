@@ -137,11 +137,11 @@ def Preview_Admit_Card(request):
         print(request.user.id)
         pending_students = []
         if request.user.groups.filter(name='Director_General').exists():
-            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, director_general__id=Director_General.objects.filter(user_id=request.user.id)[0].id, approved_by_colonel=True, approved_by_brigadier=True).order_by('id')
+            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, director_general__id=Director_General.objects.filter(user_id=request.user.id)[0].id, approved_by_colonel=True, approved_by_brigadier=True, approved_by_director_general=False).order_by('id')
         elif request.user.groups.filter(name='Brigadier').exists():
-            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, brigadier=Brigadier.objects.filter(user_id=request.user.id)[0].id, approved_by_colonel=True).order_by('id')
+            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, brigadier=Brigadier.objects.filter(user_id=request.user.id)[0].id, approved_by_colonel=True, approved_by_brigadier=False).order_by('id')
         elif request.user.groups.filter(name='Colonel').exists():
-            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, colonel=Colonel.objects.filter(user_id=request.user.id)[0].id ).order_by('id')
+            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, colonel=Colonel.objects.filter(user_id=request.user.id)[0].id, approved_by_colonel=False ).order_by('id')
         else:
             messages.error(request, "You do not have permission to perform this action.")
             return redirect('/clerk/')
