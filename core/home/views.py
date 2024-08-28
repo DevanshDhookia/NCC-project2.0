@@ -314,83 +314,88 @@ def reject_admit_card(request, cbse_no):
 
 @login_required
 def Register_Students(request):
-    if request.method == 'POST':
-        data_file = request.FILES.get('excel_file')
-        photos_folder = request.FILES.getlist('photos_folder')
-        print(request.user.id)
-        if data_file:
-            file_extension = os.path.splitext(data_file.name)[1].lower()
+    if request.user.has_perm('home.can_create_new_candidates'):
+        if request.method == 'POST':
+            data_file = request.FILES.get('excel_file')
+            photos_folder = request.FILES.getlist('photos_folder')
+            print(request.user.id)
+            if data_file:
+                file_extension = os.path.splitext(data_file.name)[1].lower()
 
-            # Read the file based on its extension
-            if file_extension in ['.csv']:
-                df = pd.read_csv(data_file)
-            elif file_extension in ['.xls', '.xlsx']:
-                df = pd.read_excel(data_file)
-            else:
-                return HttpResponseBadRequest("Unsupported file format")
+                # Read the file based on its extension
+                if file_extension in ['.csv']:
+                    df = pd.read_csv(data_file)
+                elif file_extension in ['.xls', '.xlsx']:
+                    df = pd.read_excel(data_file)
+                else:
+                    return HttpResponseBadRequest("Unsupported file format")
 
-            # Define the column indices corresponding to the model fields
-            column_indices = {
-                'CBSE_No': 0, 
-                'Name': 1,     
-                'DOB': 2,      
-                'Fathers_Name': 3,
-                'School_College_Class': 4,
-                'Home_Address': 5,
-                'Admit_Card_No': 6,
-                'Unit': 7,
-                'Rank': 8,
-                'Fresh_Failure': 9,
-                'Year_of_passing_B_Certificate':10,
-                'Attendance_1st_year':11,
-                'Attendance_2nd_year':12,
-                'Attendance_3rd_year':13,
-                'Name_of_camp_attended_1':14,
-                'Date_camp_1':15,
-                'Location_camp_1':16,
-                'Name_of_camp_attended_2':17,
-                'Date_camp_2':18,
-                'Location_camp_2':19
-            }
+                # Define the column indices corresponding to the model fields
+                column_indices = {
+                    'CBSE_No': 0, 
+                    'Name': 1,     
+                    'DOB': 2,      
+                    'Fathers_Name': 3,
+                    'School_College_Class': 4,
+                    'Home_Address': 5,
+                    'Admit_Card_No': 6,
+                    'Unit': 7,
+                    'Rank': 8,
+                    'Fresh_Failure': 9,
+                    'Year_of_passing_B_Certificate':10,
+                    'Attendance_1st_year':11,
+                    'Attendance_2nd_year':12,
+                    'Attendance_3rd_year':13,
+                    'Name_of_camp_attended_1':14,
+                    'Date_camp_1':15,
+                    'Location_camp_1':16,
+                    'Name_of_camp_attended_2':17,
+                    'Date_camp_2':18,
+                    'Location_camp_2':19
+                }
 
-            clerk = Clerk.objects.filter(user=request.user).first()
-            # Process each row in the DataFrame
-            for _, row in df.iterrows():
-                student_data = {field: row[idx] for field, idx in column_indices.items()}
-                student_data["clerk"] = clerk
-                student_data["colonel"] = clerk.colonel
-                student_data["brigadier"] = clerk.colonel.brigadier
-                student_data["director_general"] = clerk.colonel.brigadier.director_general
-                # Ensure CBSE_No is not missing
-                if pd.isna(student_data['CBSE_No']):
-                    return HttpResponseBadRequest("CBSE_No is missing for some records.")
+                clerk = Clerk.objects.filter(user=request.user).first()
+                # Process each row in the DataFrame
+                for _, row in df.iterrows():
+                    student_data = {field: row[idx] for field, idx in column_indices.items()}
+                    student_data["clerk"] = clerk
+                    student_data["colonel"] = clerk.colonel
+                    student_data["brigadier"] = clerk.colonel.brigadier
+                    student_data["director_general"] = clerk.colonel.brigadier.director_general
+                    # Ensure CBSE_No is not missing
+                    if pd.isna(student_data['CBSE_No']):
+                        return HttpResponseBadRequest("CBSE_No is missing for some records.")
 
-                # Update or create the student record
-                student, created = Student.objects.update_or_create(
-                    CBSE_No=student_data['CBSE_No'],
-                    defaults=student_data
-                )
+                    # Update or create the student record
+                    student, created = Student.objects.update_or_create(
+                        CBSE_No=student_data['CBSE_No'],
+                        defaults=student_data
+                    )
 
-                # Handle photo upload
-                for photo in photos_folder:
-                    if photo.name.startswith(str(student_data['CBSE_No'])):
-                        student.Photo.save(photo.name, photo)
-                        break
+                    # Handle photo upload
+                    for photo in photos_folder:
+                        if photo.name.startswith(str(student_data['CBSE_No'])):
+                            student.Photo.save(photo.name, photo)
+                            break
 
-        return redirect('/Register Students/')  # Redirect after processing
-
-    return render(request, "clerk/Register_Students.html")
+            return redirect('/Register Students/')  # Redirect after processing
+        return render(request, "clerk/Register_Students.html")
+    else:
+        return redirect('/index/')
 
 @login_required
 def Rejected_Admit_Cards(request):
-    # Query to get students with rejected admit cards
-    rejected_students = Student.objects.filter(admit_card_approved=False, rejection_reason__isnull=False)
-    
-    # Pass the data to the template
-    context = {
-        'rejected_students': rejected_students
-    }
-    return render(request, "clerk/Rejected_Admit_Cards.html", context)
+    if request.user.has_perm('home.can_view_rejected_applications'):
+        # Query to get students with rejected admit cards
+        rejected_students = Student.objects.filter(admit_card_approved=False, rejection_reason__isnull=False)
+        
+        # Pass the data to the template
+        context = {
+            'rejected_students': rejected_students
+        }
+        return render(request, "clerk/Rejected_Admit_Cards.html", context)
+    else:
+        return redirect('/index/')
 
 @login_required
 def Student_Details(request):
