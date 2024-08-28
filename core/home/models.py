@@ -41,6 +41,7 @@ class Student(models.Model):
     Photo = models.ImageField(upload_to='student_photos/', null=True, blank=True)
     admit_card_generated = models.BooleanField(default=False)
     admit_card_approved = models.BooleanField(default=False)
+    status = models.CharField(default='Pending approval from Colonel', max_length=100)
     rejection_reason = models.TextField(null=True, blank=True)
     clerk = models.ForeignKey(Clerk, on_delete=models.CASCADE, related_name="students", null=True, blank=True)
     colonel = models.ForeignKey(Colonel, on_delete=models.CASCADE, null=True, blank=True)

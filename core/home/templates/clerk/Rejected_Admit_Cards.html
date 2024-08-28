@@ -16,6 +16,7 @@
         <th scope="col">Student ID</th>
         <th scope="col">Name</th>
         <th scope="col">Rejection Reason</th>
+        <th scope="col">Rejected By</th>
       </tr>
     </thead>
     <tbody>
@@ -24,6 +25,7 @@
             <td>{{ student.CBSE_No }}</td>
             <td>{{ student.Name }}</td>
             <td>{{ student.rejection_reason }}</td>
+            <td>{{ student.status }}</td>
         </tr>
         {% empty %}
         <tr>
