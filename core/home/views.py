@@ -124,7 +124,7 @@ def index(request):
     return render(request, "Login_Page/index.html")
 
 @login_required
-def clerk(request):
+def clerk_page(request):
     if login_validator.is_user_logged_in(request) and request.user.is_authenticated:
         return render(request, "clerk/clerk.html", {"page_name": "NCC (National Cadet Corps)"})
     else:
@@ -136,12 +136,10 @@ def Preview_Admit_Card(request):
         # Retrieve all pending students ordered by ID
         print(request.user.id)
         pending_students = []
-        if request.user.groups.filter(name='Director_General').exists():
-            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, director_general__id=Director_General.objects.filter(user_id=request.user.id)[0].id, approved_by_colonel=True, approved_by_brigadier=True, approved_by_director_general=False).order_by('id')
-        elif request.user.groups.filter(name='Brigadier').exists():
-            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, brigadier=Brigadier.objects.filter(user_id=request.user.id)[0].id, approved_by_colonel=True, approved_by_brigadier=False).order_by('id')
-        elif request.user.groups.filter(name='Colonel').exists():
-            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, colonel=Colonel.objects.filter(user_id=request.user.id)[0].id, approved_by_colonel=False ).order_by('id')
+        if request.user.groups.filter(name='Colonel').exists():
+            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, colonel_id=Colonel.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+        elif request.user.groups.filter(name='Clerk').exists():
+            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, sent_for_approval=False, clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
         else:
             messages.error(request, "You do not have permission to perform this action.")
             return redirect('/clerk/')
@@ -268,24 +266,7 @@ def generate_admit_card(student):
 def approve_admit_card(request, cbse_no):
     student = get_object_or_404(Student, CBSE_No=cbse_no)
     student.rejection_reason = None
-    if request.user.groups.filter(name='Director_General').exists():
-        student.approved_by_director_general = True
-    elif request.user.groups.filter(name='Brigadier').exists():
-        student.approved_by_brigadier = True
-        if student.approved_by_director_general == False:
-            student.status = 'Pending approval from Director General'
-    elif request.user.groups.filter(name='Colonel').exists():
-        student.approved_by_colonel = True
-        if student.approved_by_brigadier == False:
-            student.status = 'Pending approval from Brigadier'
-    else:
-        messages.error(request, "You do not have permission to perform this action.")
-        return redirect('/clerk/')
-    if student.approved_by_colonel and student.approved_by_brigadier and student.approved_by_director_general:
-        student.admit_card_approved = True
-        student.status = 'Approved'
-    else:
-        student.admit_card_approved = False
+    student.admit_card_approved = True
     student.save()
     return redirect('Preview_Admit_Card')
 
@@ -293,20 +274,7 @@ def approve_admit_card(request, cbse_no):
 def reject_admit_card(request, cbse_no):
     if request.method == 'POST':
         student = get_object_or_404(Student, CBSE_No=cbse_no)
-        if request.user.groups.filter(name='Director_General').exists():
-            student.status = 'Rejected by Director General'
-        elif request.user.groups.filter(name='Brigadier').exists():
-            student.status = 'Rejected by Brigadier'
-        elif request.user.groups.filter(name='Colonel').exists():
-            student.status = 'Rejected by Colonel'
-        else:
-            messages.error(request, "You do not have permission to perform this action.")
-            return redirect('/clerk/')
-        
         reason = request.POST.get('rejection_reason')
-        student.approved_by_director_general = False
-        student.approved_by_brigadier = False
-        student.approved_by_colonel = False
         student.admit_card_approved = False
         student.rejection_reason = reason
         student.save()

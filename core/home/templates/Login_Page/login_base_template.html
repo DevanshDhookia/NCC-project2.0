@@ -29,35 +29,43 @@
                         <a href="/Register Students/" class="link">Register Students</a>
                     </li>
                 {% endif %}
-                <li class="nav2">
-                    <a class="link" href="#">Admit Cards</a>
-                    <div class="dropdown">
-                    <ul class="ul2">
-                        <li>
-                        <a class="dropdown-i" href="/Preview Admit Card/"
-                            >Preview Admit Cards</a
+                {% if perms.home.can_preview_admit_card or perms.home.can_print_admit_card or perms.home.can_view_rejected_applications %}
+                    <li class="nav2">
+                        <a class="link" href="#">Admit Cards</a>
+                        <div class="dropdown">
+                        <ul class="ul2">
+                            {% if perms.home.can_preview_admit_card %}
+                                <li>
+                                <a class="dropdown-i" href="/Preview Admit Card/"
+                                    >Preview Admit Cards</a
+                                >
+                                </li>
+                            {% endif %}
+                            {% if perms.home.can_print_admit_card %}
+                                <li>
+                                <a class="dropdown-i" href="/Print Admit Cards/"
+                                    >Print Admit Cards</a
+                                >
+                                </li>
+                            {% endif %}
+                            {% if perms.home.can_view_rejected_applications %}
+                                <li>
+                                <a class="dropdown-i" href="/Rejected Admit Cards/"
+                                    >Rejected Admit Cards</a
+                                >
+                                </li>
+                            {% endif %}
+                        </ul>
+                        </div>
+                    </li>
+                {% endif %}
+                {% if perms.home.can_view_student_details %}
+                    <li>
+                        <a href="/Student Details/" class="link"
+                        >Student Details</a
                         >
-                        </li>
-                        <li>
-                        <a class="dropdown-i" href="/Print Admit Cards/"
-                            >Print Admit Cards</a
-                        >
-                        </li>
-                        {% if perms.home.can_view_rejected_applications %}
-                            <li>
-                            <a class="dropdown-i" href="/Rejected Admit Cards/"
-                                >Rejected Admit Cards</a
-                            >
-                            </li>
-                        {% endif %}
-                    </ul>
-                    </div>
-                </li>
-                <li>
-                    <a href="/Student Details/" class="link"
-                    >Student Details</a
-                    >
-                </li>
+                    </li>
+                {% endif %}
                 {% if perms.home.can_create_new_users %}
                     <li>
                         <a href="/register/" class="link"

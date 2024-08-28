@@ -18,12 +18,21 @@
 
           <!-- Approval and Rejection Buttons -->
           <div class="admit-card-actions">
+            {% if perms.home.can_approve_admit_card %}
               <!-- Approval Form -->
               <form action="{% url 'approve_admit_card' student.CBSE_No %}" method="post">
                   {% csrf_token %}
                   <button type="submit" class="btn green-btn">Approve Admit Card</button>
               </form>
-          
+            {% endif %}
+            {% if perms.home.can_send_admit_card_for_approval %}
+              <!-- Approval Form -->
+              <form action="#" method="post">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-primary">Send For Approval</button>
+              </form>
+            {% endif %}
+            {% if perms.home.can_reject_admit_card %}
               <!-- Rejection Form -->
               <form action="{% url 'reject_admit_card' student.CBSE_No %}" method="post" class="reject-form">
                   {% csrf_token %}
@@ -32,6 +41,7 @@
                       <button type="submit" class="btn red-btn reject-btn">Reject</button>
                   </div>
               </form>
+            {% endif %}
               
           </div>
           <!-- Navigation Buttons -->
