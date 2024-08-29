@@ -263,6 +263,14 @@ def generate_admit_card(student):
     return final_image_path
 
 @login_required
+def send_for_approval(request, cbse_no):
+    student = get_object_or_404(Student, CBSE_No=cbse_no)
+    student.rejection_reason = None
+    student.admit_card_send_for_approval=True
+    student.save()
+    return redirect('Preview_Admit_Card')
+
+@login_required
 def approve_admit_card(request, cbse_no):
     student = get_object_or_404(Student, CBSE_No=cbse_no)
     student.rejection_reason = None

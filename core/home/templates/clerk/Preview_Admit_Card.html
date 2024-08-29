@@ -27,7 +27,7 @@
             {% endif %}
             {% if perms.home.can_send_admit_card_for_approval %}
               <!-- Approval Form -->
-              <form action="#" method="post">
+              <form action="{% url 'send_for_apporval' student.CBSE_No %}" method="post">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-primary">Send For Approval</button>
               </form>
@@ -56,3 +56,4 @@
       </div>
   </div>
 {% endblock %}
+

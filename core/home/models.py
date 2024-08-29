@@ -40,6 +40,7 @@ class Student(models.Model):
     Location_camp_2 = models.CharField(max_length=100, null=True, default='N/A')
     Photo = models.ImageField(upload_to='student_photos/', null=True, blank=True)
     admit_card_generated = models.BooleanField(default=False)
+    admit_card_send_for_approval=models.BooleanField(default=False)
     admit_card_approved = models.BooleanField(default=False)
     rejection_reason = models.TextField(null=True, blank=True)
     clerk = models.ForeignKey(Clerk, on_delete=models.CASCADE, related_name="students", null=True, blank=True)
