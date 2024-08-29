@@ -17,7 +17,9 @@ from common_utils.login_utilities import LoginValidator
 from common_utils.jwt_manager import JwtUtility
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
-
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+from django.forms.models import model_to_dict
 
 login_validator = LoginValidator()
 jwt_utility = JwtUtility()
@@ -391,7 +393,8 @@ def Student_Details(request):
         view_students = Student.objects.filter(director_general=director_general_instance)
 
     context = {
-        'students': view_students
+        'students': view_students,
+        'students_json': json.dumps(list([str(model_to_dict(i)) for i in view_students]), cls=DjangoJSONEncoder)
     }
     return render(request, "clerk/Student_Details.html", context)
 
@@ -400,7 +403,7 @@ def All_Students_Previewed(request):
     return render(request,"/All Students Previewed/")
 
 @login_required
-def update_student(request, student_id):
+def update_student(request):
     student = get_object_or_404(Student, id=student_id)
     if request.method == 'POST':
         # Get data from POST request and handle empty values
@@ -455,4 +458,8 @@ def search_student(request):
     if 'cbse_no' in request.GET and request.GET.get('cbse_no'):
         cbse_no = request.GET.get('cbse_no')
         student = get_object_or_404(Student, CBSE_No=cbse_no)
-    return render(request, 'clerk/Student_Details.html', {'student': student})
+        context = {
+            'students': [student],
+            'students_json': json.dumps([str(model_to_dict(student))], cls=DjangoJSONEncoder)
+        }
+    return render(request, 'clerk/Student_Details.html', context)

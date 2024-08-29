@@ -42,7 +42,7 @@ urlpatterns = [
     path('can_send_admit_card_for_approval/<str:cbse_no>/', approve_admit_card, name='approve_admit_card'),
     path('reject_admit_card/<str:cbse_no>/', reject_admit_card, name='reject_admit_card'),
     path('search/', search_student, name='search_student'),
-    path('update/<int:student_id>/', update_student, name='update_student'),
+    path('update/', update_student, name='update_student'),
     path('send_for_approval/<str:cbse_no>/', send_for_approval, name='send_for_approval'),
 
     path("admin/", admin.site.urls),
