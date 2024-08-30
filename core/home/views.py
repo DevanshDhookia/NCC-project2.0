@@ -150,7 +150,9 @@ def clerk_page(request):
         return render(request, "clerk/clerk.html", context)
     else:
         return redirect("/SignIn/")
-
+@login_required
+def Add_Result(request):
+    return render(request, "clerk/Add_Result.html")
 
 @login_required
 def Preview_Admit_Card(request):

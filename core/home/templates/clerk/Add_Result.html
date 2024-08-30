@@ -1,0 +1,76 @@
+{% extends "Login_Page/login_base_template.html" %}
+{% load static %}
+
+{% block css_block %}
+  <link rel="stylesheet" href="{% static 'css/register_students.css' %}">
+{% endblock %}
+
+{% block title %}
+    NCC (National Cadet Corps)
+{% endblock %}
+
+{% block script %}
+<script>
+    
+  function updateLabel(input) {
+      const label = document.querySelector(`label[for="${input.id}"]`);
+      if (input.files.length > 0) {
+          label.textContent = input.files[0].name; // Update label with file name
+      } else {
+          label.textContent = input.id === "inputGroupFile01" ? "Upload Excel File" : "Upload Photos Folder";
+      }
+  }
+
+  function updateFolderLabel(input) {
+      const label = document.querySelector(`label[for="${input.id}"]`);
+      if (input.files.length > 0) {
+          const fullPath = input.files[0].webkitRelativePath;
+          const folderName = fullPath.split('/')[0]; // Extract folder name
+          label.textContent = folderName; // Update label with folder name
+      } else {
+          label.textContent = "Upload Photos Folder";
+      }
+  }
+</script>
+{% endblock script %}
+
+{% block start %}
+    <div class="center-area">
+        <form class="register-students" method="post" enctype="multipart/form-data" action="{% url 'Register_Students' %}">
+            {% csrf_token %}
+            <header>Register New Students</header>
+            <div class="drpdwn">
+                <select class="form-select" name="certificate_type">
+                    <option selected>Select Certificate </option>
+                    <option value="A">A-Cetificate</option>
+                    <option value="B">B-Cetificate</option>
+                    <option value="C">C-Cetificate</option>
+                  </select>
+                  <select class="form-select" name="wing" >
+                    <option selected>Select Wing</option>
+                    <option value="Army">Army</option>
+                    <option value="Navy">Navy</option>
+                    <option value="Air Force">Air-Force</option>
+                  </select>
+                </div>
+            <div class="input-group">
+                <div class="file-input">
+                    <input type="file" class="form-control" id="inputGroupFile01" name="excel_file" onchange="updateLabel(this)">
+                    <label class="input-group-text" for="inputGroupFile01" id="inputGroupFile01Label">Upload Excel File</label>
+                </div>
+                <div class="folder-input">
+                    <input type="file" class="form-control" id="inputGroupFile02" name="photos_folder" webkitdirectory onchange="updateFolderLabel(this)">
+                    <label class="input-group-text" for="inputGroupFile02" id="inputGroupFile02Label">Upload Photos Folder</label>
+                </div>
+            </div>
+            <div class="submit-container">
+                <button type="submit" class="submit-btn">Submit</button>
+            </div>
+        </form>
+        <div class="notice">
+            <div><strong>Notices</strong></div>
+            <div> Excel file must be with .xls or .xlsx extension.</div>
+            <div> Photos folder must have photos in the name "cbseNo.png" format.</div>
+        </div>
+    </div>
+{% endblock %}

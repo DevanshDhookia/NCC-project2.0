@@ -35,6 +35,7 @@ urlpatterns = [
     path('Preview Admit Card/',Preview_Admit_Card,name='Preview_Admit_Card'),
     path('Print Admit Cards/',Print_Admit_Cards,name='Print_Admit_Cards'),
     path('Register Students/',Register_Students,name='Register_Students'),
+    path('Add Result/',Add_Result,name='Add_Result'),
     path('Rejected Admit Cards/',Rejected_Admit_Cards,name='Rejected_Admit_Cards'),
     path('Student Details/',Student_Details,name='Student_Details'),
     path('All Students Previewed/',All_Students_Previewed,name='All_Students_Previewed'),
