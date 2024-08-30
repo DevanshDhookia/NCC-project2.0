@@ -11,15 +11,21 @@ def create_permissions_and_groups():
     director_general_type=ContentType.objects.get_for_model(Director_General)
 
     student_type = ContentType.objects.get_for_model(Student)
-    edit_student_permission = Permission.objects.get_or_create(
-        codename="edit_student",
-        name="Can Edit Rejected Students",
+    can_edit_student_details = Permission.objects.get_or_create(
+        codename="can_edit_student_details",
+        name="Can Edit Student Details",
         content_type=student_type
     )
 
-    can_approve_certs = Permission.objects.get_or_create(
-        codename="can_approve_certs",
-        name="Can approve Certificates",
+    can_approve_admit_card = Permission.objects.get_or_create(
+        codename="can_approve_admit_card",
+        name="Can approve Admit Card",
+        content_type=student_type
+    )
+
+    can_reject_admit_card = Permission.objects.get_or_create(
+        codename="can_reject_admit_card",
+        name="Can Reject Admit Card",
         content_type=student_type
     )
 
@@ -39,33 +45,97 @@ def create_permissions_and_groups():
         codename="can_create_new_users",
         name="Can Create New Users",
         content_type=student_type
+    )
 
+    can_send_admit_card_for_approval = Permission.objects.get_or_create(
+        codename="can_send_admit_card_for_approval",
+        name="Can Send Admit Card For Approval",
+        content_type=student_type
+    )
+
+    can_preview_admit_card = Permission.objects.get_or_create(
+        codename="can_preview_admit_card",
+        name="Can Preview Admit Card",
+        content_type=student_type
+    )
+
+    can_print_admit_card = Permission.objects.get_or_create(
+        codename="can_print_admit_card",
+        name="Can Print Admit Card",
+        content_type=student_type
+    )
+
+    can_view_student_details = Permission.objects.get_or_create(
+        codename="can_view_student_details",
+        name="Can View Student Details",
+        content_type=student_type
+    )
+
+    can_add_student_results = Permission.objects.get_or_create(
+        codename="can_add_student_results",
+        name="Can Add Student Results",
+        content_type=student_type
+    )
+
+    can_generate_certificate = Permission.objects.get_or_create(
+        codename="can_generate_certificate",
+        name="Can Generate Certificate",
+        content_type=student_type
+    )
+
+    can_send_certificate_for_approval = Permission.objects.get_or_create(
+        codename="can_send_certificate_for_approval",
+        name="Can Send Certificate For Approval",
+        content_type=student_type
+    )
+
+    can_view_student_results = Permission.objects.get_or_create(
+        codename="can_view_student_results",
+        name="Can View Student Results",
+        content_type=student_type
     )
 
 
-    # clerk_group, created = Group.objects.get_or_create(
-    #     name="clerk_group"
-    # )
-    # print(can_create_new_candidates)
-    # clerk_group.permissions.add(32)
-    # clerk_group.permissions.add(31)
-    # clerk_group.permissions.add(29)
 
-    # colonel_group, created = Group.objects.get_or_create(
-    #     name="colonel_group"
-    # )
-    # colonel_group.permissions.add(31)
-    # colonel_group.permissions.add(33)
+    clerk1, created = Group.objects.get_or_create(
+        name="clerk"
+    )
+    clerk1.permissions.add(48)
+    clerk1.permissions.add(51)
+    clerk1.permissions.add(54)
+    clerk1.permissions.add(55)
+    clerk1.permissions.add(56)
+    clerk1.permissions.add(57)
+    clerk1.permissions.add(58)
+    clerk1.permissions.add(59)
+    clerk1.permissions.add(60)
+    clerk1.permissions.add(61)
+    clerk1.save()
 
-    # senior_1_group, created = Group.objects.get_or_create(
-    #     name="senior_1_group"
-    # )
-    # senior_1_group.permissions.add(31)
-    # senior_1_group.permissions.add(33)
+    colonel, created = Group.objects.get_or_create(
+        name="Colonel"
+    )
+    colonel.permissions.add(55)
+    colonel.permissions.add(57)
+    colonel.permissions.add(56)
+    colonel.permissions.add(52)
+    colonel.permissions.add(53)
+    colonel.permissions.add(50)
+    colonel.permissions.add(46)
+    colonel.save()
+    
+    brigadier, created = Group.objects.get_or_create(
+        name="Brigadier"
+    )
+    brigadier.permissions.add(57)
+    brigadier.permissions.add(50)
+    brigadier.permissions.add(46)
+    brigadier.save()
 
-    # senior_2_group, created = Group.objects.get_or_create(
-    #     name="senior_2_group"
-    # )
-    # senior_2_group.permissions.add(31)
-    # senior_2_group.permissions.add(33)
-
+    dg, created = Group.objects.get_or_create(
+        name="Director_General"
+    )
+    dg.permissions.add(57)
+    dg.permissions.add(50)
+    dg.permissions.add(46)
+    dg.save()

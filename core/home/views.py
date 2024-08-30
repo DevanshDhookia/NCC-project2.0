@@ -15,9 +15,11 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User , Group
 from common_utils.login_utilities import LoginValidator
 from common_utils.jwt_manager import JwtUtility
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
-
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+from django.forms.models import model_to_dict
 
 login_validator = LoginValidator()
 jwt_utility = JwtUtility()
@@ -29,6 +31,8 @@ def contact(request):
     return render(request, "Login_Page/contact.html")
 
 def SignIn(request):
+    if request.user is None:
+        return redirect('/clerk/')
     if request.method == 'POST':
         data = request.POST
         user = authenticate(username=data.get("username"), password=data.get("password"))
@@ -46,6 +50,7 @@ def SignIn(request):
             return redirect("/SignIn/")
     return render(request, "Login_Page/SignIn.html", {"page_name": "Ludiflex | Login & Registration"})
 
+@login_required
 def register(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -66,7 +71,9 @@ def register(request):
             return redirect('/register/')
 
         # Create new user
-        user = User.objects.create_user(username=username, password=password1)
+        user = User.objects.create_user(username=username)
+        user.set_password(password1)
+        user.save()
 
         # Determine which group and model to associate based on the logged-in user's role
         if request.user.groups.filter(name='Director_General').exists():
@@ -118,17 +125,48 @@ def user_logout(request):
 def index(request):
     return render(request, "Login_Page/index.html")
 
-def clerk(request):
+@login_required
+def clerk_page(request):
     if login_validator.is_user_logged_in(request) and request.user.is_authenticated:
-        return render(request, "clerk/clerk.html", {"page_name": "NCC (National Cadet Corps)"})
+        admitcard_generated_students = 0
+        send_for_approval_students = 0
+        reject_admit_card_students = 0
+
+        for student in Student.objects.all():
+            if student.admit_card_generated:
+                admitcard_generated_students += 1
+            if student.sent_for_approval:
+                send_for_approval_students += 1
+            if student.rejection_reason:  # This checks if rejection_reason is not None and not an empty string
+                reject_admit_card_students += 1
+
+        context = {
+            'total_students': Student.objects.all(),
+            'admitcard_generated_students': admitcard_generated_students,
+            'send_for_approval_students': send_for_approval_students,
+            'reject_admit_card_students': reject_admit_card_students,
+        }
+
+        return render(request, "clerk/clerk.html", context)
     else:
         return redirect("/SignIn/")
+@login_required
+def Add_Result(request):
+    return render(request, "clerk/Add_Result.html")
 
+@login_required
 def Preview_Admit_Card(request):
     if login_validator.is_user_logged_in(request) and request.user.is_authenticated:
         # Retrieve all pending students ordered by ID
-        pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None).order_by('id')
-
+        print(request.user.id)
+        pending_students = []
+        if request.user.groups.filter(name='Colonel').exists():
+            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, colonel_id=Colonel.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+        elif request.user.groups.filter(name='Clerk').exists():
+            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, sent_for_approval=False, clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+        else:
+            messages.error(request, "You do not have permission to perform this action.")
+            return redirect('/clerk/')
         if not pending_students.exists():
             # If no students are left to preview, render the "All Students Previewed" page
             return render(request, "clerk/All_Students_Previewed.html")
@@ -167,11 +205,10 @@ def Preview_Admit_Card(request):
     else:
         return redirect("/SignIn/")
 
-
+@login_required
 def Print_Admit_Cards(request):
     
     return render(request, "clerk/Print_Admit_Cards.html")
-
 
 def generate_admit_card(student):
     # Load the template image using OpenCV
@@ -249,13 +286,23 @@ def generate_admit_card(student):
 
     return final_image_path
 
+@login_required
+def send_for_approval(request, cbse_no):
+    student = get_object_or_404(Student, CBSE_No=cbse_no)
+    student.rejection_reason = None
+    student.admit_card_send_for_approval=True
+    student.save()
+    return redirect('Preview_Admit_Card')
 
+@login_required
 def approve_admit_card(request, cbse_no):
     student = get_object_or_404(Student, CBSE_No=cbse_no)
+    student.rejection_reason = None
     student.admit_card_approved = True
     student.save()
     return redirect('Preview_Admit_Card')
 
+@login_required
 def reject_admit_card(request, cbse_no):
     if request.method == 'POST':
         student = get_object_or_404(Student, CBSE_No=cbse_no)
@@ -265,88 +312,126 @@ def reject_admit_card(request, cbse_no):
         student.save()
     return redirect('Preview_Admit_Card')
 
+@login_required
 def Register_Students(request):
-    if request.method == 'POST':
-        data_file = request.FILES.get('excel_file')
-        photos_folder = request.FILES.getlist('photos_folder')
+    if request.user.has_perm('home.can_create_new_candidates'):
+        if request.method == 'POST':
+            certificate_type=request.POST.get('certificate_type')
+            wing=request.POST.get('wing')
+            data_file = request.FILES.get('excel_file')
+            photos_folder = request.FILES.getlist('photos_folder')
+            print(request.user.id)
+            if data_file:
+                file_extension = os.path.splitext(data_file.name)[1].lower()
 
-        if data_file:
-            file_extension = os.path.splitext(data_file.name)[1].lower()
+                # Read the file based on its extension
+                if file_extension in ['.csv']:
+                    df = pd.read_csv(data_file)
+                elif file_extension in ['.xls', '.xlsx']:
+                    df = pd.read_excel(data_file)
+                else:
+                    return HttpResponseBadRequest("Unsupported file format")
 
-            # Read the file based on its extension
-            if file_extension in ['.csv']:
-                df = pd.read_csv(data_file)
-            elif file_extension in ['.xls', '.xlsx']:
-                df = pd.read_excel(data_file)
-            else:
-                return HttpResponseBadRequest("Unsupported file format")
+                # Define the column indices corresponding to the model fields
+                column_indices = {
+                    'CBSE_No': 0, 
+                    'Name': 1,     
+                    'DOB': 2,      
+                    'Fathers_Name': 3,
+                    'School_College_Class': 4,
+                    'Home_Address': 5,
+                    'Admit_Card_No': 6,
+                    'Unit': 7,
+                    'Rank': 8,
+                    'Fresh_Failure': 9,
+                    'Year_of_passing_B_Certificate':10,
+                    'Attendance_1st_year':11,
+                    'Attendance_2nd_year':12,
+                    'Attendance_3rd_year':13,
+                    'Name_of_camp_attended_1':14,
+                    'Date_camp_1':15,
+                    'Location_camp_1':16,
+                    'Name_of_camp_attended_2':17,
+                    'Date_camp_2':18,
+                    'Location_camp_2':19
+                }
 
-            # Define the column indices corresponding to the model fields
-            column_indices = {
-                'CBSE_No': 0, 
-                'Name': 1,     
-                'DOB': 2,      
-                'Fathers_Name': 3,
-                'School_College_Class': 4,
-                'Home_Address': 5,
-                'Admit_Card_No': 6,
-                'Unit': 7,
-                'Rank': 8,
-                'Fresh_Failure': 9,
-                'Year_of_passing_B_Certificate':10,
-                'Attendance_1st_year':11,
-                'Attendance_2nd_year':12,
-                'Attendance_3rd_year':13,
-                'Name_of_camp_attended_1':14,
-                'Date_camp_1':15,
-                'Location_camp_1':16,
-                'Name_of_camp_attended_2':17,
-                'Date_camp_2':18,
-                'Location_camp_2':19
-            }
+                clerk = Clerk.objects.filter(user=request.user).first()
+                # Process each row in the DataFrame
+                for _, row in df.iterrows():
+                    student_data = {field: row[idx] for field, idx in column_indices.items()}
+                    student_data["Certificate_type"]=certificate_type
+                    student_data["Wing"]=wing
+                    student_data["clerk"] = clerk
+                    student_data["colonel"] = clerk.colonel
+                    student_data["brigadier"] = clerk.colonel.brigadier
+                    student_data["director_general"] = clerk.colonel.brigadier.director_general
+                    # Ensure CBSE_No is not missing
+                    if pd.isna(student_data['CBSE_No']):
+                        return HttpResponseBadRequest("CBSE_No is missing for some records.")
 
-            clerk = Clerk.objects.filter(user=request.user).first()
-            # Process each row in the DataFrame
-            for _, row in df.iterrows():
-                student_data = {field: row[idx] for field, idx in column_indices.items()}
-                
-                # Ensure CBSE_No is not missing
-                if pd.isna(student_data['CBSE_No']):
-                    return HttpResponseBadRequest("CBSE_No is missing for some records.")
+                    # Update or create the student record
+                    student, created = Student.objects.update_or_create(
+                        CBSE_No=student_data['CBSE_No'],
+                        defaults=student_data
+                    )
 
-                # Update or create the student record
-                student, created = Student.objects.update_or_create(
-                    CBSE_No=student_data['CBSE_No'],
-                    defaults=student_data
-                )
+                    # Handle photo upload
+                    for photo in photos_folder:
+                        if photo.name.startswith(str(student_data['CBSE_No'])):
+                            student.Photo.save(photo.name, photo)
+                            break
 
-                # Handle photo upload
-                for photo in photos_folder:
-                    if photo.name.startswith(str(student_data['CBSE_No'])):
-                        student.Photo.save(photo.name, photo)
-                        break
+            return redirect('/Register Students/')  # Redirect after processing
+        return render(request, "clerk/Register_Students.html")
+    else:
+        return redirect('/index/')
 
-        return redirect('/Register Students/')  # Redirect after processing
-
-    return render(request, "clerk/Register_Students.html")
-
+@login_required
 def Rejected_Admit_Cards(request):
-    # Query to get students with rejected admit cards
-    rejected_students = Student.objects.filter(admit_card_approved=False, rejection_reason__isnull=False)
-    
-    # Pass the data to the template
-    context = {
-        'rejected_students': rejected_students
-    }
-    return render(request, "clerk/Rejected_Admit_Cards.html", context)
+    if request.user.has_perm('home.can_view_rejected_applications'):
+        # Query to get students with rejected admit cards
+        rejected_students = Student.objects.filter(admit_card_approved=False, rejection_reason__isnull=False)
+        
+        # Pass the data to the template
+        context = {
+            'rejected_students': rejected_students
+        }
+        return render(request, "clerk/Rejected_Admit_Cards.html", context)
+    else:
+        return redirect('/index/')
+
+@login_required
 def Student_Details(request):
-    return render(request, "clerk/Student_Details.html")
+    view_students = Student.objects.none()  # Default to an empty queryset
+
+    if request.user.groups.filter(name='Clerk').exists():
+        clerk_instance = Clerk.objects.get(user=request.user)
+        view_students = Student.objects.filter(clerk=clerk_instance)
+    elif request.user.groups.filter(name='Colonel').exists():
+        colonel_instance = Colonel.objects.get(user=request.user)
+        view_students = Student.objects.filter(colonel=colonel_instance)
+    elif request.user.groups.filter(name='Brigadier').exists():
+        brigadier_instance = Brigadier.objects.get(user=request.user)
+        view_students = Student.objects.filter(brigadier=brigadier_instance)
+    elif request.user.groups.filter(name='Director_General').exists():
+        director_general_instance = Director_General.objects.get(user=request.user)
+        view_students = Student.objects.filter(director_general=director_general_instance)
+
+    context = {
+        'students': view_students,
+        'students_json': json.dumps(list([str(model_to_dict(i)) for i in view_students]), cls=DjangoJSONEncoder)
+    }
+    return render(request, "clerk/Student_Details.html", context)
+
+@login_required
 def All_Students_Previewed(request):
     return render(request,"/All Students Previewed/")
 
-def update_student(request, student_id):
-    student = get_object_or_404(Student, id=student_id)
+@login_required
+def update_student(request):
     if request.method == 'POST':
+        student = get_object_or_404(Student, id=request.POST.get("id"))
         # Get data from POST request and handle empty values
         def get_value(field_name, default=None):
             value = request.POST.get(field_name, default)
@@ -387,14 +472,21 @@ def update_student(request, student_id):
 
         # Save the student object
         student.save()
+        generate_admit_card(student)
 
-        return redirect('search_student')  # Redirect after saving
+        return redirect('/Student Details')  # Redirect after saving
 
     return render(request, 'clerk/Student_Details.html', {'student': student})
 
+@login_required
 def search_student(request):
     student = None
+    context = None
     if 'cbse_no' in request.GET and request.GET.get('cbse_no'):
         cbse_no = request.GET.get('cbse_no')
         student = get_object_or_404(Student, CBSE_No=cbse_no)
-    return render(request, 'clerk/Student_Details.html', {'student': student})
+        context = {
+            'students': [student],
+            'students_json': json.dumps([str(model_to_dict(student))], cls=DjangoJSONEncoder)
+        }
+    return render(request, 'clerk/Student_Details.html', context)

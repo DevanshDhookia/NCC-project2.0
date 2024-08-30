@@ -1,207 +1,255 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
-      rel="stylesheet"
+{% extends "Login_Page/login_base_template.html" %}
+{% load static %} 
+{% block css_block %}
+<link rel="stylesheet" href="{% static 'css/student_details.css' %}" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="{% static 'js/student_detail.js' %}"
+  data-students = "{{ students_json }}"
+></script>
+{% endblock %} 
+{% block title %} NCC (National Cadet Corps) {% endblock %} 
+{% block start %}
+<div></div>
+<div class="rectangular-box">
+  <form class="form" method="GET" action="{% url 'search_student' %}">
+    <input
+      class="form-control mr-sm-2"
+      id="search-students-box"
+      type="search"
+      name="cbse_no"
+      placeholder="Enter CBSE No."
+      aria-label="Enter CBSE No."
+      required
     />
-    <link
-      rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-    />
-    <link rel="stylesheet" href="{% static 'css/CBSE.css' %}" />
-    <title>NCC (National Cadet Corps)</title>
-  </head>
-  <body>
-    <div class="wrapper">
-      <nav class="nav">
-        <div class="nav-logo">
-          <img src="{% static 'images/logo4.png' %}" alt="" />
-        </div>
-        <div class="nav-menu" id="navMenu">
-          <ul class="ul1">
-            <li><a href="/clerk/" class="link">Home</a></li>
-            <li>
-              <a href="/Register Students/" class="link">Register Students</a>
-            </li>
-            <li class="nav2">
-              <a class="link" href="#">Admit Cards</a>
-              <div class="dropdown">
-                <ul class="ul2">
-                  <li>
-                    <a class="dropdown-i" href="/Preview Admit Card/"
-                      >Preview Admit Cards</a
-                    >
-                  </li>
-                  <li>
-                    <a class="dropdown-i" href="/Print Admit Cards/"
-                      >Print Admit Cards</a
-                    >
-                  </li>
-                  <li>
-                    <a class="dropdown-i" href="/Rejected Admit Cards/"
-                      >Rejected Admit Cards</a
-                    >
-                  </li>
-                </ul>
-              </div>
-            </li>
-            <li>
-              <a href="/Student Details/" class="link active"
-                >Student Details</a
-              >
-            </li>
-            <!-- <li><a href="/Create Admit Card/" class="link">Create Admit Cards</a></li>
-                <li><a href="/Print Admit Cards/" class="link">Print Admit Cards</a></li>
-                <li><a href="/Rejected Admit Cards/" class="link">Rejected Admit Cards</a></li> -->
-          </ul>
-        </div>
-        <div class="nav-button">
+    <button class="ctm-btn" type="submit">Search</button>
+  </form>
+  <button class="ctm-btn" id='student-clear-filter' onclick='clearButtonClick()'>Clear <i class="bx bx-message-square-x"></i></button>
+</div>
+<div class="table-container">
+  <table class="table table-bordered table2">
+    <thead>
+      <tr>
+        <th scope="col">Sr.No.</th>
+        <th scope="col">Student ID</th>
+        <th scope="col">Name</th>
+        <th scope="col">Fathers's Name</th>
+        <th scope="col">Admit Card No.</th>
+        <th scope="col">Unit</th>
+        <th scope="col">Rank</th>
+        <th scope="col">Fresh/Faliure</th>
+        <th scope="col">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for student in students %}
+      <tr>
+        <th scope="row">{{ forloop.counter }}</th>
+        <td>{{ student.CBSE_No }}</td>
+        <td>{{ student.Name }}</td>
+        <td>{{ student.Fathers_Name }}</td>
+        <td>{{ student.Admit_Card_No }}</td>
+        <td>{{ student.Unit }}</td>
+        <td>{{ student.Rank }}</td>
+        <td>{{ student.Fresh_Failure }}</td>
+        <td>
           <button
-            class="btn white-btn"
-            id="loginBtn"
-            onclick="window.location.href='/SignIn/'"
+            class="btn btn-info"
+            data-bs-toggle="modal"
+            data-bs-target="#staticBackdrop"
+            {% comment %} onclick="view_student({{student}}, 'view')" {% endcomment %}
+            onclick="openModalOnClick('{{forloop.counter}}', 'view')"
           >
-            Logout
+            View
           </button>
-        </div>
-        <div class="nav-menu-btn">
-          <i class="bx bx-menu" onclick="myMenuFunction()"></i>
-        </div>
-      </nav>
-      <div></div>
-      <div class="rectangular-box">
-        <form class="form-inline" method="GET" action="{% url 'search_student' %}">
-            <input
-              class="form-control mr-sm-2"
-              type="search"
-              name="cbse_no"
-              placeholder="Enter CBSE No."
-              aria-label="Enter CBSE No."
-              required
-            />
-            <button class="ctm-btn" type="submit">Search</button>
-          </form>
-      </div>
-      {% if student %}
-      <div class="container">
-        <div class="row flex-lg-nowrap">
-          <div class="col-12 col-lg-auto mb-3" style="width: 200px">
-            <!-- <div class="card p-3">
-              <div class="e-navlist e-navlist--active-bg"> -->
+          {% if perms.home.can_edit_student_details %}
+            <button class="btn btn-primary"
+              data-bs-toggle="modal"
+              data-bs-target="#staticBackdrop"
+              onclick="openModalOnClick('{{forloop.counter}}', 'modify')"
+            >Modify</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3">No studnets are registered .</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 
-            <!--               
-            </div></div> -->
-          </div>
-          <div class="col">
-            <div class="row">
-              <div class="col mb-3">
+<div
+  class="modal fade modal-lg"
+  id="staticBackdrop"
+  data-bs-backdrop="static"
+  data-bs-keyboard="false"
+  tabindex="-1"
+  aria-labelledby="staticBackdropLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="staticBackdropLabel">
+          Student Detils
+        </h1>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="container">
+          <div class="row flex-lg-nowrap">
+            <div class="col">
+              <div class="row">
                 <div class="card">
                   <div class="card-body">
-                    <form class="form" method="POST" action="{% url 'update_student' student.id %}">
-                        {% csrf_token %}
-                    <div class="e-profile">
-                      <div class="row">
-                        <div class="col-12 col-sm-auto mb-3">
-                          <div class="mx-auto" style="width: 140px">
-                            <div
-                              class="d-flex justify-content-center align-items-center rounded"
-                              style="
-                                height: 140px;
-                                background-color: rgb(233, 236, 239);
-                              "
+                    <form
+                      class="form"
+                      id="student-detail-form"
+                      method="POST"
+                      action="{% url 'update_student' %}"
+                    >
+                      {% csrf_token %}
+                      <div class="e-profile">
+                        <div class="row">
+                          <div class="col-12 col-sm-auto mb-3">
+                            <div class="mx-auto" style="width: 140px">
+                              <div
+                                class="d-flex justify-content-center align-items-center rounded"
+                                style="
+                                  height: 140px;
+                                  background-color: rgb(233, 236, 239);
+                                "
+                              >
+                                <img
+                                  id='student-image'
+                                  src="/media/student_photos/{{ student.CBSE_No }}.jpeg"
+                                  alt="Student Photo"
+                                  style="max-width: 170px; max-height: 170px"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            class="col d-flex flex-column flex-sm-row justify-content-between mb-3"
+                          >
+                            <div class="text-center text-sm-left mb-2 mb-sm-0">
+                              <h4 class="pt-sm-2 pb-1 mb-0 ml-3 text-nowrap" id="modal-student-name">
+                                
+                              </h4>
+                              <div class="container mt-5">
+                                <button
+                                  class="change-photo-btn"
+                                  onclick="document.getElementById('fileInput').click();"
+                                >
+                                  Change Photo
+                                </button>
+                                <input
+                                  type="file"
+                                  id="fileInput"
+                                  accept="image/*"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="tab-content pt-3">
+                          <div class="tab-pane active">
+                            <form
+                              class="form"
+                              method="POST"
+                              action="{% url 'update_student' %}"
                             >
-                            <img src="/media/student_photos/{{ student.CBSE_No }}.jpeg" alt="Student Photo" style="max-width: 170px; max-height: 170px;">
-                            </div>
-                          </div>
-                        </div>
-                        <div
-                          class="col d-flex flex-column flex-sm-row justify-content-between mb-3"
-                        >
-                          <div class="text-center text-sm-left mb-2 mb-sm-0">
-                            <h4 class="pt-sm-2 pb-1 mb-0 ml-3 text-nowrap">
-                              {{student.Name}}
-                            </h4>
-                            <div class="container mt-5">
-                              <button
-                                class="change-photo-btn"
-                                onclick="document.getElementById('fileInput').click();">
-                                Change Photo
-                              </button>
-                              <input
-                                type="file"
-                                id="fileInput"
-                                accept="image/*"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="tab-content pt-3">
-                        <div class="tab-pane active">
-                            <form class="form" method="POST" action="{% url 'update_student' student.id %}">
-                               {% csrf_token %}
-
-
-                            <div class="row">
-                              <div class="col">
-                                <hr>
-                                <div class="row">
-                                  <div class="col">
-                                    <div class="form-group">
-                                      <label>CBSE No.</label>
-                                      <input
-                                        class="form-control"
-                                        type="text"
-                                        name="CBSE_No"
-                                        value="{{ student.CBSE_No }}"
-                                        readonly
-                                      />
+                              {% csrf_token %}
+                              <div class="row">
+                                <div class="col">
+                                  <hr />
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>CBSE No.</label>
+                                        <input
+                                          class="form-control"
+                                          id='modal-cbse-no'
+                                          type="text"
+                                          name="CBSE_No"
+                                          value=""
+                                          readonly
+                                        />
+                                        <input
+                                          class="form-control"
+                                          id='student-id'
+                                          type="text"
+                                          name="id"
+                                          value=""
+                                          readonly
+                                          hidden
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Full Name</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-full-name"
+                                          type="text"
+                                          name="Name"
+                                          value=""
+                                        />
+                                      </div>
                                     </div>
                                   </div>
-                                  <div class="col">
-                                    <div class="form-group">
-                                      <label>Full Name</label>
-                                      <input
-                                        class="form-control"
-                                        type="text"
-                                        name="Name"
-                                        value="{{ student.Name}}"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                                <div class="row">
+                                  <div class="row">
                                     <div class="col">
                                       <div class="form-group">
                                         <label>Father's Name</label>
-                                        <input class="form-control" type="text" name="Fathers_Name" value="{{ student.Fathers_Name}}">
+                                        <input
+                                          class="form-control"
+                                          id="modal-father-name"
+                                          type="text"
+                                          name="Fathers_Name"
+                                          value=""
+                                        />
                                       </div>
                                     </div>
                                     <div class="col">
                                       <div class="form-group">
                                         <label>DOB</label>
-                                        <input class="form-control" type="text" name="DOB" value="{{ student.DOB}}">
+                                        <input
+                                          class="form-control"
+                                          id="modal-dob"
+                                          type="text"
+                                          name="DOB"
+                                          value=""
+                                        />
                                       </div>
                                     </div>
                                   </div>
-                                <div class="row">
-                                  <div class="col mb-3">
-                                    <div class="form-group">
-                                      <label>Address</label>
-                                      <textarea class="form-control" rows="2" name="Home_Address">{{ student.Home_Address }}</textarea>
+                                  <div class="row">
+                                    <div class="col mb-3">
+                                      <div class="form-group">
+                                        <label>Address</label>
+                                        <textarea
+                                          class="form-control"
+                                          id="modal-address"
+                                          rows="2"
+                                          name="Home_Address"
+                                        >
+                                        </textarea>
+                                      </div>
                                     </div>
                                   </div>
+                                  <hr />
                                 </div>
-                                <hr>
                               </div>
-                            </div>
 
-                            <div class="row">
+                              <div class="row">
                                 <div class="col">
                                   <div class="row">
                                     <div class="col">
@@ -209,9 +257,10 @@
                                         <label>Unit</label>
                                         <input
                                           class="form-control"
+                                          id="modal-unit"
                                           type="text"
                                           name="Unit"
-                                          value="{{ student.Unit}}"
+                                          value=""
                                         />
                                       </div>
                                     </div>
@@ -220,172 +269,221 @@
                                         <label>Rank</label>
                                         <input
                                           class="form-control"
+                                          id="modal-rank"
                                           type="text"
                                           name="Rank"
-                                          value="{{ student.Rank}}"
+                                          value=""
                                         />
                                       </div>
                                     </div>
                                   </div>
                                   <div class="row">
-                                      <div class="col">
-                                        <div class="form-group">
-                                          <label>Year of passsing B certificate</label>
-                                          <input class="form-control" type="text" name="Year_of_passing_B_Certificate" value="{{ student.Year_of_passing_B_Certificate}}">
-                                        </div>
-                                      </div>
-                                      <div class="col">
-                                        <div class="form-group">
-                                          <label>Fresh/Faliure</label>
-                                          <input class="form-control" type="text" name="Fresh_Failure" value="{{ student.Fresh_Failure}}" >
-                                        </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label
+                                          >Year of passsing B certificate</label
+                                        >
+                                        <input
+                                          class="form-control"
+                                          id="modal-yopb-cert"
+                                          type="text"
+                                          name="Year_of_passing_B_Certificate"
+                                          value=""
+                                        />
                                       </div>
                                     </div>
-                                  <div class="row">
-                                    <div class="col mb-3">
+                                    <div class="col">
                                       <div class="form-group">
-                                        <label>School/College & Class in which studying</label>
-                                        <textarea class="form-control" rows="2" name="School_College_Class">{{ student.School_College_Class }}</textarea>
-
+                                        <label>Fresh/Faliure</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-fresh-failure"
+                                          type="text"
+                                          name="Fresh_Failure"
+                                          value=""
+                                        />
                                       </div>
                                     </div>
                                   </div>
-                                  <hr>
+                                  <div class="row">
+                                    <div class="col mb-3">
+                                      <div class="form-group">
+                                        <label
+                                          >School/College & Class in which
+                                          studying</label
+                                        >
+                                        <textarea
+                                          class="form-control"
+                                          id="modal-school"
+                                          rows="2"
+                                          name="School_College_Class"
+                                        >
+                                        
+                                        </textarea>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <hr />
                                 </div>
                               </div>
-
 
                               <div class="row">
                                 <div class="col">
                                   <div class="row">
-                                      <div class="col">
-                                        <div class="form-group">
-                                          <label>1st Year</label>
-                                          <input class="form-control" type="text" name="Attendance_1st_year" value="{{ student.Attendance_1st_year}}">
-                                        </div>
-                                      </div>
-                                      <div class="col">
-                                        <div class="form-group">
-                                          <label>2nd Year</label>
-                                          <input class="form-control" type="text" name="Attendance_2nd_year" value="{{ student.Attendance_2nd_year}}">
-                                        </div>
-                                      </div>
-                                      <div class="col">
-                                        <div class="form-group">
-                                          <label>Total</label>
-                                          <input class="form-control" type="text" name="Attendance_3rd_year" value="{{ student.Attendance_3rd_year}}">
-                                        </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>1st Year</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-1st-year"
+                                          type="text"
+                                          name="Attendance_1st_year"
+                                          value=""
+                                        />
                                       </div>
                                     </div>
-                                  <hr>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>2nd Year</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-2nd-year"
+                                          type="text"
+                                          name="Attendance_2nd_year"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Total</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-3rd-year"
+                                          type="text"
+                                          name="Attendance_3rd_year"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <hr />
                                 </div>
                               </div>
 
-                            <div class="row">
+                              <div class="row">
                                 <div class="col">
                                   <div class="row">
-                                      <div class="col">
-                                        <div class="form-group">
-                                          <label>Name of Camp Attended</label>
-                                          <input class="form-control" type="text" name="Name_of_camp_attended_1" value="{{ student.Name_of_camp_attended_1}}">
-                                        </div>
-                                      </div>
-                                      <div class="col">
-                                        <div class="form-group">
-                                          <label>Date of Camp</label>
-                                          <input class="form-control" type="text" name="Date_camp_1" value="{{student.Date_camp_1}}">
-                                        </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Name of Camp Attended</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-camp-name"
+                                          type="text"
+                                          name="Name_of_camp_attended_1"
+                                          value=""
+                                        />
                                       </div>
                                     </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Date of Camp</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-camp-date"
+                                          type="text"
+                                          name="Date_camp_1"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
                                   <div class="row">
                                     <div class="col mb-3">
                                       <div class="form-group">
                                         <label>Location</label>
                                         <textarea
                                           class="form-control"
+                                          id="modal-camp-location"
                                           rows="2"
-                                          name="Location_camp_1" 
-                                        >{{student.Location_camp_1}}</textarea>
+                                          name="Location_camp_1"
+                                        >
+                                        </textarea>
                                       </div>
                                     </div>
                                   </div>
-                                  <hr>
+                                  <hr />
                                 </div>
                               </div>
-
 
                               <div class="row">
                                 <div class="col">
                                   <div class="row">
-                                      <div class="col">
-                                        <div class="form-group">
-                                          <label>Name of Camp Attended</label>
-                                          <input class="form-control" type="text" name="Name_of_camp_attended_2" value="{{ student.Name_of_camp_attended_2}}">
-                                        </div>
-                                      </div>
-                                      <div class="col">
-                                        <div class="form-group">
-                                          <label>Date of Camp</label>
-                                          <input class="form-control" type="text" name="Date_camp_2" value="{{student.Date_camp_2}}">
-                                        </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Name of Camp Attended</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-camp-name-2"
+                                          type="text"
+                                          name="Name_of_camp_attended_2"
+                                          value=""
+                                        />
                                       </div>
                                     </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Date of Camp</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-camp-date-2"
+                                          type="text"
+                                          name="Date_camp_2"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
                                   <div class="row">
                                     <div class="col mb-3">
                                       <div class="form-group">
                                         <label>Location</label>
                                         <textarea
                                           class="form-control"
+                                          id="modal-camp-location-2"
                                           rows="2"
-                                          name="Location_camp_2" 
-                                        >{{student.Location_camp_2}}</textarea>
+                                          name="Location_camp_2"
+                                        >
+                                        </textarea>
                                       </div>
                                     </div>
                                   </div>
-                                  <hr>
+                                  <hr />
                                 </div>
                               </div>
-
-                            <div class="row">
-                              <div class="col d-flex justify-content-end">
-                                <button class="btn btn-primary" type="submit">
-                                  Save Changes
-                                </button>
-                              </div>
-                            </div>
-                          </form>
+                            </form>
+                          </div>
                         </div>
                       </div>
-                    </div>
                     </form>
                   </div>
                 </div>
               </div>
-
-              <div class="col-12 col-md-3 mb-3">
-                <!-- <div class="card mb-3">
-                  <div class="card-body">
-                    <div class="px-xl-3">
-                      <button class="btn btn-block btn-secondary">
-                        <i class="fa fa-sign-out"></i>
-                        <span>Logout</span>
-                      </button>
-                    </div>
-                  </div> -->
-              </div>
-              <!-- <div class="card">
-                  <div class="card-body">
-                    <h6 class="card-title font-weight-bold">Support</h6>
-                    <p class="card-text">Get fast, free help from our friendly assistants.</p>
-                    <button type="button" class="btn btn-primary">Contact Us</button>
-                  </div>
-                </div>
-              </div> -->
             </div>
           </div>
         </div>
       </div>
-      {% endif %}
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Close
+        </button>
+        <button type="button" id="student-submit-button" class="btn btn-primary" data-bs-dismiss="modal" onclick='studentDetailFormSubmit()'>
+          Modify
+        </button>
+      </div>
     </div>
-  </body>
-</html>
+  </div>
+</div>
+
+{% if student %} {% endif %} {% endblock %}
