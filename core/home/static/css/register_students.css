@@ -312,3 +312,12 @@ label.input-group-text:hover {
         gap: 0;
     }
 }
+.drpdwn{
+    display: flex;
+    flex-direction: row;
+}
+.form-select{
+    margin-left: 25px;
+    margin-right: 25px ;
+
+}

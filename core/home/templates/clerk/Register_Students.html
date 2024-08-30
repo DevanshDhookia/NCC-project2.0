@@ -39,6 +39,20 @@
         <form class="register-students" method="post" enctype="multipart/form-data" action="{% url 'Register_Students' %}">
             {% csrf_token %}
             <header>Register New Students</header>
+            <div class="drpdwn">
+                <select class="form-select" aria-label="Default select example">
+                    <option selected>Select Certificate </option>
+                    <option value="1">A-Cetificate</option>
+                    <option value="2">B-Cetificate</option>
+                    <option value="3">C-Cetificate</option>
+                  </select>
+                  <select class="form-select" aria-label="Default select example">
+                    <option selected>Select Wing</option>
+                    <option value="1">Army</option>
+                    <option value="2">Navy</option>
+                    <option value="3">Air-Force</option>
+                  </select>
+                </div>
             <div class="input-group">
                 <div class="file-input">
                     <input type="file" class="form-control" id="inputGroupFile01" name="excel_file" onchange="updateLabel(this)">
