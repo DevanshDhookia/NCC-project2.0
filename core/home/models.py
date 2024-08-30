@@ -39,6 +39,8 @@ class Student(models.Model):
     Date_camp_2 = models.CharField(max_length=10, null=True, default='N/A')
     Location_camp_2 = models.CharField(max_length=100, null=True, default='N/A')
     Photo = models.ImageField(upload_to='student_photos/', null=True, blank=True)
+    Wing =models.CharField(max_length=10, null=True, default='N/A')
+    Certificate_type=models.CharField(max_length=10, null=True, default='N/A')
     admit_card_generated = models.BooleanField(default=False)
     admit_card_send_for_approval=models.BooleanField(default=False)
     admit_card_approved = models.BooleanField(default=False)

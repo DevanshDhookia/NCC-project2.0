@@ -314,6 +314,8 @@ def reject_admit_card(request, cbse_no):
 def Register_Students(request):
     if request.user.has_perm('home.can_create_new_candidates'):
         if request.method == 'POST':
+            certificate_type=request.POST.get('certificate_type')
+            wing=request.POST.get('wing')
             data_file = request.FILES.get('excel_file')
             photos_folder = request.FILES.getlist('photos_folder')
             print(request.user.id)
@@ -356,6 +358,8 @@ def Register_Students(request):
                 # Process each row in the DataFrame
                 for _, row in df.iterrows():
                     student_data = {field: row[idx] for field, idx in column_indices.items()}
+                    student_data["Certificate_type"]=certificate_type
+                    student_data["Wing"]=wing
                     student_data["clerk"] = clerk
                     student_data["colonel"] = clerk.colonel
                     student_data["brigadier"] = clerk.colonel.brigadier

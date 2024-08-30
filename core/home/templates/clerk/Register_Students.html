@@ -40,17 +40,17 @@
             {% csrf_token %}
             <header>Register New Students</header>
             <div class="drpdwn">
-                <select class="form-select" aria-label="Default select example">
+                <select class="form-select" name="certificate_type">
                     <option selected>Select Certificate </option>
-                    <option value="1">A-Cetificate</option>
-                    <option value="2">B-Cetificate</option>
-                    <option value="3">C-Cetificate</option>
+                    <option value="A">A-Cetificate</option>
+                    <option value="B">B-Cetificate</option>
+                    <option value="C">C-Cetificate</option>
                   </select>
-                  <select class="form-select" aria-label="Default select example">
+                  <select class="form-select" name="wing" >
                     <option selected>Select Wing</option>
-                    <option value="1">Army</option>
-                    <option value="2">Navy</option>
-                    <option value="3">Air-Force</option>
+                    <option value="Army">Army</option>
+                    <option value="Navy">Navy</option>
+                    <option value="Air Force">Air-Force</option>
                   </select>
                 </div>
             <div class="input-group">
