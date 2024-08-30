@@ -17,6 +17,35 @@ class Clerk(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     colonel = models.ForeignKey(Colonel, on_delete=models.CASCADE, related_name="clerks")
 
+class Result(models.Model):
+    Parade_attendance=models.IntegerField()
+    Paper1_W = models.IntegerField()
+    Paper1_P = models.IntegerField()
+    Paper1_T = models.IntegerField()
+    Paper2_W = models.IntegerField()
+    Paper2_P = models.IntegerField()
+    Paper2_T = models.IntegerField()
+    Paper3_W = models.IntegerField()
+    Paper4_W = models.IntegerField()
+    Paper4_P = models.IntegerField()
+    Paper4_T = models.IntegerField()
+    Bonus_marks=models.IntegerField()
+    Final_total=models.IntegerField()
+    Pass_Fail=models.CharField(max_length=100, null=True)
+    Grade=models.CharField(max_length=100, null=True)
+    
+class Certificate(models.Model):
+    certificate_id=models.CharField(max_length=15, unique=True)
+    Approval_stage=models.CharField(max_length=15,null=True)
+    Rejected_by=models.CharField(max_length=100,null=True)
+    Rejected_reason=models.CharField(max_length=100,null=True)
+    Approved=models.BooleanField(default=False)
+    Qr_code= models.ImageField(upload_to='qr_code/', null=True, blank=True)
+    Generation_date=models.DateField(null=True)
+    Place=models.CharField(max_length=100,null=True)
+
+
+
 class Student(models.Model):
     CBSE_No = models.CharField(max_length=15, unique=True)
     Name = models.CharField(max_length=100)
@@ -50,3 +79,6 @@ class Student(models.Model):
     brigadier = models.ForeignKey(Brigadier, on_delete=models.CASCADE, null=True, blank=True)
     director_general = models.ForeignKey(Director_General, on_delete=models.CASCADE, null=True, blank=True)
     sent_for_approval = models.BooleanField(default=False)
+    result=models.ForeignKey(Result, on_delete=models.CASCADE, related_name="results", null=True, blank=True)
+    certificate=models.ForeignKey(Certificate, on_delete=models.CASCADE, related_name="certificates", null=True, blank=True)
+
