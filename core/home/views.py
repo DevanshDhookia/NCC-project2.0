@@ -128,9 +128,29 @@ def index(request):
 @login_required
 def clerk_page(request):
     if login_validator.is_user_logged_in(request) and request.user.is_authenticated:
-        return render(request, "clerk/clerk.html", {"page_name": "NCC (National Cadet Corps)"})
+        admitcard_generated_students = 0
+        send_for_approval_students = 0
+        reject_admit_card_students = 0
+
+        for student in Student.objects.all():
+            if student.admit_card_generated:
+                admitcard_generated_students += 1
+            if student.sent_for_approval:
+                send_for_approval_students += 1
+            if student.rejection_reason:  # This checks if rejection_reason is not None and not an empty string
+                reject_admit_card_students += 1
+
+        context = {
+            'total_students': Student.objects.all(),
+            'admitcard_generated_students': admitcard_generated_students,
+            'send_for_approval_students': send_for_approval_students,
+            'reject_admit_card_students': reject_admit_card_students,
+        }
+
+        return render(request, "clerk/clerk.html", context)
     else:
         return redirect("/SignIn/")
+
 
 @login_required
 def Preview_Admit_Card(request):
