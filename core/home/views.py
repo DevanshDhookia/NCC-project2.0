@@ -404,8 +404,8 @@ def All_Students_Previewed(request):
 
 @login_required
 def update_student(request):
-    student = get_object_or_404(Student, id=student_id)
     if request.method == 'POST':
+        student = get_object_or_404(Student, id=request.POST.get("id"))
         # Get data from POST request and handle empty values
         def get_value(field_name, default=None):
             value = request.POST.get(field_name, default)
@@ -448,13 +448,14 @@ def update_student(request):
         student.save()
         generate_admit_card(student)
 
-        return redirect('search_student')  # Redirect after saving
+        return redirect('/Student Details')  # Redirect after saving
 
     return render(request, 'clerk/Student_Details.html', {'student': student})
 
 @login_required
 def search_student(request):
     student = None
+    context = None
     if 'cbse_no' in request.GET and request.GET.get('cbse_no'):
         cbse_no = request.GET.get('cbse_no')
         student = get_object_or_404(Student, CBSE_No=cbse_no)

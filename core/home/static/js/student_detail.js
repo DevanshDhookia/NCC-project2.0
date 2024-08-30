@@ -6,11 +6,19 @@ function clearButtonClick() {
     window.location.replace('/Student Details/')
 }
 
+
+function studentDetailFormSubmit(e) {
+    console.log("called")
+    $('#student-detail-form').submit();
+  }
+
+
 function openModalOnClick(index, event_type) {
     console.log(Number(index))
     st = students[index-1].replaceAll("'", '"').replace(' <ImageFieldFile: ', '"').replaceAll(">", '"').replaceAll("True", "true").replaceAll(": False", ": false").replaceAll("None", "null")
     student_object = JSON.parse(st);
     console.log(student_object)
+    $('#student-id').val(student_object["id"]);
     $('#student-image').attr('src', '/media/'+student_object['Photo'])
     $('#modal-student-name').html(student_object["Name"]);
     $('#modal-cbse-no').val(student_object["CBSE_No"]);
@@ -32,4 +40,9 @@ function openModalOnClick(index, event_type) {
     $('#modal-camp-name-2').val(student_object["Name_of_camp_attended_2"]).prop("readonly", event_type === 'view' ? true : false);
     $('#modal-camp-date-2').val(student_object["Date_camp_2"]).prop("readonly", event_type === 'view' ? true : false);
     $('#modal-camp-location-2').html(student_object["Location_camp_2"]).prop("readonly", event_type === 'view' ? true : false);
+    if(event_type === 'view'){
+        $('#student-submit-button').hide()
+    } else {
+        $('#student-submit-button').show()
+    }
 }
