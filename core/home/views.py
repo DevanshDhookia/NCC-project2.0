@@ -206,6 +206,8 @@ def Preview_Admit_Card(request):
         return redirect("/SignIn/")
 
 @login_required
+def Preview_Certificates(request):
+    return render(request, "clerk/Preview_Certificates.html")
 def Print_Admit_Cards(request):
     
     return render(request, "clerk/Print_Admit_Cards.html")

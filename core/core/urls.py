@@ -33,6 +33,7 @@ urlpatterns = [
     path('index/',index,name='index'),
     path('clerk/',clerk_page,name='clerk'),
     path('Preview Admit Card/',Preview_Admit_Card,name='Preview_Admit_Card'),
+    path('Preview Certificates/',Preview_Certificates,name='Preview_Certificates'),
     path('Print Admit Cards/',Print_Admit_Cards,name='Print_Admit_Cards'),
     path('Register Students/',Register_Students,name='Register_Students'),
     path('Add Result/',Add_Result,name='Add_Result'),
