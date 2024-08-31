@@ -36,6 +36,7 @@
         <th scope="col">Paper-II(WT)</th>
         <th scope="col">Paper-III(Misc)</th>
         <th scope="col">Paper-IV(Spl to Corps)</th>
+        <th scope="col">Bonus Marks</th>
         <th scope="col">Total</th>
         <th scope="col">Result</th>
         <th scope="col">Actions</th>
@@ -47,12 +48,13 @@
         <th scope="row">{{ forloop.counter }}</th>
         <td>{{ student.student_id }}</td>
         <td>{{ student.student_name }}</td>
-        <td>{{ student.p_1_total }}</td>
-        <td>{{ student.p_2_total }}</td>
-        <td>{{ student.p_3_total }}</td>
-        <td>{{ student.p_4_total }}</td>
-        <td>{{ student.Final_total }}</td>
-        <td>{{ student.Pass_Fail }}</td>
+        <td>{{ student.p_1_total |floatformat:2 }}</td>
+        <td>{{ student.p_2_total |floatformat:2 }}</td>
+        <td>{{ student.p_3_total |floatformat:2 }}</td>
+        <td>{{ student.p_4_total |floatformat:2 }}</td>
+        <td>{{ student.result.Bonus_marks |floatformat:2 }}</td>
+        <td>{{ student.result.Final_total |floatformat:2 }}</td>
+        <td>{{ student.result.Pass_Fail }}</td>
         <td>
           <button
             class="btn btn-info"
@@ -112,9 +114,9 @@
                   <div class="card-body">
                     <form
                       class="form"
-                      id="student-detail-form"
+                      id="result-form"
                       method="POST"
-                      action="{% url 'update_student' %}"
+                      action="{% url 'update-results' %}"
                     >
                       {% csrf_token %}
                       <div class="e-profile">
@@ -133,11 +135,12 @@
                           <div class="tab-pane active">
                             <form
                               class="form"
+                              id="result-form-2"
                               method="POST"
-                              action="{% url 'update_student' %}"
+                              action="{% url 'update-results' %}"
                             >
                               {% csrf_token %}
-                              <div class="row">
+                              <div class="row mt-3 mb-3">
                                 <div class="col">
                                   <hr />
                                   <div class="row">
@@ -177,10 +180,9 @@
                                     </div>
                                   </div>
                                   </div>
-                                </div>
                               </div>
 
-                              <div class="row">
+                              <div class="row mt-3 mb-3">
                                 <div class="col">
                                   <div class="row">
                                     <div class="col">
@@ -208,8 +210,8 @@
                                       </div>
                                     </div>
                                   </div>
-                                  <div class="row">
-                                    <div class="col mb-3">
+                                  <div class="row mt-3 mb-3">
+                                    <div class="col">
                                       <div class="form-group">
                                         <label
                                           >School/College & Class in which
@@ -239,12 +241,36 @@
                                         />
                                       </div>
                                     </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Attandance</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-attandance"
+                                          type="text"
+                                          name="attandance"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Grade</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-grade"
+                                          type="text"
+                                          name="grade"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
                                   </div>
                                   <hr />
                                 </div>
                               </div>
 
-                              <div class="row">
+                              <div class="row mt-3 mb-3">
                                 <div class="col">
                                   <center id='modal-heading'>Paper-I (Drill)</center>
                                   <div class="row">
@@ -289,7 +315,7 @@
                                 </div>
                               </div>
 
-                              <div class="row">
+                              <div class="row mt-3 mb-3">
                                 <div class="col">
                                   <center id='modal-heading'>Paper-II (WT)</center>
                                   <div class="row">
@@ -334,7 +360,7 @@
                                 </div>
                               </div>
 
-                              <div class="row">
+                              <div class="row mt-3 mb-3">
                                 <div class="col">
                                   <center id='modal-heading'>Paper-III (Misc)</center>
                                   <div class="row">
@@ -354,7 +380,7 @@
                                   <hr />
                                 </div>
                               </div>
-                              <div class="row">
+                              <div class="row mt-3 mb-3">
                                 <div class="col">
                                   <center id='modal-heading'>Paper-IV (Spl to Corps)</center>
                                   <div class="row">
@@ -398,6 +424,55 @@
                                   <hr />
                                 </div>
                               </div>
+                              <div class="row mt-3 mb-3">
+                                <div class="col">
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Bonus Marks Category</label>
+                                        <select class="form-select"
+                                          id="bonus_marks_cat"
+                                          type="text"
+                                          name="bonus_marks_cat"
+                                          value=""
+                                          aria-label="Default select example"  
+                                          onclick="calculateTotalMarks('{{bonus_marks_ser}}')"
+                                        >
+                                          {% for item in bonus_marks %}
+                                            <option value={{item.id}} percentage={{item.percentage}}>{{item.type}}</option>
+                                          {% endfor %}
+                                        </select>
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Bonus Marks</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-bonus-marks"
+                                          type="text"
+                                          name="bonus_marks"
+                                          value=""
+                                          readonly
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Total Marks</label>
+                                        <input
+                                          class="form-control"
+                                          id="form-total-marks"
+                                          type="text"
+                                          name="modal_total"
+                                          value=""
+                                          readonly
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
                             </form>
                           </div>
                         </div>
@@ -413,7 +488,10 @@
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           Close
         </button>
-        <button type="button" id="student-submit-button" class="btn btn-primary" data-bs-dismiss="modal" onclick='studentDetailFormSubmit()'>
+        <button type="button" class="btn btn-info" id="student-approval-button" data-bs-dismiss="modal">
+          Send for Approval
+        </button>
+        <button type="button" id="student-submit-button" class="btn btn-primary" data-bs-dismiss="modal" onclick='formSubmit()'>
           Modify
         </button>
       </div>
