@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from django.shortcuts import get_object_or_404
-from home.models import Student , Clerk , Colonel , Brigadier ,Director_General
+from home.models import Student , Clerk , Colonel , Brigadier ,Director_General, Result
 from django.conf import settings
 from django.urls import reverse
 from django.contrib.auth import login, logout, authenticate
@@ -20,6 +20,7 @@ from django.contrib import messages
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.forms.models import model_to_dict
+from django.db.models import Q
 
 login_validator = LoginValidator()
 jwt_utility = JwtUtility()
@@ -153,6 +154,16 @@ def clerk_page(request):
 @login_required
 def Add_Result(request):
     return render(request, "clerk/Add_Result.html")
+
+@login_required
+def view_results(request):
+    print(type(request.user.id))
+    results_data = Student.objects.filter(result__isnull=False, clerk_id=Clerk.objects.get(user_id=request.user.id).id).order_by('id')
+    print(results_data)
+    return_data = [{"id": student.id,"student_id": student.CBSE_No, "result": model_to_dict(student.result), "student_name": student.Name, "college": student.School_College_Class, "unit": student.Unit,"rank": student.Rank, "p_1_total": student.result.Paper1_P + student.result.Paper1_W + student.result.Paper1_T, "p_2_total": student.result.Paper2_P + student.result.Paper2_W + student.result.Paper2_T, "p_3_total": student.result.Paper3_W, "p_4_total": student.result.Paper4_P + student.result.Paper4_W + student.result.Paper4_T} for student in results_data]
+    serialized_return_data = json.dumps(list(return_data), cls=DjangoJSONEncoder)
+    print(serialized_return_data)
+    return render(request, "clerk/view_results.html", {"result_data": return_data, "serialized_result_data": serialized_return_data})
 
 @login_required
 def Preview_Admit_Card(request):

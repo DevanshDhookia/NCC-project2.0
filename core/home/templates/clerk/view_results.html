@@ -3,8 +3,8 @@
 {% block css_block %}
 <link rel="stylesheet" href="{% static 'css/student_details.css' %}" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="{% static 'js/student_detail.js' %}"
-  data-students = "{{ students_json }}"
+<script src="{% static 'js/student_result.js' %}"
+  data-result = "{{ serialized_result_data }}"
 ></script>
 {% endblock %} 
 {% block title %} NCC (National Cadet Corps) {% endblock %} 
@@ -23,7 +23,7 @@
     />
     <button class="ctm-btn" type="submit">Search</button>
   </form>
-  <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/Student Details/')">Clear <i class="bx bx-message-square-x"></i></button>
+  <button class="ctm-btn" id='student-clear-filter' onclick='clearButtonClick()'>Clear <i class="bx bx-message-square-x"></i></button>
 </div>
 <div class="table-container">
   <table class="table table-bordered table2">
@@ -32,25 +32,27 @@
         <th scope="col">Sr.No.</th>
         <th scope="col">Student ID</th>
         <th scope="col">Name</th>
-        <th scope="col">Fathers's Name</th>
-        <th scope="col">Admit Card No.</th>
-        <th scope="col">Unit</th>
-        <th scope="col">Rank</th>
-        <th scope="col">Fresh/Faliure</th>
+        <th scope="col">Paper-I(Drill)</th>
+        <th scope="col">Paper-II(WT)</th>
+        <th scope="col">Paper-III(Misc)</th>
+        <th scope="col">Paper-IV(Spl to Corps)</th>
+        <th scope="col">Total</th>
+        <th scope="col">Result</th>
         <th scope="col">Actions</th>
       </tr>
     </thead>
     <tbody>
-      {% for student in students %}
+      {% for student in result_data %}
       <tr>
         <th scope="row">{{ forloop.counter }}</th>
-        <td>{{ student.CBSE_No }}</td>
-        <td>{{ student.Name }}</td>
-        <td>{{ student.Fathers_Name }}</td>
-        <td>{{ student.Admit_Card_No }}</td>
-        <td>{{ student.Unit }}</td>
-        <td>{{ student.Rank }}</td>
-        <td>{{ student.Fresh_Failure }}</td>
+        <td>{{ student.student_id }}</td>
+        <td>{{ student.student_name }}</td>
+        <td>{{ student.p_1_total }}</td>
+        <td>{{ student.p_2_total }}</td>
+        <td>{{ student.p_3_total }}</td>
+        <td>{{ student.p_4_total }}</td>
+        <td>{{ student.Final_total }}</td>
+        <td>{{ student.Pass_Fail }}</td>
         <td>
           <button
             class="btn btn-info"
@@ -92,7 +94,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h1 class="modal-title fs-5" id="staticBackdropLabel">
-          Student Detils
+          Student Result
         </h1>
         <button
           type="button"
@@ -117,24 +119,6 @@
                       {% csrf_token %}
                       <div class="e-profile">
                         <div class="row">
-                          <div class="col-12 col-sm-auto mb-3">
-                            <div class="mx-auto" style="width: 140px">
-                              <div
-                                class="d-flex justify-content-center align-items-center rounded"
-                                style="
-                                  height: 140px;
-                                  background-color: rgb(233, 236, 239);
-                                "
-                              >
-                                <img
-                                  id='student-image'
-                                  src="/media/student_photos/{{ student.CBSE_No }}.jpeg"
-                                  alt="Student Photo"
-                                  style="max-width: 170px; max-height: 170px"
-                                />
-                              </div>
-                            </div>
-                          </div>
                           <div
                             class="col d-flex flex-column flex-sm-row justify-content-between mb-3"
                           >
@@ -142,19 +126,6 @@
                               <h4 class="pt-sm-2 pb-1 mb-0 ml-3 text-nowrap" id="modal-student-name">
                                 
                               </h4>
-                              <div class="container mt-5">
-                                <button
-                                  class="change-photo-btn"
-                                  onclick="document.getElementById('fileInput').click();"
-                                >
-                                  Change Photo
-                                </button>
-                                <input
-                                  type="file"
-                                  id="fileInput"
-                                  accept="image/*"
-                                />
-                              </div>
                             </div>
                           </div>
                         </div>
@@ -205,47 +176,7 @@
                                       </div>
                                     </div>
                                   </div>
-                                  <div class="row">
-                                    <div class="col">
-                                      <div class="form-group">
-                                        <label>Father's Name</label>
-                                        <input
-                                          class="form-control"
-                                          id="modal-father-name"
-                                          type="text"
-                                          name="Fathers_Name"
-                                          value=""
-                                        />
-                                      </div>
-                                    </div>
-                                    <div class="col">
-                                      <div class="form-group">
-                                        <label>DOB</label>
-                                        <input
-                                          class="form-control"
-                                          id="modal-dob"
-                                          type="text"
-                                          name="DOB"
-                                          value=""
-                                        />
-                                      </div>
-                                    </div>
                                   </div>
-                                  <div class="row">
-                                    <div class="col mb-3">
-                                      <div class="form-group">
-                                        <label>Address</label>
-                                        <textarea
-                                          class="form-control"
-                                          id="modal-address"
-                                          rows="2"
-                                          name="Home_Address"
-                                        >
-                                        </textarea>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <hr />
                                 </div>
                               </div>
 
@@ -278,34 +209,6 @@
                                     </div>
                                   </div>
                                   <div class="row">
-                                    <div class="col">
-                                      <div class="form-group">
-                                        <label
-                                          >Year of passsing B certificate</label
-                                        >
-                                        <input
-                                          class="form-control"
-                                          id="modal-yopb-cert"
-                                          type="text"
-                                          name="Year_of_passing_B_Certificate"
-                                          value=""
-                                        />
-                                      </div>
-                                    </div>
-                                    <div class="col">
-                                      <div class="form-group">
-                                        <label>Fresh/Faliure</label>
-                                        <input
-                                          class="form-control"
-                                          id="modal-fresh-failure"
-                                          type="text"
-                                          name="Fresh_Failure"
-                                          value=""
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div class="row">
                                     <div class="col mb-3">
                                       <div class="form-group">
                                         <label
@@ -323,45 +226,15 @@
                                       </div>
                                     </div>
                                   </div>
-                                  <hr />
-                                </div>
-                              </div>
-
-                              <div class="row">
-                                <div class="col">
                                   <div class="row">
                                     <div class="col">
                                       <div class="form-group">
-                                        <label>1st Year</label>
+                                        <label>Result</label>
                                         <input
                                           class="form-control"
-                                          id="modal-1st-year"
+                                          id="modal-fresh-failure"
                                           type="text"
-                                          name="Attendance_1st_year"
-                                          value=""
-                                        />
-                                      </div>
-                                    </div>
-                                    <div class="col">
-                                      <div class="form-group">
-                                        <label>2nd Year</label>
-                                        <input
-                                          class="form-control"
-                                          id="modal-2nd-year"
-                                          type="text"
-                                          name="Attendance_2nd_year"
-                                          value=""
-                                        />
-                                      </div>
-                                    </div>
-                                    <div class="col">
-                                      <div class="form-group">
-                                        <label>Total</label>
-                                        <input
-                                          class="form-control"
-                                          id="modal-3rd-year"
-                                          type="text"
-                                          name="Attendance_3rd_year"
+                                          name="Fresh_Failure"
                                           value=""
                                         />
                                       </div>
@@ -373,43 +246,42 @@
 
                               <div class="row">
                                 <div class="col">
+                                  <center id='modal-heading'>Paper-I (Drill)</center>
                                   <div class="row">
                                     <div class="col">
                                       <div class="form-group">
-                                        <label>Name of Camp Attended</label>
+                                        <label>W</label>
                                         <input
                                           class="form-control"
-                                          id="modal-camp-name"
+                                          id="res_p1_w"
                                           type="text"
-                                          name="Name_of_camp_attended_1"
+                                          name="result_p1_w"
                                           value=""
                                         />
                                       </div>
                                     </div>
                                     <div class="col">
                                       <div class="form-group">
-                                        <label>Date of Camp</label>
+                                        <label>P (50/16.5)</label>
                                         <input
                                           class="form-control"
-                                          id="modal-camp-date"
+                                          id="res_p1_p"
                                           type="text"
-                                          name="Date_camp_1"
+                                          name="result_p1_p"
                                           value=""
                                         />
                                       </div>
                                     </div>
-                                  </div>
-                                  <div class="row">
-                                    <div class="col mb-3">
+                                    <div class="col">
                                       <div class="form-group">
-                                        <label>Location</label>
-                                        <textarea
+                                        <label>T (50/16.5)</label>
+                                        <input
                                           class="form-control"
-                                          id="modal-camp-location"
-                                          rows="2"
-                                          name="Location_camp_1"
-                                        >
-                                        </textarea>
+                                          id="res_p1_t"
+                                          type="text"
+                                          name="result_p1_t"
+                                          value=""
+                                        />
                                       </div>
                                     </div>
                                   </div>
@@ -419,43 +291,107 @@
 
                               <div class="row">
                                 <div class="col">
+                                  <center id='modal-heading'>Paper-II (WT)</center>
                                   <div class="row">
                                     <div class="col">
                                       <div class="form-group">
-                                        <label>Name of Camp Attended</label>
+                                        <label>W (10/3.3)</label>
                                         <input
                                           class="form-control"
-                                          id="modal-camp-name-2"
+                                          id="res_p2_w"
                                           type="text"
-                                          name="Name_of_camp_attended_2"
+                                          name="result_p2_w"
                                           value=""
                                         />
                                       </div>
                                     </div>
                                     <div class="col">
                                       <div class="form-group">
-                                        <label>Date of Camp</label>
+                                        <label>P (60/19.8)</label>
                                         <input
                                           class="form-control"
-                                          id="modal-camp-date-2"
+                                          id="res_p2_p"
                                           type="text"
-                                          name="Date_camp_2"
+                                          name="result_p2_p"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>T (70/23.1)</label>
+                                        <input
+                                          class="form-control"
+                                          id="res_p2_t"
+                                          type="text"
+                                          name="result_p2_t"
                                           value=""
                                         />
                                       </div>
                                     </div>
                                   </div>
+                                  <hr />
+                                </div>
+                              </div>
+
+                              <div class="row">
+                                <div class="col">
+                                  <center id='modal-heading'>Paper-III (Misc)</center>
                                   <div class="row">
-                                    <div class="col mb-3">
+                                    <div class="col">
                                       <div class="form-group">
-                                        <label>Location</label>
-                                        <textarea
+                                        <label>W (230/75.9)</label>
+                                        <input
                                           class="form-control"
-                                          id="modal-camp-location-2"
-                                          rows="2"
-                                          name="Location_camp_2"
-                                        >
-                                        </textarea>
+                                          id="res_p3_w"
+                                          type="text"
+                                          name="result_p3_w"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <hr />
+                                </div>
+                              </div>
+                              <div class="row">
+                                <div class="col">
+                                  <center id='modal-heading'>Paper-IV (Spl to Corps)</center>
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>W (110/36.3)</label>
+                                        <input
+                                          class="form-control"
+                                          id="res_p4_w"
+                                          type="text"
+                                          name="result_p4_w"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>P (40/13.2)</label>
+                                        <input
+                                          class="form-control"
+                                          id="res_p4_p"
+                                          type="text"
+                                          name="result_p4_p"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>T (150/49.5)</label>
+                                        <input
+                                          class="form-control"
+                                          id="res_p4_t"
+                                          type="text"
+                                          name="result_p4_t"
+                                          value=""
+                                        />
                                       </div>
                                     </div>
                                   </div>
@@ -473,7 +409,6 @@
             </div>
           </div>
         </div>
-      </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           Close

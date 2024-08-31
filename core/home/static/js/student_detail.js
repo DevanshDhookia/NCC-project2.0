@@ -1,22 +1,24 @@
 const data = document.currentScript.dataset
 students = JSON.parse(data.students)
+students_result = JSON.parse(data.result)
 
-function clearButtonClick() {
+function clearButtonClick(href) {
     console.log("Function clled")
-    window.location.replace('/Student Details/')
+    window.location.replace(href)
 }
-
+function dataToJson(data) {
+    return JSON.parse(data.replaceAll("'", '"').replace(' <ImageFieldFile: ', '"').replaceAll(">", '"').replaceAll("True", "true").replaceAll(": False", ": false").replaceAll("None", "null"))
+}
 
 function studentDetailFormSubmit(e) {
     console.log("called")
     $('#student-detail-form').submit();
-  }
-
+}
 
 function openModalOnClick(index, event_type) {
     console.log(Number(index))
     st = students[index-1].replaceAll("'", '"').replace(' <ImageFieldFile: ', '"').replaceAll(">", '"').replaceAll("True", "true").replaceAll(": False", ": false").replaceAll("None", "null")
-    student_object = JSON.parse(st);
+    student_object = dataToJson(students[index-1])
     console.log(student_object)
     $('#student-id').val(student_object["id"]);
     $('#student-image').attr('src', '/media/'+student_object['Photo'])
