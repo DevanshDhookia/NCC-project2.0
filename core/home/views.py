@@ -21,6 +21,8 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.forms.models import model_to_dict
 from django.db.models import Q
+import pyqrcode 
+import png
 
 login_validator = LoginValidator()
 jwt_utility = JwtUtility()
@@ -195,7 +197,7 @@ def add_result_data(request):
                 bonus_marks_cat = BonusMarksCategories.objects.get(id=bonus_cat),
                 Bonus_marks = bonus_marks,
                 Final_total = total,
-                Pass_Fail = result_pf,
+                Pass = True if result_pf == 'true' else False,
                 Grade = grade,
             )
             student = Student.objects.get(CBSE_No=cbse_no)
@@ -229,7 +231,6 @@ def results(request):
             request_data = request.POST
             st_id = request_data.get("id")
             student = Student.objects.filter(id=st_id).first()
-            print("Giti tthe res", student)
             if student:
                 st_result = Result.objects.filter(id=student.result.id)[0]
                 st_result.Parade_attendance = request_data.get("attandance")
@@ -246,7 +247,7 @@ def results(request):
                 st_result.bonus_marks_cat = BonusMarksCategories.objects.get(id=request_data.get("bonus_marks_cat"))
                 st_result.Bonus_marks = request_data.get("bonus_marks")
                 st_result.Final_total = request_data.get("modal_total")
-                st_result.Pass_Fail = request_data.get("Fresh_Failure")
+                st_result.Pass = True if request_data.get("Fresh_Failure") == 'true' else False
                 st_result.Grade = request_data.get("grade")
                 st_result.save()
             else:
@@ -320,7 +321,99 @@ def Preview_Admit_Card(request):
 
 @login_required
 def Preview_Certificates(request):
-    return render(request, "clerk/Preview_Certificates.html")
+     # Determine the user's role and fetch pending students accordingly
+    if request.user.groups.filter(name='Director_General').exists():
+        director_general_id = Colonel.objects.get(user_id=request.user.id).id
+        pending_students = Student.objects.filter(
+            certificate__Approval_stage=2,
+            certificate__Rejected_reason=None,
+            director_general_id=director_general_id
+        ).order_by('id')
+
+    elif request.user.groups.filter(name='Colonel').exists():
+        colonel_id = Colonel.objects.get(user_id=request.user.id).id
+        pending_students = Student.objects.filter(
+            certificate__Approval_stage=1,
+            certificate__Rejected_reason=None,
+            colonel_id=colonel_id
+        ).order_by('id')
+
+    elif request.user.groups.filter(name='Colonel').exists():
+        colonel_id = Colonel.objects.get(user_id=request.user.id).id
+        pending_students = Student.objects.filter(
+            certificate__Approval_stage=1,
+            certificate__Rejected_reason=None,
+            colonel_id=colonel_id
+        ).order_by('id')
+    elif request.user.groups.filter(name='Clerk').exists():
+        clerk_id = Clerk.objects.get(user_id=request.user.id).id
+        pending_students = Student.objects.filter(
+            certificate__Approval_stage=0,
+            certificate__Rejected_reason=None,
+            clerk_id=clerk_id
+        ).order_by('id')
+    else:
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('/clerk/')
+
+    pending_students=Student.objects.all()
+    # If no pending students, render the "All Students Previewed" page
+    if not pending_students.exists():
+        return render(request, "clerk/All_Students_Previewed.html")
+
+    # Get the current student from request or default to the first in the list
+    student_id = request.GET.get('student_id')
+    if student_id:
+        student = get_object_or_404(Student, id=student_id, certificate__certificate_generated=True)
+    else:
+        student = pending_students.first()
+    student.certificate.certificate_generated = False
+    # Generate the certificate if it hasn't been generated yet
+    if not student.certificate.certificate_generated:
+        certificate_image_path = generate_certificate(student)
+        student.certificate.save()
+    else:
+        certificate_image_path = os.path.join(settings.MEDIA_URL, 'Certificates', f'{student.CBSE_No}_certificate.png')
+
+    # Get the current student's position in the list
+    student_ids = list(pending_students.values_list('id', flat=True))
+    current_index = student_ids.index(student.id)
+
+    # Determine the next and previous student indices
+    next_student = pending_students[current_index + 1] if current_index + 1 < len(student_ids) else None
+    prev_student = pending_students[current_index - 1] if current_index - 1 >= 0 else None
+
+    # Render the template with the appropriate context
+    context = {
+        'student': student,
+        'certificate_image_path': certificate_image_path,
+        'next_student': next_student,
+        'prev_student': prev_student,
+    }
+    return render(request, "clerk/Preview_Certificates.html", context)
+
+def generate_qr_code(student):
+    # The data to encode in the QR code
+    data = "www.google.com"
+
+    # Generate the QR code
+    qr = pyqrcode.create(data)
+
+    # Path to the 'Qrcode' directory within MEDIA_ROOT
+    output_dir = os.path.join(settings.MEDIA_ROOT, 'Qrcode')
+
+    # Create the directory if it does not exist
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Define the final path for the QR code image
+    qr_image_path = os.path.join(output_dir, f'{student.CBSE_No}_qr.png')
+
+    # Save the image as a PNG file
+    qr.png(qr_image_path, scale=6)
+
+    return qr_image_path
+
+
 def Print_Admit_Cards(request):
     
     return render(request, "clerk/Print_Admit_Cards.html")
@@ -401,6 +494,101 @@ def generate_admit_card(student):
 
     return final_image_path
 
+def generate_certificate(student):
+    # Define template paths based on the student's Wing and Certificate_Type
+    template_filenames = {
+        'Army': {'A': 'Army_A.png', 'B': 'Army_B.png', 'C': 'Army_C.png'},
+        'Navy': {'A': 'Navy_A.png', 'B': 'Navy_B.png', 'C': 'Navy_C.png'},
+        'Air Force': {'A': 'Air_Force_A.png', 'B': 'Air_Force_B.png', 'C': 'Air_Force_C.png'},
+    }
+
+    try:
+        template_path = os.path.join(settings.MEDIA_ROOT, 'Template_images', template_filenames[student.Wing][student.Certificate_type])
+    except KeyError:
+        raise ValueError("Invalid Wing or Certificate Type.")
+
+    template = cv2.imread(template_path)
+    if template is None:
+        raise ValueError("Could not load the certificate template image.")
+
+    # Convert the template image from OpenCV format (BGR) to PIL format (RGB)
+    template_pil = Image.fromarray(cv2.cvtColor(template, cv2.COLOR_BGR2RGB))
+
+    # Initialize ImageDraw object
+    draw = ImageDraw.Draw(template_pil)
+
+    # Load the font
+    font_path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'Saans2.ttf')
+    font_size = 16
+    try:
+        font = ImageFont.truetype(font_path, font_size)
+    except IOError:
+        raise ValueError("Could not load the specified font.")
+
+    # Define text and their corresponding positions based on the certificate type
+    if student.Certificate_type == "C":
+        texts_with_positions = [
+            (student.Unit, (226, 842)),
+            (student.CBSE_No, (226, 697)),
+            (student.Rank, (748, 697)),
+            (student.Name, (226, 764)),
+            (student.DOB, (820, 842)),
+            (student.Fathers_Name, (829, 764)),
+            (student.Certificate_type, (384, 1156)),
+            (student.certificate.Place, (217, 1387)),
+            (student.certificate.Date, (217, 1477))
+        ]
+    else:
+        texts_with_positions = [
+            (student.Unit, (227, 554)),
+            (student.CBSE_No, (229, 443)),
+            (student.Rank, (660, 443)),
+            (student.Name, (244, 500)),
+            (student.DOB, (743, 546)),
+            (student.Fathers_Name, (741, 500)),
+            (student.Certificate_type, (305, 783)),
+            (student.certificate.Place, (230, 936)),
+            (student.certificate.Date, (227, 991))
+        ]
+
+    # Add text to the image
+    for text, position in texts_with_positions:
+        if text:
+            draw.text(position, str(text), font=font, fill=(0, 0, 0))
+
+    # Add the student's photo to the certificate
+    if student.Photo:
+        try:
+            insert_image_path = student.Photo.path
+            insert_image = Image.open(insert_image_path)
+            insert_image = insert_image.resize((170, 170))
+            image_position = (800, 80)
+            template_pil.paste(insert_image, image_position)
+        except Exception as e:
+            raise ValueError(f"Could not process the student's photo. Error: {e}, Photo Path: {insert_image_path}")
+
+    qr_image_path = generate_qr_code(student)
+    if qr_image_path:
+        try:
+            qr_image = Image.open(qr_image_path)
+            qr_image = qr_image.resize((170, 170))  # Resize QR code as needed
+            qr_position = (80, 80)  # Set QR code position
+            template_pil.paste(qr_image, qr_position)
+        except Exception as e:
+            raise ValueError(f"Could not process the QR code image. Error: {e}, QR Code Path: {qr_image_path}")
+        
+    # Save the final image
+    output_dir = os.path.join(settings.MEDIA_ROOT, 'Certificates')
+    os.makedirs(output_dir, exist_ok=True)
+    final_image_path = os.path.join(output_dir, f'{student.CBSE_No}_certificate.png')
+
+    try:
+        template_pil.save(final_image_path)
+        print(f"Certificate saved at: {final_image_path}")
+    except Exception as e:
+        raise ValueError(f"Could not save the certificate image. Error: {e}")
+
+    return final_image_path
 @login_required
 def send_for_approval(request, cbse_no):
     student = get_object_or_404(Student, CBSE_No=cbse_no)

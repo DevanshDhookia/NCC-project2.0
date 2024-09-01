@@ -89,6 +89,12 @@ def create_permissions_and_groups():
         content_type=student_type
     )
 
+    can_approve_certificate = Permission.objects.get_or_create(
+        codename="can_approve_certificate",
+        name="Can Approve Certificate",
+        content_type=student_type
+    )
+
     can_view_student_results = Permission.objects.get_or_create(
         codename="can_view_student_results",
         name="Can View Student Results",

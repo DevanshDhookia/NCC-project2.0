@@ -48,18 +48,19 @@ function openModalOnClick(index, event_type) {
     $('#res_p4_t').val(student_object["result"]["Paper4_T"]).prop("readonly", true);
     $('#modal-bonus-marks').val(student_object["result"]["Bonus_marks"]).prop("readonly", true);
     $('#form-total-marks').val(student_object["result"]["Final_total"]).prop("readonly", true);
+    console.log(student_object["result"], typeof(student_object["result"]['Pass']));
     if(event_type === 'view'){
         $('#student-submit-button').hide()
         $('#student-approval-button').hide()
-        $('#modal-fresh-failure').val(student_object["result"]["Pass_Fail"]).attr("disabled", "disabled");
+        $('#modal-fresh-failure').val(student_object["result"]["Pass"] ? 'true' : 'false').attr("disabled", "disabled");
         $('#bonus_marks_cat').val(student_object["result"]["bonus_marks_cat"]).attr("disabled", "disabled");
     } else {
         $('#student-submit-button').show()
         $('#student-approval-button').show()
-        if(student_object["result"]["Pass_Fail"] === 'Fail') {
+        if(!student_object["result"]["Pass"]) {
             $('#student-approval-button').hide()
         }
-        $('#modal-fresh-failure').val(student_object["result"]["Pass_Fail"]).removeAttr("disabled");
+        $('#modal-fresh-failure').val(student_object["result"]["Pass"] ? 'true' : 'false').removeAttr("disabled");
         $('#bonus_marks_cat').val(student_object["result"]["bonus_marks_cat"]).removeAttr("disabled");
     }
     $('#res_p1_p').on('blur', function() {

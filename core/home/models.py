@@ -36,11 +36,13 @@ class Result(models.Model):
     bonus_marks_cat = models.ForeignKey(BonusMarksCategories, on_delete=models.CASCADE, related_name="bonus_marks", default=0, blank=True)
     Bonus_marks=models.FloatField(default=0)
     Final_total=models.FloatField()
-    Pass_Fail=models.CharField(max_length=100, null=True)
+    Pass=models.BooleanField(default=False)
     Grade=models.CharField(max_length=100, null=True)
     
 class Certificate(models.Model):
     certificate_id=models.CharField(max_length=15, unique=True)
+    certificate_generated=models.BooleanField(default=False)
+    Date=models.DateField(max_length=15,null=True)
     Approval_stage=models.CharField(max_length=15,null=True)
     Rejected_by=models.CharField(max_length=100,null=True)
     Rejected_reason=models.CharField(max_length=100,null=True)
