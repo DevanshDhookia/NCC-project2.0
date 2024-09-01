@@ -37,6 +37,7 @@ urlpatterns = [
     path('Print Admit Cards/',Print_Admit_Cards,name='Print_Admit_Cards'),
     path('Register Students/',Register_Students,name='Register_Students'),
     path('Add Result/',Add_Result,name='Add_Result'),
+    path('add-result-data/',add_result_data,name='Add_Result_file'),
     path('view-results/',results,name='view-results'),
     path('update-results/',results,name='update-results'),
     path('Rejected Admit Cards/',Rejected_Admit_Cards,name='Rejected_Admit_Cards'),

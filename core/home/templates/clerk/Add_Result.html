@@ -3,6 +3,7 @@
 
 {% block css_block %}
   <link rel="stylesheet" href="{% static 'css/add_result.css' %}">
+  <script src="{% static 'js/add_result.js' %}"></script>
 {% endblock %}
 
 {% block title %}
@@ -36,9 +37,18 @@
 
 {% block start %}
     <div class="center-area">
-        <form class="register-students" method="post" enctype="multipart/form-data" action="{% url 'Register_Students' %}">
+        {% if messages %}
+            <div class="alert alert-primary alert-dismissible">
+                {% for message in messages %}
+                    {{message}}
+                {% endfor %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+        <form class="register-students" method="post" enctype="multipart/form-data" action="/add-result-data/">
             {% csrf_token %}
             <header>Add Result</header>
+            <input name="type" value="upload" hidden/>
             <div class="input-group">
                 <div class="file-input">
                     <input type="file" class="form-control" id="inputGroupFile01" name="excel_file" onchange="updateLabel(this)">
@@ -49,9 +59,443 @@
                 <button type="submit" class="submit-btn">Submit</button>
             </div>
         </form>
+        <form class="register-students"  method="get" enctype="multipart/form-data" action="/add-result-data/">
+            {% csrf_token %}
+            <header>Add Result Manually</header>
+            <input name="type" value="manual" hidden/>
+            <div class="row">
+                <div class="col">
+                  <div class="form-group add-result-cbse">
+                    <label>CBSE No.</label>
+                    <input
+                      class="form-control"
+                      id="cbse_no"
+                      type="text"
+                      name="cbse_no"
+                      placeholder="Enter a CBSE No."
+                      value=""
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            <div class="row">
+                <div class="col manual-submit">
+                    <center>
+                    <button type="submit" class="submit-btn" id="manual-addition" >Submit</button></center>
+                </div>
+            </div>
+            {% if student.status == "true" %}
+                <div class="table-container">
+                    <table class="table table-bordered table2">
+                    <thead>
+                        <tr>
+                        <th scope="col">Student ID</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Rank</th>
+                        <th scope="col">Unit</th>
+                        <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                        <td>{{ student.cbse_no }}</td>
+                        <td>{{ student.name }}</td>
+                        <td>{{ student.rank }}</td>
+                        <td>{{ student.unit }}</td>
+                        <td>
+                            {% if perms.home.add_result %}
+                            <button class="btn btn-primary"
+                                type="button"
+                                data-bs-toggle="modal"
+                                data-bs-target="#staticBackdrop"
+                                onclick="addManualResult('{{student.cbse_no}}')"
+                            >Add Result</button>
+                            {% endif %}
+                        </td>
+                        </tr>
+                        {% if student.status == 'false' %}
+                        <tr>
+                            <td colspan="6">No results to view.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </form>
         <div class="notice">
             <div><strong>Notices</strong></div>
             <div> Excel file must be with .xls or .xlsx extension.</div>
+        </div>
+    </div>
+
+    <div
+        class="modal fade modal-lg"
+        id="staticBackdrop"
+        data-bs-backdrop="static"
+        data-bs-keyboard="false"
+        tabindex="-1"
+        aria-labelledby="staticBackdropLabel"
+        aria-hidden="true"
+    >
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="staticBackdropLabel">
+                Add Student Result
+                </h1>
+                <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <div class="container">
+                <div class="row flex-lg-nowrap">
+                    <div class="col">
+                    <div class="row">
+                        <div class="card">
+                        <div class="card-body">
+                            <form
+                            class="form"
+                            id="result-form"
+                            method="POST"
+                            action="/add-result-data/"
+                            >
+                            {% csrf_token %}
+                            <div class="e-profile">
+                                <div class="row">
+                                <div
+                                    class="col d-flex flex-column flex-sm-row justify-content-between mb-3"
+                                >
+                                    <div class="text-center text-sm-left mb-2 mb-sm-0">
+                                    <h4 class="pt-sm-2 pb-1 mb-0 ml-3 text-nowrap" id="modal-student-name">
+                                        
+                                    </h4>
+                                    </div>
+                                </div>
+                                </div>
+                                <div class="tab-content pt-3">
+                                <div class="tab-pane active">
+                                    <form
+                                    class="form"
+                                    id="result-form-2"
+                                    method="POST"
+                                    action="/add-result-data/"
+                                    >
+                                    {% csrf_token %}
+                                    <div class="row mt-3 mb-3">
+                                        <div class="col">
+                                        <hr />
+                                        <div class="row">
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>CBSE No.</label>
+                                                <input
+                                                class="form-control"
+                                                id='modal-cbse-no'
+                                                type="text"
+                                                name="CBSE_No"
+                                                value=""
+                                                readonly
+                                                />
+                                                <input
+                                                type="text"
+                                                name="type"
+                                                value="manual"
+                                                hidden
+                                                readonly
+                                                />
+                                            </div>
+                                            </div>
+                                        </div>
+                                        </div>
+                                    </div>
+
+                                        <div class="row">
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>Result</label>
+                                                <select class="form-select"
+                                                id="modal-fresh-failure"
+                                                name="Fresh_Failure"
+                                                value=""
+                                                aria-label="Default select example" 
+                                                required 
+                                                >
+                                                <option value='Pass' selected>Pass</option>
+                                                <option value='Fail'>Fail</option>
+                                                </select>
+                                            </div>
+                                            </div>
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>Attandance</label>
+                                                <input
+                                                class="form-control"
+                                                id="modal-attandance"
+                                                type="text"
+                                                name="attandance"
+                                                value=""
+                                                required
+                                                />
+                                            </div>
+                                            </div>
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>Grade</label>
+                                                <input
+                                                class="form-control"
+                                                id="modal-grade"
+                                                type="text"
+                                                name="grade"
+                                                value=""
+                                                required
+                                                />
+                                            </div>
+                                            </div>
+                                        </div>
+                                        <hr />
+                                        </div>
+                                    </div>
+
+                                    <div class="row mt-3 mb-3">
+                                        <div class="col">
+                                        <center id='modal-heading'>Paper-I (Drill)</center>
+                                        <div class="row">
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>W</label>
+                                                <input
+                                                class="form-control"
+                                                id="res_p1_w"
+                                                type="text"
+                                                name="result_p1_w"
+                                                value=""
+                                                required
+                                                />
+                                            </div>
+                                            </div>
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>P (50/16.5)</label>
+                                                <input
+                                                class="form-control"
+                                                id="res_p1_p"
+                                                type="text"
+                                                name="result_p1_p"
+                                                value=""
+                                                required
+                                                />
+                                            </div>
+                                            </div>
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>T (50/16.5)</label>
+                                                <input
+                                                class="form-control"
+                                                id="res_p1_t"
+                                                type="text"
+                                                name="result_p1_t"
+                                                value=""
+                                                required
+                                                />
+                                            </div>
+                                            </div>
+                                        </div>
+                                        <hr />
+                                        </div>
+                                    </div>
+
+                                    <div class="row mt-3 mb-3">
+                                        <div class="col">
+                                        <center id='modal-heading'>Paper-II (WT)</center>
+                                        <div class="row">
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>W (10/3.3)</label>
+                                                <input
+                                                class="form-control"
+                                                id="res_p2_w"
+                                                type="text"
+                                                name="result_p2_w"
+                                                value=""
+                                                required
+                                                />
+                                            </div>
+                                            </div>
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>P (60/19.8)</label>
+                                                <input
+                                                class="form-control"
+                                                id="res_p2_p"
+                                                type="text"
+                                                name="result_p2_p"
+                                                value=""
+                                                required
+                                                />
+                                            </div>
+                                            </div>
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>T (70/23.1)</label>
+                                                <input
+                                                class="form-control"
+                                                id="res_p2_t"
+                                                type="text"
+                                                name="result_p2_t"
+                                                value=""
+                                                required
+                                                />
+                                            </div>
+                                            </div>
+                                        </div>
+                                        <hr />
+                                        </div>
+                                    </div>
+
+                                    <div class="row mt-3 mb-3">
+                                        <div class="col">
+                                        <center id='modal-heading'>Paper-III (Misc)</center>
+                                        <div class="row">
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>W (230/75.9)</label>
+                                                <input
+                                                class="form-control"
+                                                id="res_p3_w"
+                                                type="text"
+                                                name="result_p3_w"
+                                                value=""
+                                                required
+                                                />
+                                            </div>
+                                            </div>
+                                        </div>
+                                        <hr />
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3 mb-3">
+                                        <div class="col">
+                                        <center id='modal-heading'>Paper-IV (Spl to Corps)</center>
+                                        <div class="row">
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>W (110/36.3)</label>
+                                                <input
+                                                class="form-control"
+                                                id="res_p4_w"
+                                                type="text"
+                                                name="result_p4_w"
+                                                value=""
+                                                required
+                                                />
+                                            </div>
+                                            </div>
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>P (40/13.2)</label>
+                                                <input
+                                                class="form-control"
+                                                id="res_p4_p"
+                                                type="text"
+                                                name="result_p4_p"
+                                                value=""
+                                                required
+                                                />
+                                            </div>
+                                            </div>
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>T (150/49.5)</label>
+                                                <input
+                                                class="form-control"
+                                                id="res_p4_t"
+                                                type="text"
+                                                name="result_p4_t"
+                                                value=""
+                                                required
+                                                />
+                                            </div>
+                                            </div>
+                                        </div>
+                                        <hr />
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3 mb-3">
+                                        <div class="col">
+                                        <div class="row">
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>Bonus Marks Category</label>
+                                                <select class="form-select"
+                                                id="bonus_marks_cat"
+                                                type="text"
+                                                name="bonus_marks_cat"
+                                                value=""
+                                                aria-label="Default select example"  
+                                                onclick="calculateTotalMarks('{{bonus_marks_ser}}')"
+                                                >
+                                                {% for item in bonus_marks %}
+                                                    <option value={{item.id}} percentage={{item.percentage}}>{{item.type}}</option>
+                                                {% endfor %}
+                                                </select>
+                                            </div>
+                                            </div>
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>Bonus Marks</label>
+                                                <input
+                                                class="form-control"
+                                                id="modal-bonus-marks"
+                                                type="text"
+                                                name="bonus_marks"
+                                                value=""
+                                                readonly
+                                                />
+                                            </div>
+                                            </div>
+                                            <div class="col">
+                                            <div class="form-group">
+                                                <label>Total Marks</label>
+                                                <input
+                                                class="form-control"
+                                                id="form-total-marks"
+                                                type="text"
+                                                name="modal_total"
+                                                value=""
+                                                readonly
+                                                />
+                                            </div>
+                                            </div>
+                                        </div>
+                                        </div>
+                                    </div>
+                                    </form>
+                                </div>
+                                </div>
+                            </div>
+                            </form>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                Close
+                </button>
+                {% if perms.home.change_result %}
+                <button type="button" id="student-submit-button" class="btn btn-primary" data-bs-dismiss="modal" onclick='formSubmit()'>
+                    Submit
+                </button>
+                {% endif %}
+            </div>
+            </div>
         </div>
     </div>
 {% endblock %}

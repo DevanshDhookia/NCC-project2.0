@@ -2,7 +2,6 @@
 {% load static %} 
 {% block css_block %}
 <link rel="stylesheet" href="{% static 'css/student_details.css' %}" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="{% static 'js/student_result.js' %}"
   data-result = "{{ serialized_result_data }}"
 ></script>
@@ -65,7 +64,7 @@
           >
             View
           </button>
-          {% if perms.home.can_edit_student_details %}
+          {% if perms.home.change_result %}
             <button class="btn btn-primary"
               data-bs-toggle="modal"
               data-bs-target="#staticBackdrop"
@@ -76,7 +75,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="3">No studnets are registered .</td>
+        <td colspan="3">No results to view.</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -232,13 +231,15 @@
                                     <div class="col">
                                       <div class="form-group">
                                         <label>Result</label>
-                                        <input
-                                          class="form-control"
+                                        <select class="form-select"
                                           id="modal-fresh-failure"
-                                          type="text"
                                           name="Fresh_Failure"
                                           value=""
-                                        />
+                                          aria-label="Default select example"  
+                                          >
+                                          <option value='Pass'>Pass</option>
+                                          <option value='Fail'>Fail</option>
+                                        </select>
                                       </div>
                                     </div>
                                     <div class="col">
@@ -491,9 +492,11 @@
         <button type="button" class="btn btn-info" id="student-approval-button" data-bs-dismiss="modal">
           Send for Approval
         </button>
-        <button type="button" id="student-submit-button" class="btn btn-primary" data-bs-dismiss="modal" onclick='formSubmit()'>
-          Modify
-        </button>
+        {% if perms.home.change_result %}
+          <button type="button" id="student-submit-button" class="btn btn-primary" data-bs-dismiss="modal" onclick='formSubmit()'>
+            Modify
+          </button>
+        {% endif %}
       </div>
     </div>
   </div>

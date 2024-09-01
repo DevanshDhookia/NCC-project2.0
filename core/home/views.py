@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from home.models import Student , Clerk , Colonel , Brigadier ,Director_General, Result, BonusMarksCategories
 from django.conf import settings
 from django.urls import reverse
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout, authenticate, get_backends
 from django.contrib.auth.models import User , Group
 from common_utils.login_utilities import LoginValidator
 from common_utils.jwt_manager import JwtUtility
@@ -53,68 +53,71 @@ def SignIn(request):
 
 @login_required
 def register(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password1 = request.POST.get('password1')
-        password2 = request.POST.get('password2')
+    if request.user.has_perm('home.can_create_new_users'):
+        if request.method == 'POST':
+            username = request.POST.get('username')
+            password1 = request.POST.get('password1')
+            password2 = request.POST.get('password2')
 
-        # Basic validation
-        if not username or not password1 or not password2:
-            messages.error(request, "All fields are required.")
+            # Basic validation
+            if not username or not password1 or not password2:
+                messages.error(request, "All fields are required.")
+                return redirect('/register/')
+
+            if password1 != password2:
+                messages.error(request, "Passwords do not match.")
+                return redirect('/register/')
+
+            if User.objects.filter(username=username).exists():
+                messages.error(request, "Username already exists.")
+                return redirect('/register/')
+
+            # Create new user
+            user = User.objects.create_user(username=username)
+            user.set_password(password1)
+            user.save()
+
+            # Determine which group and model to associate based on the logged-in user's role
+            if request.user.groups.filter(name='Director_General').exists():
+                group_name = 'Brigadier'
+                model_class = Brigadier
+                related_model = Director_General
+                related_field = 'director_general'
+            elif request.user.groups.filter(name='Brigadier').exists():
+                group_name = 'Colonel'
+                model_class = Colonel
+                related_model = Brigadier
+                related_field = 'brigadier'
+            elif request.user.groups.filter(name='Colonel').exists():
+                group_name = 'Clerk'
+                model_class = Clerk
+                related_model = Colonel
+                related_field = 'colonel'
+            else:
+                messages.error(request, "You do not have permission to register users.")
+                user.delete()  # Delete the user since permission failed
+                return redirect('/register/')
+
+            # Add user to the appropriate group
+            group, created = Group.objects.get_or_create(name=group_name)
+            user.groups.add(group)
+
+            # Get the related instance (e.g., Director_General for Brigadier)
+            related_instance = related_model.objects.get(user=request.user)
+
+            # Create the corresponding model instance but don't save it yet
+            model_instance = model_class(user=user)
+
+            # Set the relationship field before saving
+            setattr(model_instance, related_field, related_instance)
+            model_instance.save()
+
+            messages.success(request, f"{group_name} registered successfully.")
             return redirect('/register/')
 
-        if password1 != password2:
-            messages.error(request, "Passwords do not match.")
-            return redirect('/register/')
-
-        if User.objects.filter(username=username).exists():
-            messages.error(request, "Username already exists.")
-            return redirect('/register/')
-
-        # Create new user
-        user = User.objects.create_user(username=username)
-        user.set_password(password1)
-        user.save()
-
-        # Determine which group and model to associate based on the logged-in user's role
-        if request.user.groups.filter(name='Director_General').exists():
-            group_name = 'Brigadier'
-            model_class = Brigadier
-            related_model = Director_General
-            related_field = 'director_general'
-        elif request.user.groups.filter(name='Brigadier').exists():
-            group_name = 'Colonel'
-            model_class = Colonel
-            related_model = Brigadier
-            related_field = 'brigadier'
-        elif request.user.groups.filter(name='Colonel').exists():
-            group_name = 'Clerk'
-            model_class = Clerk
-            related_model = Colonel
-            related_field = 'colonel'
-        else:
-            messages.error(request, "You do not have permission to register users.")
-            user.delete()  # Delete the user since permission failed
-            return redirect('/register/')
-
-        # Add user to the appropriate group
-        group, created = Group.objects.get_or_create(name=group_name)
-        user.groups.add(group)
-
-        # Get the related instance (e.g., Director_General for Brigadier)
-        related_instance = related_model.objects.get(user=request.user)
-
-        # Create the corresponding model instance but don't save it yet
-        model_instance = model_class(user=user)
-
-        # Set the relationship field before saving
-        setattr(model_instance, related_field, related_instance)
-        model_instance.save()
-
-        messages.success(request, f"{group_name} registered successfully.")
-        return redirect('/register/')
-
-    return render(request, "Login_Page/register.html")
+        return render(request, "Login_Page/register.html")
+    else:
+        return redirect("/index/")
 
 def user_logout(request):
     request.session.delete("token")
@@ -155,42 +158,114 @@ def clerk_page(request):
 def Add_Result(request):
     return render(request, "clerk/Add_Result.html")
 
-@login_required
-def results(request):
+def add_result_data(request):
     if request.method == 'POST':
         request_data = request.POST
-        st_id = request_data.get("id")
-        student = Student.objects.filter(id=st_id).first()
-        print("Giti tthe res", student)
+        type = request_data.get('type')
+        if type == 'manual':
+            cbse_no = request_data.get("CBSE_No")
+            result_pf = request_data.get("Fresh_Failure")
+            attand = request_data.get("attandance")
+            grade = request_data.get("grade")
+            p1_w = request_data.get("result_p1_w")
+            p1_p = request_data.get("result_p1_p")
+            p1_t = request_data.get("result_p1_t")
+            p2_w = request_data.get("result_p2_w")
+            p2_p = request_data.get("result_p2_p")
+            p2_t = request_data.get("result_p2_t")
+            p3_w = request_data.get("result_p3_w")
+            p4_w = request_data.get("result_p4_w")
+            p4_p = request_data.get("result_p4_p")
+            p4_t = request_data.get("result_p4_t")
+            bonus_cat = request_data.get("bonus_marks_cat")
+            bonus_marks = request_data.get("bonus_marks")
+            total = request_data.get("modal_total")
+            result = Result.objects.create(
+                Parade_attendance = attand,
+                Paper1_W = p1_w,
+                Paper1_P = p1_p,
+                Paper1_T = p1_t,
+                Paper2_W = p2_w,
+                Paper2_P = p2_p,
+                Paper2_T = p2_t,
+                Paper3_W = p3_w,
+                Paper4_W = p4_w,
+                Paper4_P = p4_p,
+                Paper4_T = p4_t,
+                bonus_marks_cat = BonusMarksCategories.objects.get(id=bonus_cat),
+                Bonus_marks = bonus_marks,
+                Final_total = total,
+                Pass_Fail = result_pf,
+                Grade = grade,
+            )
+            student = Student.objects.get(CBSE_No=cbse_no)
+            student.result = result
+            student.save()
+            messages.info(request, "Result data added successfully")
+            return redirect("/Add Result/")
+        elif type == 'upload':
+            pass
+    elif request.method == 'GET':
+        request_data = request.GET
+        student = Student.objects.filter(CBSE_No=request_data.get('cbse_no')).first()
+        data = None
+        bonus_marks_cat = None
         if student:
-            st_result = Result.objects.filter(id=student.result.id)[0]
-            st_result.Parade_attendance = request_data.get("attandance")
-            st_result.Paper1_W = request_data.get("result_p1_w")
-            st_result.Paper1_P = request_data.get("result_p1_p")
-            st_result.Paper1_T = request_data.get("result_p1_t")
-            st_result.Paper2_W = request_data.get("result_p2_w")
-            st_result.Paper2_P = request_data.get("result_p2_p")
-            st_result.Paper2_T = request_data.get("result_p2_t")
-            st_result.Paper3_W = request_data.get("result_p3_w")
-            st_result.Paper4_W = request_data.get("result_p4_w")
-            st_result.Paper4_P = request_data.get("result_p4_p")
-            st_result.Paper4_T = request_data.get("result_p4_t")
-            st_result.bonus_marks_cat = BonusMarksCategories.objects.get(id=request_data.get("bonus_marks_cat"))
-            st_result.Bonus_marks = request_data.get("bonus_marks")
-            st_result.Final_total = request_data.get("modal_total")
-            st_result.Pass_Fail = request_data.get("Fresh_Failure")
-            st_result.Grade = request_data.get("grade")
-            st_result.save()
-            print(model_to_dict(st_result))
+            data = { "status": "true", "id": student.id, "cbse_no": student.CBSE_No, "name": student.Name, "unit": student.Unit, "rank": student.Rank }
+            bonus_marks_cat = BonusMarksCategories.objects.all()
+            if student.result != None:
+                messages.info(request, "Student result already available")
+                return redirect("/Add Result/")
+        else:
+            messages.info(request, "CBSE No. does not exists.")
+            return redirect("/Add Result/")
+        return render(request, "clerk/Add_Result.html", context={"student": data,"bonus_marks": bonus_marks_cat})
 
-
-    
-    results_data = Student.objects.filter(result__isnull=False, clerk_id=Clerk.objects.get(user_id=request.user.id).id).order_by('id')
-    bonus_marks_cat = BonusMarksCategories.objects.all()
-    bonus_marks_ser = json.dumps([model_to_dict(item) for item in bonus_marks_cat], cls=DjangoJSONEncoder)
-    return_data = [{"id": student.id,"student_id": student.CBSE_No, "result": model_to_dict(student.result), "student_name": student.Name, "college": student.School_College_Class, "unit": student.Unit,"rank": student.Rank, "p_1_total": student.result.Paper1_P + student.result.Paper1_W + student.result.Paper1_T, "p_2_total": student.result.Paper2_P + student.result.Paper2_W + student.result.Paper2_T, "p_3_total": student.result.Paper3_W, "p_4_total": student.result.Paper4_P + student.result.Paper4_W + student.result.Paper4_T} for student in results_data]
-    serialized_return_data = json.dumps(list(return_data), cls=DjangoJSONEncoder)
-    return render(request, "clerk/view_results.html", {"result_data": return_data, "serialized_result_data": serialized_return_data, "bonus_marks": bonus_marks_cat, "bonus_marks_ser": bonus_marks_ser})
+@login_required
+def results(request):
+    if request.user.has_perm("home.view_result"):
+        results_data = None
+        if request.method == 'POST' and request.user.has_perm("home.change_result"):
+            request_data = request.POST
+            st_id = request_data.get("id")
+            student = Student.objects.filter(id=st_id).first()
+            print("Giti tthe res", student)
+            if student:
+                st_result = Result.objects.filter(id=student.result.id)[0]
+                st_result.Parade_attendance = request_data.get("attandance")
+                st_result.Paper1_W = request_data.get("result_p1_w")
+                st_result.Paper1_P = request_data.get("result_p1_p")
+                st_result.Paper1_T = request_data.get("result_p1_t")
+                st_result.Paper2_W = request_data.get("result_p2_w")
+                st_result.Paper2_P = request_data.get("result_p2_p")
+                st_result.Paper2_T = request_data.get("result_p2_t")
+                st_result.Paper3_W = request_data.get("result_p3_w")
+                st_result.Paper4_W = request_data.get("result_p4_w")
+                st_result.Paper4_P = request_data.get("result_p4_p")
+                st_result.Paper4_T = request_data.get("result_p4_t")
+                st_result.bonus_marks_cat = BonusMarksCategories.objects.get(id=request_data.get("bonus_marks_cat"))
+                st_result.Bonus_marks = request_data.get("bonus_marks")
+                st_result.Final_total = request_data.get("modal_total")
+                st_result.Pass_Fail = request_data.get("Fresh_Failure")
+                st_result.Grade = request_data.get("grade")
+                st_result.save()
+            else:
+                return redirect("/index/")
+        if request.user.groups.filter(name='Colonel').exists():
+            results_data = Student.objects.filter(result__isnull=False, colonel=Colonel.objects.get(user_id=request.user.id)).order_by('id')
+        elif request.user.groups.filter(name='Clerk').exists():
+            results_data = Student.objects.filter(result__isnull=False, clerk=Clerk.objects.get(user_id=request.user.id)).order_by('id')
+        elif request.user.groups.filter(name='Brigadier').exists():
+            results_data = Student.objects.filter(result__isnull=False, brigadier=Brigadier.objects.get(user_id=request.user.id)).order_by('id')
+        elif request.user.groups.filter(name='Director_General').exists():
+            results_data = Student.objects.filter(result__isnull=False, director_general=Director_General.objects.get(user_id=request.user.id)).order_by('id')
+        bonus_marks_cat = BonusMarksCategories.objects.all()
+        bonus_marks_ser = json.dumps([model_to_dict(item) for item in bonus_marks_cat], cls=DjangoJSONEncoder)
+        return_data = [{"id": student.id,"student_id": student.CBSE_No, "result": model_to_dict(student.result), "student_name": student.Name, "college": student.School_College_Class, "unit": student.Unit,"rank": student.Rank, "p_1_total": student.result.Paper1_P + student.result.Paper1_W + student.result.Paper1_T, "p_2_total": student.result.Paper2_P + student.result.Paper2_W + student.result.Paper2_T, "p_3_total": student.result.Paper3_W, "p_4_total": student.result.Paper4_P + student.result.Paper4_W + student.result.Paper4_T} for student in results_data]
+        serialized_return_data = json.dumps(list(return_data), cls=DjangoJSONEncoder)
+        return render(request, "clerk/view_results.html", {"result_data": return_data, "serialized_result_data": serialized_return_data, "bonus_marks": bonus_marks_cat, "bonus_marks_ser": bonus_marks_ser})
+    else:
+        return redirect('/index/')
 
 @login_required
 def Preview_Admit_Card(request):

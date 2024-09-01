@@ -33,7 +33,7 @@ class Result(models.Model):
     Paper4_W = models.FloatField()
     Paper4_P = models.FloatField()
     Paper4_T = models.FloatField()
-    bonus_marks_cat = models.ForeignKey(BonusMarksCategories, on_delete=models.CASCADE, related_name="bonus_marks", default=10, blank=True)
+    bonus_marks_cat = models.ForeignKey(BonusMarksCategories, on_delete=models.CASCADE, related_name="bonus_marks", default=0, blank=True)
     Bonus_marks=models.FloatField(default=0)
     Final_total=models.FloatField()
     Pass_Fail=models.CharField(max_length=100, null=True)

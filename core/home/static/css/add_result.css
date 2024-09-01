@@ -13,7 +13,8 @@ body{
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 .wrapper{
     display: flex;
@@ -184,10 +185,11 @@ body{
     }
 }
 .center-area{
+    padding-top:4rem;
     width: 80%;
 }
 .register-students {
-    height: 240px;
+    height: fit-content;
     width: 90%;
     max-width: 600px;  /* Limit the maximum width */
     /* border-radius: 30px; */
@@ -197,12 +199,13 @@ body{
     padding-top: 10px; 
     padding-left: 30px; /* Add padding inside the container */
     padding-right: 30px;
+    padding-bottom: 10px;
     box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2);  /* Add a subtle shadow */
     margin: 0 auto;  /* Center the form horizontally */
 }
 
 .register-students header {
-    margin-top: 30px;
+    /* margin-top: 30px; */
     font-size: 30px;
     text-align: center;
     color: #333;  /* Darker color for the header */
@@ -321,4 +324,14 @@ label.input-group-text:hover {
     margin-left: 25px;
     margin-right: 25px ;
 
+}
+
+.manual-submit {
+    align-self: flex-end;
+    margin-top: 20px;
+}
+
+.add-result-cbse {
+    margin: auto;
+    max-width: 70%;
 }
