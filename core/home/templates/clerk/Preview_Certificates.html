@@ -46,10 +46,10 @@
     <!-- Navigation Buttons -->
     <div class="admit-card-navigation">
         {% if prev_student %}
-            <a href="{% url 'Preview_Certificates' %}?student_id={{ prev_student.id }}&action=prev" class="btn">Previous</a>
+            <a href="/Preview Certificates?student_id={{ prev_student.id }}&action=prev" class="btn">Previous</a>
         {% endif %}
         {% if next_student %}
-            <a href="{% url 'Preview_Certificates' %}?student_id={{ next_student.id }}&action=next" class="btn">Next</a>
+            <a href="/Preview Certificates?student_id={{ next_student.id }}&action=next" class="btn">Next</a>
         {% endif %}
     </div>     
 

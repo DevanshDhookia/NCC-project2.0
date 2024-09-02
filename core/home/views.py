@@ -322,6 +322,7 @@ def Preview_Admit_Card(request):
 @login_required
 def Preview_Certificates(request):
      # Determine the user's role and fetch pending students accordingly
+    pending_students=[]
     if request.user.groups.filter(name='Director_General').exists():
         director_general_id = Colonel.objects.get(user_id=request.user.id).id
         pending_students = Student.objects.filter(
@@ -333,6 +334,7 @@ def Preview_Certificates(request):
     elif request.user.groups.filter(name='Colonel').exists():
         colonel_id = Colonel.objects.get(user_id=request.user.id).id
         pending_students = Student.objects.filter(
+            certificate__Approved=False,
             certificate__Approval_stage=1,
             certificate__Rejected_reason=None,
             colonel_id=colonel_id
@@ -341,6 +343,7 @@ def Preview_Certificates(request):
     elif request.user.groups.filter(name='Colonel').exists():
         colonel_id = Colonel.objects.get(user_id=request.user.id).id
         pending_students = Student.objects.filter(
+            certificate__Approved=False,
             certificate__Approval_stage=1,
             certificate__Rejected_reason=None,
             colonel_id=colonel_id
@@ -348,6 +351,7 @@ def Preview_Certificates(request):
     elif request.user.groups.filter(name='Clerk').exists():
         clerk_id = Clerk.objects.get(user_id=request.user.id).id
         pending_students = Student.objects.filter(
+            certificate__Approved=False,
             certificate__Approval_stage=0,
             certificate__Rejected_reason=None,
             clerk_id=clerk_id
@@ -356,7 +360,7 @@ def Preview_Certificates(request):
         messages.error(request, "You do not have permission to perform this action.")
         return redirect('/clerk/')
 
-    pending_students=Student.objects.all()
+    # pending_students=Student.objects.all()
     # If no pending students, render the "All Students Previewed" page
     if not pending_students.exists():
         return render(request, "clerk/All_Students_Previewed.html")
@@ -364,7 +368,7 @@ def Preview_Certificates(request):
     # Get the current student from request or default to the first in the list
     student_id = request.GET.get('student_id')
     if student_id:
-        student = get_object_or_404(Student, id=student_id, certificate__certificate_generated=True)
+        student = get_object_or_404(Student, id=student_id, certificate__Approved=False,)
     else:
         student = pending_students.first()
     student.certificate.certificate_generated = False
