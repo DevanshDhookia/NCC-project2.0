@@ -350,9 +350,12 @@ def generate_certificate_action(request, cbse_no):
             student.certificate = cert
             student.save()
         except Exception as e:
-            print("Unable to generate certificate")
+            print("Unable to generate certificate", e)
             student.certificate = None
+            student.save()
             cert.delete()
+            messages.info(request, "Error while generating certificate")
+            return redirect("/view-results/")
         messages.info(request, "Certificate Sent for Approval")
     else:
         messages.error(request, "Student not found with provided CBSE No.")
@@ -441,8 +444,8 @@ def Preview_Certificates(request):
 
 def generate_qr_code(student):
     # The data to encode in the QR code
-    data = "www.google.com"
-
+    # data = "www.google.com"
+    data = student.certificate.certificate_id + "," + student.Wing + ", " + student.Location_camp_1 + "," + student.Certificate_type + ", " + str(student.certificate.Date) + ", " +student.School_College_Class
     # Generate the QR code
     qr = pyqrcode.create(data)
 
