@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from django.shortcuts import get_object_or_404
-from home.models import Student , Clerk , Colonel , Brigadier ,Director_General, Result, BonusMarksCategories
+from home.models import Student , Clerk , Colonel , Brigadier ,Director_General, Result, BonusMarksCategories, Certificate
 from django.conf import settings
 from django.urls import reverse
 from django.contrib.auth import login, logout, authenticate, get_backends
@@ -23,6 +23,7 @@ from django.forms.models import model_to_dict
 from django.db.models import Q
 import pyqrcode 
 import png
+from datetime import date
 
 login_validator = LoginValidator()
 jwt_utility = JwtUtility()
@@ -268,6 +269,7 @@ def results(request):
     else:
         return redirect('/index/')
 
+
 @login_required
 def Preview_Admit_Card(request):
     if login_validator.is_user_logged_in(request) and request.user.is_authenticated:
@@ -275,9 +277,9 @@ def Preview_Admit_Card(request):
         print(request.user.id)
         pending_students = []
         if request.user.groups.filter(name='Colonel').exists():
-            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, colonel_id=Colonel.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, admit_card_send_for_approval=True, colonel_id=Colonel.objects.filter(user_id=request.user.id)[0].id).order_by('id')
         elif request.user.groups.filter(name='Clerk').exists():
-            pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, sent_for_approval=False, clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+            pending_students = Student.objects.filter(admit_card_approved=False, admit_card_send_for_approval=False, clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
         else:
             messages.error(request, "You do not have permission to perform this action.")
             return redirect('/clerk/')
@@ -318,43 +320,84 @@ def Preview_Admit_Card(request):
         return render(request, "clerk/Preview_Admit_Card.html", context)
     else:
         return redirect("/SignIn/")
+    
+@login_required
+def generate_certificate_action(request, cbse_no):
+    student = Student.objects.filter(CBSE_No = cbse_no)
+    print('Generating certificate for student with CBSE No: ', cbse_no)
+    if student.exists():
+        student = student[0]
+        id = str(student.id)
+        year = str(date.today().year)
+        try:
+            cert = Certificate.objects.create(
+                certificate_id = cbse_no+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year + "/" +id.zfill(5), 
+                certificate_generated = True,
+                Date = date.today(),
+                Approval_stage=0,
+                Generation_date = date.today(),
+                Place = "Kanpur"
+            )
+        except Exception as error:
+            error.with_traceback
+            messages.error(request, "Certificate already generated for the student")
+            return redirect("/view-results")
+        student.certificate = cert
+        student.save()
+        try:
+            certificate_image_path = generate_certificate(student)
+            cert.certificate_path = certificate_image_path,
+            student.certificate = cert
+            student.save()
+        except Exception as e:
+            print("Unable to generate certificate")
+            student.certificate = None
+            cert.delete()
+        messages.info(request, "Certificate Sent for Approval")
+    else:
+        messages.error(request, "Student not found with provided CBSE No.")
+    return redirect("/view-results/")
+
 
 @login_required
 def Preview_Certificates(request):
      # Determine the user's role and fetch pending students accordingly
     pending_students=[]
     if request.user.groups.filter(name='Director_General').exists():
-        director_general_id = Colonel.objects.get(user_id=request.user.id).id
+        director_general_id = Director_General.objects.get(user_id=request.user.id).id
         pending_students = Student.objects.filter(
             certificate__Approval_stage=2,
             certificate__Rejected_reason=None,
-            director_general_id=director_general_id
+            director_general_id=director_general_id,
+            certificate__certificate_generated=True
+        ).order_by('id')
+
+    elif request.user.groups.filter(name='Brigadier').exists():
+        brigadier_id = Brigadier.objects.get(user_id=request.user.id).id
+        pending_students = Student.objects.filter(
+            certificate__Approved=False,
+            certificate__Approval_stage=1,
+            certificate__Rejected_reason=None,
+            brigadier_id=brigadier_id,
+            certificate__certificate_generated=True
         ).order_by('id')
 
     elif request.user.groups.filter(name='Colonel').exists():
         colonel_id = Colonel.objects.get(user_id=request.user.id).id
         pending_students = Student.objects.filter(
             certificate__Approved=False,
-            certificate__Approval_stage=1,
+            certificate__Approval_stage=0,
             certificate__Rejected_reason=None,
-            colonel_id=colonel_id
-        ).order_by('id')
-
-    elif request.user.groups.filter(name='Colonel').exists():
-        colonel_id = Colonel.objects.get(user_id=request.user.id).id
-        pending_students = Student.objects.filter(
-            certificate__Approved=False,
-            certificate__Approval_stage=1,
-            certificate__Rejected_reason=None,
-            colonel_id=colonel_id
+            colonel_id=colonel_id,
+            certificate__certificate_generated=True
         ).order_by('id')
     elif request.user.groups.filter(name='Clerk').exists():
         clerk_id = Clerk.objects.get(user_id=request.user.id).id
         pending_students = Student.objects.filter(
             certificate__Approved=False,
-            certificate__Approval_stage=0,
             certificate__Rejected_reason=None,
-            clerk_id=clerk_id
+            clerk_id=clerk_id,
+            certificate__certificate_generated=True
         ).order_by('id')
     else:
         messages.error(request, "You do not have permission to perform this action.")
@@ -371,13 +414,13 @@ def Preview_Certificates(request):
         student = get_object_or_404(Student, id=student_id, certificate__Approved=False,)
     else:
         student = pending_students.first()
-    student.certificate.certificate_generated = False
     # Generate the certificate if it hasn't been generated yet
-    if not student.certificate.certificate_generated:
-        certificate_image_path = generate_certificate(student)
-        student.certificate.save()
-    else:
-        certificate_image_path = os.path.join(settings.MEDIA_URL, 'Certificates', f'{student.CBSE_No}_certificate.png')
+    # if not student.certificate.certificate_generated:
+    #     certificate_image_path = generate_certificate(student)
+    #     student.certificate.save()
+    # else:
+    # certificate_image_path = os.path.join(settings.MEDIA_URL, 'Certificates', f'{student.CBSE_No}_certificate.png')
+    certificate_image_path = student.certificate.certificate_path
 
     # Get the current student's position in the list
     student_ids = list(pending_students.values_list('id', flat=True))
@@ -445,6 +488,7 @@ def generate_admit_card(student):
         raise ValueError("Could not load the specified font.")
 
     # Define the text and their corresponding positions
+    print(model_to_dict(student))
     texts_with_positions = [
         (student.Unit, (242, 246)),
         (student.Admit_Card_No, (920, 230)),
@@ -477,6 +521,7 @@ def generate_admit_card(student):
     if student.Photo:
         try:
             insert_image_path = student.Photo.path
+            print("image path", insert_image_path)
             insert_image = Image.open(insert_image_path)
             insert_image = insert_image.resize((170, 170))
             image_position = (870, 274)
@@ -615,6 +660,7 @@ def reject_admit_card(request, cbse_no):
         student = get_object_or_404(Student, CBSE_No=cbse_no)
         reason = request.POST.get('rejection_reason')
         student.admit_card_approved = False
+        student.admit_card_send_for_approval=False
         student.rejection_reason = reason
         student.save()
     return redirect('Preview_Admit_Card')

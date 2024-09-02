@@ -50,6 +50,7 @@ class Certificate(models.Model):
     Qr_code= models.ImageField(upload_to='qr_code/', null=True, blank=True)
     Generation_date=models.DateField(null=True)
     Place=models.CharField(max_length=100,null=True)
+    certificate_path=models.CharField(max_length=200, null=True)
 
 
 

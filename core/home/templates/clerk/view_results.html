@@ -24,6 +24,14 @@
   </form>
   <button class="ctm-btn" id='student-clear-filter' onclick='clearButtonClick()'>Clear <i class="bx bx-message-square-x"></i></button>
 </div>
+{% if messages %}
+<div class="alert alert-primary alert-dismissible">
+    {% for message in messages %}
+        {{message}}
+    {% endfor %}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
 <div class="table-container">
   <table class="table table-bordered table2">
     <thead>
@@ -493,9 +501,9 @@
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           Close
         </button>
-        <button type="button" class="btn btn-info" id="student-approval-button" data-bs-dismiss="modal">
-          Send for Approval
-        </button>
+        <a href="/generate_certificate/" class="btn btn-info" id="student-approval-button">
+          Generate Certificate
+        </a>
         {% if perms.home.change_result %}
           <button type="button" id="student-submit-button" class="btn btn-primary" data-bs-dismiss="modal" onclick='formSubmit()'>
             Modify

@@ -57,6 +57,7 @@ function openModalOnClick(index, event_type) {
     } else {
         $('#student-submit-button').show()
         $('#student-approval-button').show()
+        $('#student-approval-button').attr('href', '/generate_certificate/'+student_object["student_id"])
         if(!student_object["result"]["Pass"]) {
             $('#student-approval-button').hide()
         }
