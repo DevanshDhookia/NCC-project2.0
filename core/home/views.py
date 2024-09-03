@@ -207,7 +207,105 @@ def add_result_data(request):
             messages.info(request, "Result data added successfully")
             return redirect("/Add Result/")
         elif type == 'upload':
-            pass
+            print("Starting to prcess the result upload file")
+            # try:
+            excel_file = request.FILES.get("excel_file")
+            if excel_file:
+                print("Reading the excel file")
+                file_extension = os.path.splitext(excel_file.name)[1]
+                df = None
+                if file_extension in ['.csv']:
+                    df = pd.read_csv(excel_file)
+                elif file_extension in ['.xls', '.xlsx']:
+                    df = pd.read_excel(excel_file)
+                else:
+                    messages.info(request, "The uploaded file format is not supproted")
+                    return redirect("/Add Result/")
+                print("Excel file read complete")
+                column_indices = {
+                    'CBSE_No': 1,
+                    'Parade_attendance': 9,
+                    'Paper1_W': 11,
+                    'Paper1_P': 12,
+                    'Paper1_T': 13,
+                    'Paper2_W': 14,
+                    'Paper2_P': 15,
+                    'Paper2_T': 16,
+                    'Paper3_W': 17,
+                    'Paper4_W': 18,
+                    'Paper4_P': 19,
+                    'Paper4_T': 20,
+                    'Bonus_marks': 22,
+                    'Final_total': 21,
+                    'Grade': 24
+                }
+                print("Start of file parsing")
+                col_count = 0
+                for _, row in df.iterrows():
+                    if col_count > 13:
+                        result_data = {field: row[idx] for field, idx in column_indices.items()}
+                        pass_paper_1 = ((float(result_data['Paper1_T']) / 80) * 100) >= 33
+                        pass_paper_2 = ((float(result_data['Paper2_T']) / 60) * 100) >= 33
+                        pass_paper_3 = ((float(result_data['Paper3_W']) / 210) * 100) >= 33
+                        pass_paper_4 = ((float(result_data['Paper4_T']) / 150) * 100) >= 33
+                        if pass_paper_1 and pass_paper_2 and pass_paper_3 and pass_paper_4:
+                            result_data["Pass"] = True
+                        else:
+                            result_data["Pass"] = False
+                        cbse_no = result_data["CBSE_No"]
+                        result_data.pop("CBSE_No")
+                        student = Student.objects.filter(CBSE_No = cbse_no).first()
+                        if student:
+                            if np.isnan(result_data["Parade_attendance"]):
+                                result_data["Parade_attendance"] = 0
+                            if np.isnan(result_data['Paper1_W']):
+                                result_data["Paper1_W"] = 0
+                            if np.isnan(result_data['Paper1_P']):
+                                result_data["Paper1_P"] = 0
+                            if np.isnan(result_data['Paper1_T']):
+                                result_data["Paper1_T"] = 0
+                            if np.isnan(result_data['Paper2_W']):
+                                result_data["Paper2_W"] = 0
+                            if np.isnan(result_data['Paper2_P']):
+                                result_data["Paper2_P"] = 0
+                            if np.isnan(result_data['Paper2_T']):
+                                result_data["Paper2_T"] = 0
+                            if np.isnan(result_data['Paper3_W']):
+                                result_data["Paper3_W"] = 0
+                            if np.isnan(result_data['Paper4_W']):
+                                result_data["Paper4_W"] = 0
+                            if np.isnan(result_data['Paper4_P']):
+                                result_data["Paper4_P"] = 0
+                            if np.isnan(result_data['Paper4_T']):
+                                result_data["Paper4_T"] = 0
+                            if np.isnan(result_data['Bonus_marks']):
+                                result_data["Bonus_marks"] = 0
+                            if np.isnan(result_data['Final_total']):
+                                result_data["Final_total"] = 0
+
+                            result = Result.objects.create(
+                                **result_data
+                            )
+                            student.result = result
+                            student.save()
+                        else:
+                            print("Student record not available for cbse no: ", cbse_no)
+                    
+                    col_count += 1
+                print("End of file parsing")
+                messages.info(request, "Student results added successfully")
+                return redirect("/Add Result/")
+            else:
+                messages.info(request, "Not able to read the uploaded file")
+                return redirect("/Add Result/")
+            # except Exception as e:
+            #     print(e)
+            #     messages.info(request, "Unable to process record")
+            #     return redirect("/Add Result/")
+                    
+
+                    
+
     elif request.method == 'GET':
         request_data = request.GET
         student = Student.objects.filter(CBSE_No=request_data.get('cbse_no')).first()
@@ -676,7 +774,6 @@ def Register_Students(request):
             wing=request.POST.get('wing')
             data_file = request.FILES.get('excel_file')
             photos_folder = request.FILES.getlist('photos_folder')
-            print(request.user.id)
             if data_file:
                 file_extension = os.path.splitext(data_file.name)[1].lower()
 
