@@ -35,35 +35,6 @@
                         <a href="/Register Students/" class="link">Register Students</a>
                     </li>
                 {% endif %}
-                {% if perms.home.can_send_certificate_for_approval or perms.home.can_generate_certificate %}
-                    <li>
-                        <a href="/Preview Certificates/" class="link">Preview Certificates</a>
-                    </li>
-                {% endif %}
-                {% if perms.home.can_add_student_results or perms.home.view_result or perms.home.change_result%}
-                    <li class="nav2">
-                        <a class="link" href="#">Result</a>
-                        <div class="dropdown">
-                        <ul class="ul2">
-                                {% if perms.home.can_add_student_results %}
-                                    <li>
-                                    <a class="dropdown-i" href="/Add Result/"
-                                        >Add Result</a
-                                    >
-                                    </li>
-                                {% endif %}
-                                {% if perms.home.view_result or perms.home.change_result %}
-                                    <li>
-                                    <a class="dropdown-i" href="/view-results/"
-                                        >Student Results</a
-                                    >
-                                    </li>
-                                {% endif %}
-                            
-                        </ul>
-                        </div>
-                    </li>
-                {% endif %}
                 {% if perms.home.can_preview_admit_card or perms.home.can_print_admit_card or perms.home.can_view_rejected_applications %}
                     <li class="nav2">
                         <a class="link" href="#">Admit Cards</a>
@@ -92,6 +63,35 @@
                             {% endif %}
                         </ul>
                         </div>
+                    </li>
+                {% endif %}
+                {% if perms.home.can_add_student_results or perms.home.view_result or perms.home.change_result%}
+                    <li class="nav2">
+                        <a class="link" href="#">Result</a>
+                        <div class="dropdown">
+                        <ul class="ul2">
+                                {% if perms.home.can_add_student_results %}
+                                    <li>
+                                    <a class="dropdown-i" href="/Add Result/"
+                                        >Add Result</a
+                                    >
+                                    </li>
+                                {% endif %}
+                                {% if perms.home.view_result or perms.home.change_result %}
+                                    <li>
+                                    <a class="dropdown-i" href="/view-results/"
+                                        >Student Results</a
+                                    >
+                                    </li>
+                                {% endif %}
+                            
+                        </ul>
+                        </div>
+                    </li>
+                {% endif %}
+                {% if perms.home.can_send_certificate_for_approval or perms.home.can_generate_certificate %}
+                    <li>
+                        <a href="/Preview Certificates/" class="link">Preview Certificates</a>
                     </li>
                 {% endif %}
                 {% if perms.home.can_view_student_details %}
