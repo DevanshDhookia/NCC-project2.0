@@ -51,13 +51,13 @@ function openModalOnClick(index, event_type) {
     console.log(student_object["result"], typeof(student_object["result"]['Pass']));
     if(event_type === 'view'){
         $('#student-submit-button').hide()
-        $('#student-approval-button').hide()
+        // $('#student-approval-button').hide()
         $('#modal-fresh-failure').val(student_object["result"]["Pass"] ? 'true' : 'false').attr("disabled", "disabled");
         $('#bonus_marks_cat').val(student_object["result"]["bonus_marks_cat"]).attr("disabled", "disabled");
     } else {
         $('#student-submit-button').show()
-        $('#student-approval-button').show()
-        $('#student-approval-button').attr('href', '/generate_certificate/'+student_object["student_id"])
+        // $('#student-approval-button').show()
+        // $('#student-approval-button').attr('href', '/generate_certificate/'+student_object["student_id"])
         if(!student_object["result"]["Pass"]) {
             $('#student-approval-button').hide()
         }
