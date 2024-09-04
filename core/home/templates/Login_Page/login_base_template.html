@@ -14,6 +14,7 @@
             $("#success-alert").slideUp(500);
           }, 5000);
     </script>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
     {% block css_block %}
         
     {% endblock %}
@@ -114,7 +115,7 @@
                 <button class="btn white-btn" id="loginBtn" onclick="window.location.href='/user-logout/'">Logout</button>
             </div>
             <div class="nav-menu-btn">
-                <i class="bx bx-menu" onclick="myMenuFunction()"></i>
+                <i class="bx bx-menu" style="color: black;" onclick="myMenuFunction()"></i>
             </div>
         {% else %}
             <div class="nav-menu" id="navMenu">
@@ -127,7 +128,7 @@
                 <button class="btn white-btn" id="loginBtn" onclick="window.location.href='/SignIn/'">Sign In</button>
             </div>
             <div class="nav-menu-btn">
-                <i class="bx bx-menu" onclick="myMenuFunction()"></i>
+                <i class="bx bx-menu" style="color: black;" onclick="myMenuFunction()"></i>
             </div>
         {% endif %}
         

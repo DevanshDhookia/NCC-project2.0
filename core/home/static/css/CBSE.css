@@ -174,7 +174,8 @@ body{
 #fileInput {
     display: none;}
 
-@media only screen and (max-width: 786px){
+
+@media only screen and (max-width: 1200px){
     .nav-button{
         display: none;
     }

@@ -13,7 +13,6 @@ body{
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
-    overflow: hidden;
 }
 .wrapper{
     display: flex;
@@ -187,7 +186,8 @@ header{
     text-decoration: underline;
 }
 
-@media only screen and (max-width: 786px){
+
+@media only screen and (max-width: 1200px){
     .nav-button{
         display: none;
     }

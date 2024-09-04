@@ -13,7 +13,8 @@ body{
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 .wrapper{
     display: flex;
@@ -187,7 +188,8 @@ header{
     text-decoration: underline;
 }
 
-@media only screen and (max-width: 786px){
+
+@media only screen and (max-width: 1200px){
     .nav-button{
         display: none;
     }
@@ -789,6 +791,7 @@ table tbody tr {
     .main-content {
         margin-left: 0;
         width: 100%;
+        overflow-y: auto;
     }
     
     #menu-toggle:checked ~ .sidebar {
