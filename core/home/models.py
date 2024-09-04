@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from datetime import datetime
 
 class Director_General(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -89,4 +90,7 @@ class Student(models.Model):
     sent_for_approval = models.BooleanField(default=False)
     result=models.ForeignKey(Result, on_delete=models.CASCADE, related_name="results", null=True, blank=True)
     certificate=models.ForeignKey(Certificate, on_delete=models.CASCADE, related_name="certificates", null=True, blank=True)
+    Year = models.IntegerField(default=24, null=True)
+    # int(str(datetime.now().year)[-2:])
+    Directorate=models.CharField(max_length=100, null=True, default='Kanpur')
 

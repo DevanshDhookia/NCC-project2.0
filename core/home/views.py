@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponseBadRequest
 from django.core.files.base import ContentFile, File
 from django.core.files.storage import default_storage
+from django.http import HttpResponse,HttpResponseRedirect
 import os
+import zipfile
 import pandas as pd
 import cv2
 import numpy as np
@@ -495,41 +497,42 @@ def Preview_Certificates(request):
      # Determine the user's role and fetch pending students accordingly
     pending_students=[]
     if request.user.groups.filter(name='Director_General').exists():
-        director_general_id = Director_General.objects.get(user_id=request.user.id).id
-        pending_students = Student.objects.filter(
-            certificate__Approval_stage=2,
-            certificate__Rejected_reason=None,
-            director_general_id=director_general_id,
-            certificate__certificate_generated=True
-        ).order_by('id')
+       director_general_id = Director_General.objects.get(user_id=request.user.id).id
+       pending_students = Student.objects.filter(
+           certificate__Approval_stage=3,
+           certificate__Rejected_reason=None,
+           director_general_id=director_general_id,
+           certificate__certificate_generated=True
+       ).order_by('id')
 
     elif request.user.groups.filter(name='Brigadier').exists():
-        brigadier_id = Brigadier.objects.get(user_id=request.user.id).id
-        pending_students = Student.objects.filter(
-            certificate__Approved=False,
-            certificate__Approval_stage=1,
-            certificate__Rejected_reason=None,
-            brigadier_id=brigadier_id,
-            certificate__certificate_generated=True
-        ).order_by('id')
+       brigadier_id = Brigadier.objects.get(user_id=request.user.id).id
+       pending_students = Student.objects.filter(
+           certificate__Approved=False,
+           certificate__Approval_stage=2,
+           certificate__Rejected_reason=None,
+           brigadier_id=brigadier_id,
+           certificate__certificate_generated=True
+       ).order_by('id')
 
     elif request.user.groups.filter(name='Colonel').exists():
-        colonel_id = Colonel.objects.get(user_id=request.user.id).id
-        pending_students = Student.objects.filter(
-            certificate__Approved=False,
-            certificate__Approval_stage=0,
-            certificate__Rejected_reason=None,
-            colonel_id=colonel_id,
-            certificate__certificate_generated=True
-        ).order_by('id')
+       colonel_id = Colonel.objects.get(user_id=request.user.id).id
+       pending_students = Student.objects.filter(
+           certificate__Approved=False,
+           certificate__Approval_stage=1,
+           certificate__Rejected_reason=None,
+           colonel_id=colonel_id,
+           certificate__certificate_generated=True
+       ).order_by('id')
     elif request.user.groups.filter(name='Clerk').exists():
-        clerk_id = Clerk.objects.get(user_id=request.user.id).id
-        pending_students = Student.objects.filter(
-            certificate__Approved=False,
-            certificate__Rejected_reason=None,
-            clerk_id=clerk_id,
-            certificate__certificate_generated=True
-        ).order_by('id')
+       clerk_id = Clerk.objects.get(user_id=request.user.id).id
+       pending_students = Student.objects.filter(
+           certificate__Approved=False,
+           certificate__Approval_stage=0,
+           certificate__Rejected_reason=None,
+           clerk_id=clerk_id,
+           certificate__certificate_generated=True
+       ).order_by('id')
     else:
         messages.error(request, "You do not have permission to perform this action.")
         return redirect('/clerk/')
@@ -545,6 +548,8 @@ def Preview_Certificates(request):
         student = get_object_or_404(Student, id=student_id, certificate__Approved=False,)
     else:
         student = pending_students.first()
+    
+    certificate_image_path = generate_certificate(student)
     # Generate the certificate if it hasn't been generated yet
     # if not student.certificate.certificate_generated:
     #     certificate_image_path = generate_certificate(student)
@@ -593,7 +598,38 @@ def generate_qr_code(student):
 
 
 def Print_Admit_Cards(request):
-    
+    if request.method == 'POST' and 'download' in request.POST:
+        # Define the folder you want to download
+        folder_path = os.path.join(settings.MEDIA_ROOT, 'Admit_Cards')
+
+        # Create a zip file in memory
+        zip_file_name = 'Admit_Cards.zip'
+        zip_file_path = os.path.join(settings.MEDIA_ROOT, zip_file_name)
+        
+        with zipfile.ZipFile(zip_file_path, 'w') as zipf:
+            for root, dirs, files in os.walk(folder_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    zipf.write(file_path, os.path.relpath(file_path, folder_path))
+
+        # Serve the zip file as a downloadable response
+        with open(zip_file_path, 'rb') as zipf:
+            response = HttpResponse(zipf.read(), content_type='application/zip')
+            response['Content-Disposition'] = f'attachment; filename={zip_file_name}'
+        
+        # Close the response before deleting the file
+        response.close()
+
+        # Delete the ZIP file from the server after the download
+        os.remove(zip_file_path)
+
+        # Set a success message
+        messages.success(request, 'The Admit Cards folder has been successfully downloaded.')
+
+        # Redirect back to the same page after download
+        return HttpResponseRedirect(reverse('Print_Admit_Cards'))
+
+    # Render the template for GET requests
     return render(request, "clerk/Print_Admit_Cards.html")
 
 def generate_admit_card(student):
@@ -699,7 +735,7 @@ def generate_certificate(student):
 
     # Load the font
     font_path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'Saans2.ttf')
-    font_size = 16
+    font_size = 17
     try:
         font = ImageFont.truetype(font_path, font_size)
     except IOError:
@@ -711,24 +747,30 @@ def generate_certificate(student):
             (student.Unit, (226, 842)),
             (student.CBSE_No, (226, 697)),
             (student.Rank, (748, 697)),
-            (student.Name, (226, 764)),
+            (student.Name, (226, 760)),
             (student.DOB, (820, 842)),
             (student.Fathers_Name, (829, 764)),
             (student.Certificate_type, (384, 1156)),
             (student.certificate.Place, (217, 1387)),
-            (student.certificate.Date, (217, 1477))
+            (student.certificate.Date, (217, 1477)),
+            (student.Year,(200,200)),
+            (student.Year,(100,100)),
+            (student.Directorate,(300,300))
         ]
     else:
         texts_with_positions = [
-            (student.Unit, (227, 554)),
+            (student.Unit, (227, 550)),
             (student.CBSE_No, (229, 443)),
             (student.Rank, (660, 443)),
-            (student.Name, (244, 500)),
+            (student.Name, (244, 498)),
             (student.DOB, (743, 546)),
-            (student.Fathers_Name, (741, 500)),
+            (student.Fathers_Name, (740, 490)),
             (student.Certificate_type, (305, 783)),
-            (student.certificate.Place, (230, 936)),
-            (student.certificate.Date, (227, 991))
+            (student.certificate.Place, (230, 934)),
+            (student.certificate.Date, (227, 989)),
+            (student.Year,(770,780)),
+            (student.Year,(370,712)),
+            (student.Directorate,(350,633))
         ]
 
     # Add text to the image
@@ -973,3 +1015,65 @@ def search_student(request):
             'students_json': json.dumps([str(model_to_dict(student))], cls=DjangoJSONEncoder)
         }
     return render(request, 'clerk/Student_Details.html', context)
+
+@login_required
+def reject_certificate(request, cbse_no):
+   if request.method == 'POST':
+       student = get_object_or_404(Student, CBSE_No=cbse_no)
+       reason = request.POST.get('rejection_reason')
+       student.certificate.Approved = False
+       student.certificate.Approval_stage=0
+       student.certificate.Rejected_reason = reason
+       student.certificate.Rejected_by=request.user.groups.first()
+       student.save()
+   return redirect('Preview_Admit_Card')
+
+@login_required
+def approve_certificate(request, cbse_no):
+   if request.user.groups.filter(name='Clerk').exists():
+       student = get_object_or_404(Student, CBSE_No=cbse_no)
+       student.certificate.Approval_stage +=1
+       student.save()
+   elif request.user.groups.filter(name='Colonel').exists():
+       student = get_object_or_404(Student, CBSE_No=cbse_no)
+       student.certificate.Approval_stage +=1
+       if(student.Certificate_type=='A') :
+           student.certificate.Approved = True
+       student.save()
+   elif request.user.groups.filter(name='Brigadier').exists():
+       student = get_object_or_404(Student, CBSE_No=cbse_no)
+       student.certificate.Approval_stage +=1
+       if(student.Certificate_type=='B') :
+           student.certificate.Approved = True
+       student.save()
+   else :
+       student = get_object_or_404(Student, CBSE_No=cbse_no)
+       student.certificate.Approved = True
+       student.save()
+
+
+   return redirect('Preview_Admit_Card')
+
+def Download_Admit_Card(request):
+    if request.method == 'POST':
+        cbse_no = request.POST.get('cbse_no')
+        try:
+            student = Student.objects.get(CBSE_No=cbse_no)
+
+            # Assuming the admit card is stored in a folder within MEDIA_ROOT
+            admit_card_path = os.path.join(settings.MEDIA_ROOT, 'Admit_Cards', f'{student.CBSE_No}.pdf')
+
+            if os.path.exists(admit_card_path):
+                with open(admit_card_path, 'rb') as admit_card_file:
+                    response = HttpResponse(admit_card_file.read(), content_type='application/pdf')
+                    response['Content-Disposition'] = f'attachment; filename="{student.CBSE_No}_Admit_Card.pdf"'
+                    return response
+            else:
+                messages.error(request, 'Admit Card not found.')
+                return redirect('Download_Admit_Card')
+        
+        except Student.DoesNotExist:
+            messages.error(request, f'Student with CBSE No. {cbse_no} not found.')
+            return redirect('Download_Admit_Card')
+
+    return render(request, 'clerk/Download_Admit_Card.html')

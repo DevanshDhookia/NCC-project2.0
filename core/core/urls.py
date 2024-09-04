@@ -51,6 +51,10 @@ urlpatterns = [
     path('update/', update_student, name='update_student'),
     path('send_for_approval/<str:cbse_no>/', send_for_approval, name='send_for_approval'),
     path('generate_certificate/<str:cbse_no>/', generate_certificate_action, name="generate_certificate"),
+    path('approve_certificate/<str:cbse_no>/', approve_certificate, name='approve_certificate'),
+    path('reject_certificate/<str:cbse_no>/', reject_certificate, name='reject_certificate'),
+    path('download-admit-card/', Download_Admit_Card, name='Download_Admit_Card'),
+    # Other paths...
     path("admin/", admin.site.urls),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

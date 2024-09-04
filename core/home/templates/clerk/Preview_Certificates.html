@@ -19,21 +19,21 @@
     <div class="admit-card-actions">
       {% if perms.home.can_approve_certificate %}
         <!-- Approval Form -->
-        <form action="{% url 'approve_admit_card' student.CBSE_No %}" method="post">
+        <form action="{% url 'approve_certificate' student.CBSE_No %}" method="post">
             {% csrf_token %}
             <button type="submit" class="btn green-btn">Approve Admit Card</button>
         </form>
       {% endif %}
       {% if perms.home.can_send_certificate_for_approval %}
         <!-- Approval Form -->
-        <form action="{% url 'send_for_approval' student.CBSE_No %}" method="post">
+        <form action="{% url 'approve_certificate' student.CBSE_No %}" method="post">
             {% csrf_token %}
             <button type="submit" class="btn btn-primary">Send For Approval</button>
         </form>
       {% endif %}
       {% if perms.home.can_approve_certificate %}
         <!-- Rejection Form -->
-        <form action="{% url 'reject_admit_card' student.CBSE_No %}" method="post" class="reject-form">
+        <form action="{% url 'reject_certificate' student.CBSE_No %}" method="post" class="reject-form">
             {% csrf_token %}
             <div class="reject-bar">
                 <textarea name="rejection_reason" placeholder="Enter reason for rejection" class="reject-textarea"></textarea>
