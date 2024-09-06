@@ -168,7 +168,8 @@ def clerk_page(request, user_id='default'):
         if request.user.groups.filter(name='Clerk').exists():
             juniors = None
             students_list = Student.objects.filter(clerk_id = request.user.id)
-        juniors = [User.objects.get(id = junior.user_id) for junior in juniors]
+        if juniors is not None :
+            juniors = [User.objects.get(id = junior.user_id) for junior in juniors]
         for student in students_list:
             if student.admit_card_generated:
                 admitcard_generated_students += 1
