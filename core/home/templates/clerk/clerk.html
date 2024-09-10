@@ -26,16 +26,28 @@
       <div class="container">
         <div class="row">
           {% if juniors is not None %}
-            <div class="col-md-3 col-sm-0">
+            <div class="col-md-3 col-sm-0 dashboard-juniors">
               <ul class="list-group">
-                <a href="/clerk/" class="list-group-item list-group-item-action"> Current User</a>
+                <div class="list-group-item list-group-item-action">
+                  <a href="/clerk/" class="list-group-item"> Current User<i class="bx bx-chevron-right dashboard-juniors-icon"></i></a>
+                </div>
                 {% for junior in juniors %}
-                  <a href="/clerk/{{junior.id}}" class="list-group-item list-group-item-action"> {{junior.username}} </a>
+                  <div class="list-group-item list-group-item-action">
+                    <a href="/clerk/{{junior.id}}" class="list-group-item"> {{junior.username}}<i class="bx bx-chevron-right dashboard-juniors-icon"></i> </a>
+                  </div>
                 {% endfor %}
               </ul>
             </div>
           {% endif %}
-          <div class="col-md-9 col-sm-12">
+          <div class="col-md-9 col-sm-12" id="dashboard-cards">
+            {% if messages %}
+                <div class="alert alert-primary alert-dismissible" id="success-alert">
+                    {% for message in messages %}
+                        {{message}}
+                    {% endfor %}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
             <div class="analytics">
               <div class="card">
                 <div class="card-head">

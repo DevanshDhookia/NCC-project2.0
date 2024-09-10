@@ -13,8 +13,7 @@ body{
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden; 
 }
 .wrapper{
     display: flex;
@@ -87,7 +86,7 @@ body{
     justify-content: center;
     width: 512px;
     height: 420px;
-    overflow: hidden;
+    /* overflow: hidden; */
     z-index: 2;
 }
 .login-container{
@@ -339,7 +338,7 @@ header{
 
 .side-content {
     height: calc(100vh - 140px); /* Adjusted to fit within the sidebar */
-    overflow: auto;
+    /* overflow: auto; */
 }
 
 
@@ -607,7 +606,7 @@ main {
     height: 10px;
     border-radius: 4px;
     background: #e9edf2;
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 
 .indicator {
@@ -824,14 +823,19 @@ table tbody tr {
     }
 }
 
+#dashboard-cards {
+    overflow: auto;
+    height: 65vh;
+}
 
+.dashboard-juniors {
+    margin-top: 0.6rem;
+    height: 65vh;
+    overflow: auto;
+    margin-bottom: 50px;
+}
 
-
-
-
-
-
-
-
-
-
+.dashboard-juniors-icon {
+    margin-top: 5px;
+    float: right;
+}

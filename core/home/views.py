@@ -144,25 +144,49 @@ def clerk_page(request, user_id='default'):
         juniors = None
         students_list = None
         if request.user.groups.filter(name='Director_General').exists():
-            juniors = Brigadier.objects.filter(director_general_id = request.user.id)
+            juniors = Brigadier.objects.filter(director_general_id = Director_General.objects.get(user_id=request.user.id).id)
             if user_id != 'default':
-                students_list = Student.objects.filter(brigadier_id = user_id, director_general_id = request.user.id)
+                try:
+                    if Brigadier.objects.get(user_id = user_id).director_general_id == Director_General.objects.get(user_id = request.user.id).id:
+                        students_list = Student.objects.filter(brigadier_id = Brigadier.objects.get(user_id=user_id), director_general_id = Director_General.objects.get(user_id=request.user.id).id)
+                    else:
+                        raise Exception("You are not entitled to view this user")
+                except Exception as e:
+                    print(e)
+                    messages.info(request, "You are not entitled to view this user details")
+                    return redirect("/clerk/")
             else:
-                students_list = Student.objects.filter(director_general_id = request.user.id)
+                students_list = Student.objects.filter(director_general_id = Director_General.objects.get(user_id=request.user.id).id)
         
         if request.user.groups.filter(name='Brigadier').exists():
-            juniors = Colonel.objects.filter(brigadier_id = request.user.id)
+            juniors = Colonel.objects.filter(brigadier_id = Brigadier.objects.get(user_id=request.user.id).id)
             if user_id != 'default':
-                students_list = Student.objects.filter(colonel_id = user_id, brigadier_id = request.user.id)
+                try:
+                    if Colonel.objects.get(user_id = user_id).brigadier_id == Brigadier.objects.get(user_id = request.user.id).id:
+                        students_list = Student.objects.filter(colonel_id = Colonel.objects.get(user_id=user_id).id, brigadier_id = Brigadier.objects.get(user_id=request.user.id).id)
+                    else:
+                        raise Exception("You are not entitled to view this user")
+                except Exception as e:
+                    print(e)
+                    messages.info(request, "You are not entitled to view this user details")
+                    return redirect("/clerk/")
             else:
-                students_list = Student.objects.filter(brigadier_id = request.user.id)
+                students_list = Student.objects.filter(brigadier_id = Brigadier.objects.get(user_id=request.user.id).id)
 
         if request.user.groups.filter(name='Colonel').exists():
             print("Searching for juniors")
             print(request.user.id)
             juniors = Clerk.objects.filter(colonel_id = Colonel.objects.get(user_id=request.user.id).id)
             if user_id != 'default':
-                students_list = Student.objects.filter(clerk_id = Clerk.objects.get(user_id=user_id), colonel_id = Colonel.objects.get(user_id=request.user.id).id)
+                try:
+                    if Clerk.objects.get(user_id = user_id).colonel_id == Colonel.objects.get(user_id = request.user.id).id:
+                        students_list = Student.objects.filter(clerk_id = Clerk.objects.get(user_id=user_id), colonel_id = Colonel.objects.get(user_id=request.user.id).id)
+                    else:
+                        raise Exception("You are not entitled to view this user")
+                except Exception as e:
+                    print(e)
+                    messages.info(request, "You are not entitled to view this user details")
+                    return redirect("/clerk/")
             else:
                 students_list = Student.objects.filter(colonel_id = Colonel.objects.get(user_id=request.user.id).id)
         if request.user.groups.filter(name='Clerk').exists():
