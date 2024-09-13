@@ -137,5 +137,7 @@ LOGOUT_REDIRECT_URL = '/SignIn'
 
 JWT_SECRET = 'D@#R@##F#F@QDC$T%'
 
+OTP_LENGTH = 6
+
 
 

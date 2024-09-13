@@ -94,3 +94,7 @@ class Student(models.Model):
     # int(str(datetime.now().year)[-2:])
     Directorate=models.CharField(max_length=100, null=True, default='Kanpur')
 
+class OTP(models.Model):
+    username = models.CharField(max_length = 100)
+    otp = models.CharField(max_length=6)
+    expiry_time = models.DateTimeField(null = False)

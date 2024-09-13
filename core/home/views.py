@@ -17,6 +17,7 @@ from django.contrib.auth import login, logout, authenticate, get_backends
 from django.contrib.auth.models import User , Group
 from common_utils.login_utilities import LoginValidator
 from common_utils.jwt_manager import JwtUtility
+from common_utils.smtp_manager import SMTPManager
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 import json
@@ -26,9 +27,12 @@ from django.db.models import Q
 import pyqrcode 
 import png
 from datetime import date
+from .util import Util
 
 login_validator = LoginValidator()
 jwt_utility = JwtUtility()
+utility = Util()
+smtp = SMTPManager()
 
 def home(request):
     return render(request, "Login_Page/index.html")
@@ -56,6 +60,16 @@ def SignIn(request):
             return redirect("/SignIn/")
     return render(request, "Login_Page/SignIn.html", {"page_name": "Ludiflex | Login & Registration"})
 
+
+@login_required
+def generate_otp(request):
+    if request.user.has_perm('home.can_create_new_users'):
+        if request.method == 'POST':
+            username = request.POST.get('otp-username')
+            typee = request.POST.get("type")
+            otpp = request.POST.get("otp")
+            print("The type is: :", typee, otpp, username)
+
 @login_required
 def register(request):
     if request.user.has_perm('home.can_create_new_users'):
@@ -63,8 +77,32 @@ def register(request):
             username = request.POST.get('username')
             password1 = request.POST.get('password1')
             password2 = request.POST.get('password2')
-
+            firstname = request.POST.get('firstName')
+            lastname = request.POST.get('lastName')
+            email = request.POST.get('email')
+            otp = request.POST.get("otp")
             # Basic validation
+            if not username or not email:
+                messages.error(request, "Username and Email required to generate OTP.")
+                return redirect('/register/')
+            if(not otp and not password1 and not password2):
+                data = utility.generate_and_save_otp(username)
+                if(data[0]):
+                    try:
+                        smtp.send_email(username, email, data[1])
+                        messages.error(request, "OTP Generated. Valid for 10 minutes.")
+                    except Exception as e:
+                        print("Exception occured while sending email", e)
+                        message.error(request, "Unable to send email")
+                else:
+                    messages.error(request, "Unable to generate OTP. Please try later.")
+                context={
+                    "firstName": firstname,
+                    "lastName": lastname,
+                    "email": email,
+                    "username": username
+                }
+                return render(request, 'Login_Page/register.html', context)
             if not username or not password1 or not password2:
                 messages.error(request, "All fields are required.")
                 return redirect('/register/')
@@ -79,6 +117,8 @@ def register(request):
 
             # Create new user
             user = User.objects.create_user(username=username)
+            user.first_name=firstname
+            user.last_name=lastname
             user.set_password(password1)
             user.save()
 
@@ -141,6 +181,21 @@ def clerk_page(request, user_id='default'):
         admitcard_generated_students = 0
         send_for_approval_students = 0
         reject_admit_card_students = 0
+        admitcard_approved = 0
+        army_students = 0
+        navy_students = 0
+        af_students = 0
+        a_cert_generated = 0
+        b_cert_generated = 0
+        c_cert_generated = 0
+        a_cert_pending_approval = 0
+        b_cert_pending_approval = 0
+        c_cert_pending_approval = 0
+        total_certificates = 0
+        total_cert_approved = 0
+        total_cert_pending_approval = 0
+        total_rejected_certs = 0
+        
         juniors = None
         students_list = None
         if request.user.groups.filter(name='Director_General').exists():
@@ -191,23 +246,73 @@ def clerk_page(request, user_id='default'):
                 students_list = Student.objects.filter(colonel_id = Colonel.objects.get(user_id=request.user.id).id)
         if request.user.groups.filter(name='Clerk').exists():
             juniors = None
-            students_list = Student.objects.filter(clerk_id = request.user.id)
+            students_list = Student.objects.filter(clerk_id = Clerk.objects.get(user_id=request.user.id).id)
         if juniors is not None :
             juniors = [User.objects.get(id = junior.user_id) for junior in juniors]
         for student in students_list:
+            if student.admit_card_approved:
+                admitcard_approved += 1
             if student.admit_card_generated:
                 admitcard_generated_students += 1
-            if student.sent_for_approval:
+            if student.admit_card_send_for_approval:
                 send_for_approval_students += 1
             if student.rejection_reason:  # This checks if rejection_reason is not None and not an empty string
                 reject_admit_card_students += 1
+            if student.Wing == 'Army':
+                army_students += 1
+            if student.Wing == 'Navy':
+                navy_students += 1
+            if student.Wing == 'Air-Force':
+                af_students += 1
+            if student.Certificate_type == 'A' and student.certificate and student.certificate.Approved == True:
+                total_certificates += 1
+                a_cert_generated += 1
+                total_cert_approved += 1
+            if student.Certificate_type == 'B' and student.certificate and  student.certificate.Approved == True:
+                total_certificates += 1
+                b_cert_generated += 1
+                total_cert_approved += 1
+            if student.Certificate_type == 'C' and student.certificate and  student.certificate.Approved == True:
+                total_certificates += 1
+                c_cert_generated += 1
+                total_cert_approved += 1
+            if student.Certificate_type == 'A' and student.certificate and  student.certificate.Approved == False:
+                total_certificates += 1
+                a_cert_pending_approval += 1
+                total_cert_pending_approval += 1
+            if student.Certificate_type == 'B' and student.certificate and  student.certificate.Approved == False:
+                total_certificates += 1
+                b_cert_pending_approval += 1
+                total_cert_pending_approval += 1
+            if student.Certificate_type == 'C' and student.certificate and  student.certificate.Approved == False:
+                total_certificates += 1
+                c_cert_pending_approval += 1
+                total_cert_pending_approval += 1
+            if student.certificate and  student.certificate.Approved == False and student.certificate.Rejected_reason is not None:
+                total_rejected_certs += 1
+                
+                
         print(students_list)
         context = {
             'total_students': students_list,
             'admitcard_generated_students': admitcard_generated_students,
             'send_for_approval_students': send_for_approval_students,
             'reject_admit_card_students': reject_admit_card_students,
-            "juniors": juniors
+            "admit_card_approved": admitcard_approved,
+            "juniors": juniors,
+            "army_students": army_students,
+            "navy_students": navy_students,
+            "air_force_students": af_students,
+            "a_cert_generated": a_cert_generated,
+            "b_cert_generated": b_cert_generated,
+            "c_cert_generated": c_cert_generated,
+            "a_cert_pending_approval": a_cert_pending_approval,
+            "b_cert_pending_approval": b_cert_pending_approval,
+            "c_cert_pending_approval": c_cert_pending_approval,
+            "total_certificates": total_certificates,
+            "total_cert_approved": total_cert_approved,
+            "total_cert_pending_approval": total_cert_pending_approval,
+            "total_rejected_certs": total_rejected_certs
         }
 
 
@@ -305,7 +410,9 @@ def add_result_data(request):
                         pass_paper_2 = ((float(result_data['Paper2_T']) / 60) * 100) >= 33
                         pass_paper_3 = ((float(result_data['Paper3_W']) / 210) * 100) >= 33
                         pass_paper_4 = ((float(result_data['Paper4_T']) / 150) * 100) >= 33
-                        if pass_paper_1 and pass_paper_2 and pass_paper_3 and pass_paper_4:
+                        percentage_obt = ((float(result_data['Final_total']) / 500) * 100)
+                        result_data["Grade"] = "A" if percentage_obt >= 70 else "B" if percentage_obt >= 55 else "C" if percentage_obt >= 33 else "F"
+                        if pass_paper_1 and pass_paper_2 and pass_paper_3 and pass_paper_4 and percentage_obt >= 33:
                             result_data["Pass"] = True
                         else:
                             result_data["Pass"] = False
@@ -489,7 +596,7 @@ def generate_certificate_action(request, cbse_no):
                 certificate_id = cbse_no+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year + "/" +id.zfill(5), 
                 certificate_generated = True,
                 Date = date.today(),
-                Approval_stage=0,
+                Approval_stage='0',
                 Generation_date = date.today(),
                 Place = "Kanpur"
             )
@@ -1057,24 +1164,28 @@ def reject_certificate(request, cbse_no):
 def approve_certificate(request, cbse_no):
    if request.user.groups.filter(name='Clerk').exists():
        student = get_object_or_404(Student, CBSE_No=cbse_no)
-       student.certificate.Approval_stage +=1
-       student.save()
+       certificate = student.certificate
+       certificate.Approval_stage = 1
+       certificate.save()
    elif request.user.groups.filter(name='Colonel').exists():
        student = get_object_or_404(Student, CBSE_No=cbse_no)
-       student.certificate.Approval_stage +=1
+       certificate = student.certificate
+       certificate.Approval_stage = 2
        if(student.Certificate_type=='A') :
-           student.certificate.Approved = True
-       student.save()
+           certificate.Approved = True
+       certificate.save()
    elif request.user.groups.filter(name='Brigadier').exists():
        student = get_object_or_404(Student, CBSE_No=cbse_no)
-       student.certificate.Approval_stage +=1
+       certificate = student.certificate
+       certificate.Approval_stage = 3
        if(student.Certificate_type=='B') :
-           student.certificate.Approved = True
-       student.save()
+           certificate.Approved = True
+       certificate.save()
    else :
        student = get_object_or_404(Student, CBSE_No=cbse_no)
-       student.certificate.Approved = True
-       student.save()
+       certificate = student.certificate
+       certificate.Approved = True
+       certificate.save()
 
 
    return redirect('Preview_Admit_Card')

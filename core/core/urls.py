@@ -29,6 +29,7 @@ urlpatterns = [
     path('SignIn/',SignIn,name='SignIn'),
     path('accounts/login/',SignIn,name='AccountSignIn'),
     path('register/',register,name='register'),
+    path('generate-otp/',generate_otp,name='generate_otp'),
     path('user-logout/', user_logout, name='logout'),
     path('index/',index,name='index'),
     path('clerk/',clerk_page,name='clerk_p'),
