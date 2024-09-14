@@ -44,7 +44,11 @@
             </div>
             <div class="two-forms" id="otp-section">
                 <div class="input-box">
-                    <input type="text" class="input-field" placeholder="OTP" name="otp" onkeydown="otpchange()" id="otp_field">
+                    {% if otpEnabled == True %}
+                        <input type="text" class="input-field" placeholder="OTP" name="otp" onkeydown="otpchange()" id="otp_field">
+                    {% else %}
+                        <input type="text" class="input-field" placeholder="OTP" name="otp" onkeydown="otpchange()" id="otp_field" disabled>
+                    {% endif %}
                     <i class="bx bx-lock-alt"></i>
                 </div>
                 <div class="input-box">

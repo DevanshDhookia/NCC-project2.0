@@ -139,5 +139,7 @@ JWT_SECRET = 'D@#R@##F#F@QDC$T%'
 
 OTP_LENGTH = 6
 
+USE_TZ = False
+
 
 

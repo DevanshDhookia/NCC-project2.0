@@ -100,67 +100,108 @@ def register(request):
                     "firstName": firstname,
                     "lastName": lastname,
                     "email": email,
-                    "username": username
+                    "username": username,
+                    "otpEnabled": True
                 }
                 return render(request, 'Login_Page/register.html', context)
             if not username or not password1 or not password2:
+                context={
+                    "firstName": firstname,
+                    "lastName": lastname,
+                    "email": email,
+                    "username": username,
+                    "otpEnabled": True
+                }
+                context={"otpEnabled": False}
                 messages.error(request, "All fields are required.")
-                return redirect('/register/')
-
+                return render(request, 'Login_Page/register.html', context)
+            if not otp:
+                context={
+                    "firstName": firstname,
+                    "lastName": lastname,
+                    "email": email,
+                    "username": username,
+                    "otpEnabled": True
+                }
+                context={"otpEnabled": False}
+                messages.error(request, "OTP is required.")
+                return render(request, 'Login_Page/register.html', context)
             if password1 != password2:
+                context={
+                    "firstName": firstname,
+                    "lastName": lastname,
+                    "email": email,
+                    "username": username,
+                    "otpEnabled": True
+                }
+                context={"otpEnabled": False}
                 messages.error(request, "Passwords do not match.")
-                return redirect('/register/')
+                return render(request, 'Login_Page/register.html', context)
 
             if User.objects.filter(username=username).exists():
+                context={"otpEnabled": False}
                 messages.error(request, "Username already exists.")
+                return render(request, 'Login_Page/register.html', context)
+
+            otp_validation_result = utility.validate_otp(username, otp)
+            if otp_validation_result[0]:
+                # Create new user
+                user = User.objects.create_user(username=username)
+                user.first_name=firstname
+                user.last_name=lastname
+                user.set_password(password1)
+                user.save()
+
+                # Determine which group and model to associate based on the logged-in user's role
+                if request.user.groups.filter(name='Director_General').exists():
+                    group_name = 'Brigadier'
+                    model_class = Brigadier
+                    related_model = Director_General
+                    related_field = 'director_general'
+                elif request.user.groups.filter(name='Brigadier').exists():
+                    group_name = 'Colonel'
+                    model_class = Colonel
+                    related_model = Brigadier
+                    related_field = 'brigadier'
+                elif request.user.groups.filter(name='Colonel').exists():
+                    group_name = 'Clerk'
+                    model_class = Clerk
+                    related_model = Colonel
+                    related_field = 'colonel'
+                else:
+                    messages.error(request, "You do not have permission to register users.")
+                    user.delete()  # Delete the user since permission failed
+                    return redirect('/register/')
+
+                # Add user to the appropriate group
+                group, created = Group.objects.get_or_create(name=group_name)
+                user.groups.add(group)
+
+                # Get the related instance (e.g., Director_General for Brigadier)
+                related_instance = related_model.objects.get(user=request.user)
+
+                # Create the corresponding model instance but don't save it yet
+                model_instance = model_class(user=user)
+
+                # Set the relationship field before saving
+                setattr(model_instance, related_field, related_instance)
+                model_instance.save()
+
+                messages.success(request, f"{group_name} registered successfully.")
                 return redirect('/register/')
-
-            # Create new user
-            user = User.objects.create_user(username=username)
-            user.first_name=firstname
-            user.last_name=lastname
-            user.set_password(password1)
-            user.save()
-
-            # Determine which group and model to associate based on the logged-in user's role
-            if request.user.groups.filter(name='Director_General').exists():
-                group_name = 'Brigadier'
-                model_class = Brigadier
-                related_model = Director_General
-                related_field = 'director_general'
-            elif request.user.groups.filter(name='Brigadier').exists():
-                group_name = 'Colonel'
-                model_class = Colonel
-                related_model = Brigadier
-                related_field = 'brigadier'
-            elif request.user.groups.filter(name='Colonel').exists():
-                group_name = 'Clerk'
-                model_class = Clerk
-                related_model = Colonel
-                related_field = 'colonel'
             else:
-                messages.error(request, "You do not have permission to register users.")
-                user.delete()  # Delete the user since permission failed
-                return redirect('/register/')
-
-            # Add user to the appropriate group
-            group, created = Group.objects.get_or_create(name=group_name)
-            user.groups.add(group)
-
-            # Get the related instance (e.g., Director_General for Brigadier)
-            related_instance = related_model.objects.get(user=request.user)
-
-            # Create the corresponding model instance but don't save it yet
-            model_instance = model_class(user=user)
-
-            # Set the relationship field before saving
-            setattr(model_instance, related_field, related_instance)
-            model_instance.save()
-
-            messages.success(request, f"{group_name} registered successfully.")
-            return redirect('/register/')
-
-        return render(request, "Login_Page/register.html")
+                context={
+                    "firstName": firstname,
+                    "lastName": lastname,
+                    "email": email,
+                    "username": username,
+                    "otpEnabled": True
+                }
+                messages.error(request, otp_validation_result[1])
+                return render(request, 'Login_Page/register.html', context)
+                
+        context = {"otpEnabled": False}
+        return render(request, 'Login_Page/register.html', context)
     else:
         return redirect("/index/")
 

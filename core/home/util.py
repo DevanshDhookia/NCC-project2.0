@@ -29,3 +29,25 @@ class Util():
         except Exception as e:
             print("Exception occurred while generating otp", e)
             return False, ""
+        
+    def validate_otp(self, username, otp):
+        try:
+            ottp = OTP.objects.filter(username = username)
+            if ottp:
+                ottp = ottp[0]
+                print("otp from db: ", ottp.otp, " otp from request: ", otp)
+                if otp != ottp.otp:
+                    return False, "OTP does not match"
+                else:
+                    print(datetime.now(), ottp.expiry_time)
+                    if ottp.expiry_time < datetime.now():
+                        return False, "OTP expired"
+                    else:
+                        ottp.delete()
+                        return True, ""
+            else:
+                return False, "OTP not found for username"
+        except Exception as e:
+            print("Unable to validate otp: ", e)
+            return False, "Unable to validate"
+                    

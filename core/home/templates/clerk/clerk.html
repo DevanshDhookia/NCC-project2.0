@@ -38,6 +38,27 @@
                 {% endfor %}
               </ul>
             </div>
+            <div class="dashboard-juniors-dropdown">
+              <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Select Cadet
+                </button>
+                <ul class="dropdown-menu">
+                  <li>
+                    <div class="dropdown-item">
+                      <a href="/clerk/" class="list-group-item">Current User<i class="bx bx-chevron-right dashboard-juniors-icon"></i> </a>
+                    </div>
+                  </li>
+                  {% for junior in juniors %}
+                    <li>
+                      <div class="dropdown-item">
+                        <a href="/clerk/{{junior.id}}" class="list-group-item"> {{junior.username}}<i class="bx bx-chevron-right dashboard-juniors-icon"></i> </a>
+                      </div>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
           {% endif %}
           <div class="col-md-9 col-sm-12" id="dashboard-cards">
             {% if messages %}
