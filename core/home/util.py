@@ -32,6 +32,7 @@ class Util():
         
     def validate_otp(self, username, otp):
         try:
+            print("Checking otp for username: ", username)
             ottp = OTP.objects.filter(username = username)
             if ottp:
                 ottp = ottp[0]

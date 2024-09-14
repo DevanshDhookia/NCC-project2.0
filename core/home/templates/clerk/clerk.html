@@ -1,6 +1,7 @@
 {% extends "Login_Page/login_base_template.html" %} {% load static %} 
 {% block css_block %}
 <link rel="stylesheet" href="{% static 'css/Dashboard.css' %}" />
+<script src="{% static 'js/dashboard.js' %}"></script>
 {% endblock %} 
 {% block start %}
 <div class="sidebar">
@@ -10,7 +11,7 @@
       <h4>{{request.user.username}}</h4>
       <small>{% for group in request.user.groups.all %} {{ group.name }} {% endfor %}</small>
     </div>
-
+    <button class='btn btn-secondary' onclick="window.location.href='/change-password/'">Change Password</button>
     <div class="side-menu"></div>
   </div>
 </div>

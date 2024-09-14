@@ -60,6 +60,86 @@ def SignIn(request):
             return redirect("/SignIn/")
     return render(request, "Login_Page/SignIn.html", {"page_name": "Ludiflex | Login & Registration"})
 
+def forgot_password(request):
+    context = {"page_name": "Ludiflex | Login & Registration", "otp": False}
+    if request.method == "POST":
+        user_name = request.POST.get("username")
+        otp = request.POST.get("otp")
+        isotpcall = request.POST.get("isotp")
+        print("This is an otp call", isotpcall)
+        try:
+            user = User.objects.get(username=user_name)
+            context["username"] = user_name
+            if not otp and isotpcall == 'True':
+                context["otp"] = True
+                messages.error(request, "OTP is required")
+            elif not otp:
+                if user is not None:
+                    email = user.email
+                    if not email:
+                        messages.error(request,"Email address not found for the user")
+                    else:
+                        data = utility.generate_and_save_otp(user_name)
+                        if(data[0]):
+                            try:
+                                smtp.send_email(user_name, email, data[1])
+                                messages.info(request, "OTP Generated. Valid for 10 minutes.")
+                                context["otp"] = True
+                            except Exception as e:
+                                print("Exception occured while sending email", e)
+                                messages.error(request, "Unable to send email")
+                        else:
+                            messages.error(request, "Unable to generate OTP. Please try later.")
+                else:
+                    messages.error(reqest, "User details not found")
+            else:
+                otp_validation_result = utility.validate_otp(user_name, otp)
+                if otp_validation_result[0]:
+                    password1 = request.POST.get("new-pass")
+                    password2 = request.POST.get("new-pass-1")
+                    if not password1 or not password2:
+                        context["otp"] = False
+                        messages.error(request, "All fields are required, Please regerate the OTP")
+                    else:
+                        if password1 != password2:
+                            context["otp"] = True
+                            messages.error(request, "Passwords does not match")
+                        else:
+                            user.set_password(password1)
+                            user.save()
+                            messages.info(request, "Password updated successfully, Please login")
+                else:
+                    context["username"]=user_name
+                    context["otp"] = True
+                    messages.error(request, otp_validation_result[1])
+                                        
+        except Exception as e:
+            print("User not found", e)
+            messages.info(request, "User not found")
+    return render(request, "Login_Page/reset_password.html", context=context)
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        old_password = request.POST.get("old-pass")
+        new_pass = request.POST.get("new-pass")
+        new_pass_c = request.POST.get("new-pass-1")
+        if request.user.check_password(old_password):
+            if new_pass == old_password:
+                messages.info(request, "New password cannot be same as old password")
+            else:
+                if new_pass == new_pass_c:
+                    user = User.objects.get(id = request.user.id)
+                    user.set_password(new_pass)
+                    user.save()
+                    messages.info(request, "Password updated successfully")
+                    return redirect("/clerk/")
+                else:
+                    messages.error(request, "New password and confirm pasword does not match.")
+        else:
+            messages.error(request, "Incorrect old password.")
+    return render(request, "Login_Page/reset_password.html", {"page_name": "NCC (National Cadet Corps)"})
+
 
 @login_required
 def generate_otp(request):
@@ -149,6 +229,7 @@ def register(request):
                 user = User.objects.create_user(username=username)
                 user.first_name=firstname
                 user.last_name=lastname
+                user.email = email
                 user.set_password(password1)
                 user.save()
 
