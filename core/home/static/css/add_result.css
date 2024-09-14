@@ -314,6 +314,27 @@ label.input-group-text:hover {
         flex-direction: column;
         gap: 0;
     }
+    .notice {
+        width: 90%;
+        max-width: 100%;
+    }
+    .register-students {
+        width: 90%;
+        max-width: 100%;
+    }
+
+    .drpdwn{
+        flex-direction: column !important;
+        select {
+            width: 83%;
+            border-radius: 10px;
+            margin-top: 5px;
+        }
+    }
+
+    .input-group-text {
+        text-wrap: pretty;
+    }
 }
 .drpdwn{
     display: flex;

@@ -76,7 +76,7 @@
           >
             View
           </button>
-          {% if perms.home.change_result %}
+          {% if perms.home.change_result and student.cert_generated == False %}
             <a href="/generate_certificate/{{student.student_id}}" class="btn btn-info" id="student-approval-button">
               Generate Certificate
             </a>

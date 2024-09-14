@@ -18,8 +18,8 @@ body{
 .wrapper{
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    /* justify-content: center; */
+    /* align-items: center; */
     min-height: 110vh;
     background: rgba(39, 39, 39, 0.4);
 }
@@ -123,43 +123,37 @@ body{
     text-decoration: none; /* Ensures no underline on hover */
     border-bottom: 2px solid #000000;
 }
-/* ----------ALL Students Previewed----------- */
-.previewed-notice{
-    background-color: rgba(255, 255, 255, 0.5);
-    padding: 20px;
-    line-height: 80px;
-    display: flex;
-    flex-direction: column;
-    justify-items: center;
-    align-items: center;
-}
 
-.previewed-notice p{
-    font-size: large;
-}
-.previewed-notice button{
-    width: auto;
-    height: 40px;
-    font-weight: 500;
-    background: rgba(255, 255, 255, 0.7);
+.ctm-btn {
+    margin-left: 10px;
     padding-left: 5px;
     padding-right: 5px;
-    border: 2px solid black;
-    border-radius: 30px;
+    height: 39px;
+    width: 90px;
+    border-radius: 10px;
+    color: rgb(0, 0, 0); 
+    border-style: none;
+    /* border-color: rgb(19, 19, 19); */
+}
+.ctm-btn:hover {
+    color: #e7e9e7; /* Green color on hover */
+    background-color: rgb(25, 189, 47);
+    border-style: none;
+
+}
+.change-photo-btn {
+    color: white;
+    background-color: #28a745; /* Green background */
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
     cursor: pointer;
-    transition: .3s ease;
+        border-radius: 5px;}
+.change-photo-btn:hover {
+    background-color: #218838; /* Darker green on hover */
 }
-.previewed-notice button:hover{
-    background: rgba(255, 255, 255, 0.3);
-}
-
-/* Table Style */
-
-.table2 {
-    background: white;
-    color: black;
-    width: 60%;
-}
+#fileInput {
+    display: none;}
 
 @media only screen and (max-width: 786px){
     .nav-button{
@@ -218,3 +212,43 @@ body{
     }
 }
 
+.rectangular-box {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 40px;
+    margin: 20px 20px 20px 20px;
+    /* justify-content: center;  */
+    margin-top: 100px; /* Add margin-top to push the box below the navbar */
+}
+
+/* Optional: style the text inside the box */
+.rectangular-box p {
+    color: white;
+    font-size: 18px;
+    text-align: center;
+}
+.table-container {
+    width: 100%; /* Adjust as needed */
+    max-width: 100%; /* Adjust as needed */
+    height: auto; /* Set the height as per your requirement */
+    overflow-x: auto;
+    overflow-y: auto;
+  }
+
+  table.table2 {
+    width: 100%; /* Ensures table takes full width of container */
+    table-layout: auto;
+  }
+
+  th, td {
+    white-space: nowrap; /* Prevents text from wrapping */
+  }
+.form{
+    display: flex;
+    flex-direction: row;
+}
+
+#modal-heading{
+    font-weight: bold;
+}

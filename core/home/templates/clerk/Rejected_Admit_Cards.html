@@ -3,12 +3,16 @@
 
 {% block css_block %}
 <link rel="stylesheet" href="{% static 'css/contact.css' %}">
+<script src="{% static 'js/student_detail.js' %}"
+  data-students = "{{ students_json }}"
+></script>
 {% endblock %}
 
 {% block title %}
     NCC (National Cadet Corps)
 {% endblock %}
 {% block start %}
+<div class="table-container">
   <table class="table table-bordered table2">
     <thead>
       <tr>
@@ -16,7 +20,9 @@
         <th scope="col">Student ID</th>
         <th scope="col">Name</th>
         <th scope="col">Rejection Reason</th>
-        <th scope="col">Rejected By</th>
+        {% if perms.home.can_edit_student_details %}
+          <th scope="col">Action</th>
+        {% endif %}
       </tr>
     </thead>
     <tbody>
@@ -25,7 +31,15 @@
             <td>{{ student.CBSE_No }}</td>
             <td>{{ student.Name }}</td>
             <td>{{ student.rejection_reason }}</td>
-            <td>{{ student.status }}</td>
+            {% if perms.home.can_edit_student_details %}
+              <td>
+                  <button class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#staticBackdrop"
+                    onclick="openModalOnClick('{{forloop.counter}}', 'modify')"
+                  >Modify</button>
+              </td>
+            {% endif %}
         </tr>
         {% empty %}
         <tr>
@@ -34,4 +48,414 @@
         {% endfor %}
     </tbody>
   </table>
+</div>
+
+
+  <div
+  class="modal fade modal-lg"
+  id="staticBackdrop"
+  data-bs-backdrop="static"
+  data-bs-keyboard="false"
+  tabindex="-1"
+  aria-labelledby="staticBackdropLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="staticBackdropLabel">
+          Student Detils
+        </h1>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="container">
+          <div class="row flex-lg-nowrap">
+            <div class="col">
+              <div class="row">
+                <div class="card">
+                  <div class="card-body">
+                    <form
+                      class="form"
+                      id="student-detail-form"
+                      method="POST"
+                      action="{% url 'update_student' %}"
+                    >
+                      {% csrf_token %}
+                      <div class="e-profile">
+                        <div class="row">
+                          <div class="col-12 col-sm-auto mb-3">
+                            <div class="mx-auto" style="width: 140px">
+                              <div
+                                class="d-flex justify-content-center align-items-center rounded"
+                                style="
+                                  height: 140px;
+                                  background-color: rgb(233, 236, 239);
+                                "
+                              >
+                                <img
+                                  id='student-image'
+                                  src="/media/student_photos/{{ student.CBSE_No }}.jpeg"
+                                  alt="Student Photo"
+                                  style="max-width: 170px; max-height: 170px"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            class="col d-flex flex-column flex-sm-row justify-content-between mb-3"
+                          >
+                            <div class="text-center text-sm-left mb-2 mb-sm-0">
+                              <h4 class="pt-sm-2 pb-1 mb-0 ml-3 text-nowrap" id="modal-student-name">
+                                
+                              </h4>
+                              {% comment %} <div class="container mt-5">
+                                <button
+                                  class="change-photo-btn"
+                                  onclick="document.getElementById('fileInput').click();"
+                                >
+                                  Change Photo
+                                </button>
+                                <input
+                                  type="file"
+                                  id="fileInput"
+                                  accept="image/*"
+                                />
+                              </div> {% endcomment %}
+                            </div>
+                          </div>
+                        </div>
+                        <div class="tab-content pt-3">
+                          <div class="tab-pane active">
+                            <form
+                              class="form"
+                              method="POST"
+                              action="{% url 'update_student' %}"
+                            >
+                              {% csrf_token %}
+                              <div class="row">
+                                <div class="col">
+                                  <hr />
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>CBSE No.</label>
+                                        <input
+                                          class="form-control"
+                                          id='modal-cbse-no'
+                                          type="text"
+                                          name="CBSE_No"
+                                          value=""
+                                          readonly
+                                        />
+                                        <input
+                                          class="form-control"
+                                          id='student-id'
+                                          type="text"
+                                          name="id"
+                                          value=""
+                                          readonly
+                                          hidden
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Full Name</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-full-name"
+                                          type="text"
+                                          name="Name"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Father's Name</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-father-name"
+                                          type="text"
+                                          name="Fathers_Name"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>DOB</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-dob"
+                                          type="text"
+                                          name="DOB"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="row">
+                                    <div class="col mb-3">
+                                      <div class="form-group">
+                                        <label>Address</label>
+                                        <textarea
+                                          class="form-control"
+                                          id="modal-address"
+                                          rows="2"
+                                          name="Home_Address"
+                                        >
+                                        </textarea>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <hr />
+                                </div>
+                              </div>
+
+                              <div class="row">
+                                <div class="col">
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Unit</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-unit"
+                                          type="text"
+                                          name="Unit"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Rank</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-rank"
+                                          type="text"
+                                          name="Rank"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label
+                                          >Year of passsing B certificate</label
+                                        >
+                                        <input
+                                          class="form-control"
+                                          id="modal-yopb-cert"
+                                          type="text"
+                                          name="Year_of_passing_B_Certificate"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Fresh/Faliure</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-fresh-failure"
+                                          type="text"
+                                          name="Fresh_Failure"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="row">
+                                    <div class="col mb-3">
+                                      <div class="form-group">
+                                        <label
+                                          >School/College & Class in which
+                                          studying</label
+                                        >
+                                        <textarea
+                                          class="form-control"
+                                          id="modal-school"
+                                          rows="2"
+                                          name="School_College_Class"
+                                        >
+                                        
+                                        </textarea>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <hr />
+                                </div>
+                              </div>
+
+                              <div class="row">
+                                <div class="col">
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>1st Year</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-1st-year"
+                                          type="text"
+                                          name="Attendance_1st_year"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>2nd Year</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-2nd-year"
+                                          type="text"
+                                          name="Attendance_2nd_year"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Total</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-3rd-year"
+                                          type="text"
+                                          name="Attendance_3rd_year"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <hr />
+                                </div>
+                              </div>
+
+                              <div class="row">
+                                <div class="col">
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Name of Camp Attended</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-camp-name"
+                                          type="text"
+                                          name="Name_of_camp_attended_1"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Date of Camp</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-camp-date"
+                                          type="text"
+                                          name="Date_camp_1"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="row">
+                                    <div class="col mb-3">
+                                      <div class="form-group">
+                                        <label>Location</label>
+                                        <textarea
+                                          class="form-control"
+                                          id="modal-camp-location"
+                                          rows="2"
+                                          name="Location_camp_1"
+                                        >
+                                        </textarea>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <hr />
+                                </div>
+                              </div>
+
+                              <div class="row">
+                                <div class="col">
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Name of Camp Attended</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-camp-name-2"
+                                          type="text"
+                                          name="Name_of_camp_attended_2"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Date of Camp</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-camp-date-2"
+                                          type="text"
+                                          name="Date_camp_2"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="row">
+                                    <div class="col mb-3">
+                                      <div class="form-group">
+                                        <label>Location</label>
+                                        <textarea
+                                          class="form-control"
+                                          id="modal-camp-location-2"
+                                          rows="2"
+                                          name="Location_camp_2"
+                                        >
+                                        </textarea>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <hr />
+                                </div>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Close
+        </button>
+        <button type="button" id="student-submit-button" class="btn btn-primary" data-bs-dismiss="modal" onclick='studentDetailFormSubmit()'>
+          Modify
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

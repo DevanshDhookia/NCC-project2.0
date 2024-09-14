@@ -647,7 +647,7 @@ def results(request):
             results_data = Student.objects.filter(result__isnull=False, director_general=Director_General.objects.get(user_id=request.user.id)).order_by('id')
         bonus_marks_cat = BonusMarksCategories.objects.all()
         bonus_marks_ser = json.dumps([model_to_dict(item) for item in bonus_marks_cat], cls=DjangoJSONEncoder)
-        return_data = [{"id": student.id,"student_id": student.CBSE_No, "result": model_to_dict(student.result), "student_name": student.Name, "college": student.School_College_Class, "unit": student.Unit,"rank": student.Rank, "p_1_total": student.result.Paper1_T, "p_2_total": student.result.Paper2_T, "p_3_total": student.result.Paper3_W, "p_4_total": student.result.Paper4_T} for student in results_data]
+        return_data = [{"id": student.id,"student_id": student.CBSE_No, "result": model_to_dict(student.result), "student_name": student.Name, "college": student.School_College_Class, "unit": student.Unit,"rank": student.Rank, "p_1_total": student.result.Paper1_T, "p_2_total": student.result.Paper2_T, "p_3_total": student.result.Paper3_W, "p_4_total": student.result.Paper4_T, "cert_generated": student.certificate_id != None} for student in results_data]
         serialized_return_data = json.dumps(list(return_data), cls=DjangoJSONEncoder)
         return render(request, "clerk/view_results.html", {"result_data": return_data, "serialized_result_data": serialized_return_data })
     else:
@@ -1174,7 +1174,8 @@ def Rejected_Admit_Cards(request):
         
         # Pass the data to the template
         context = {
-            'rejected_students': rejected_students
+            'rejected_students': rejected_students,
+            'students_json': json.dumps(list([str(model_to_dict(i)) for i in rejected_students]), cls=DjangoJSONEncoder)
         }
         return render(request, "clerk/Rejected_Admit_Cards.html", context)
     else:
