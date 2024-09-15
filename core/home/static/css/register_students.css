@@ -189,6 +189,7 @@ body{
     padding-bottom: 5vh;
 }
 .register-students {
+    padding-top: 35px !important;
     height: fit-content;
     width: 90%;
     max-width: 600px;  /* Limit the maximum width */
@@ -205,7 +206,6 @@ body{
 }
 
 .register-students header {
-    margin-top: 30px;
     font-size: 30px;
     text-align: center;
     color: #333;  /* Darker color for the header */
@@ -260,7 +260,7 @@ label.input-group-text:hover {
 .submit-container {
     display: flex;
     justify-content: center;  /* Center the button horizontally */
-    margin-top: 0px;  /* Add space above the button */
+    margin-top: 10px;  /* Add space above the button */
     font-size: 20px;
 }
 
@@ -345,4 +345,9 @@ label.input-group-text:hover {
     margin-left: 25px;
     margin-right: 25px ;
 
+}
+
+.admcd {
+    max-width: 70%;
+    margin: auto;
 }

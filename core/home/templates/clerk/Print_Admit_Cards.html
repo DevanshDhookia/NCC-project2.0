@@ -36,9 +36,38 @@
 
 {% block start %}
     <div class="center-area">
-        <form class="register-students" method="post" enctype="multipart/form-data" action="{% url 'Print_Admit_Cards' %}">
+        {% if messages %}
+            <div class="alert alert-primary alert-dismissible" id="success-alert">
+                {% for message in messages %}
+                    {{message}}
+                {% endfor %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+        <form class="register-students" method="post" enctype="multipart/form-data" action="/Print Admit Cards/">
             {% csrf_token %}
             <header>Download Admit Cards</header>
+            <input name="download" hidden/>
+            <div class="submit-container">
+                <button type="Download" class="submit-btn">Download</button>
+            </div>
+        </form>
+        <form class="register-students" method="post" enctype="multipart/form-data" action="/Print Admit Cards/">
+            {% csrf_token %}
+            <header>Download Admit Cards</header>
+            <header>by CBSE No.</header>
+            <input name="single" hidden/>
+            <div class="form-group admcd">
+                <label>CBSE No.</label>
+                <input
+                  class="form-control"
+                  id="cbse_no"
+                  type="text"
+                  name="cbse_no"
+                  placeholder="Please enter CBSE No."
+                  value=""
+                />
+              </div>
             <div class="submit-container">
                 <button type="Download" class="submit-btn">Download</button>
             </div>

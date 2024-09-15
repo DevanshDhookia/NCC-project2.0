@@ -852,14 +852,10 @@ def generate_qr_code(student):
 
 
 def Print_Admit_Cards(request):
+    folder_path = os.path.join(settings.MEDIA_ROOT, 'Admit_Cards')
     if request.method == 'POST' and 'download' in request.POST:
-        # Define the folder you want to download
-        folder_path = os.path.join(settings.MEDIA_ROOT, 'Admit_Cards')
-
-        # Create a zip file in memory
         zip_file_name = 'Admit_Cards.zip'
         zip_file_path = os.path.join(settings.MEDIA_ROOT, zip_file_name)
-        
         with zipfile.ZipFile(zip_file_path, 'w') as zipf:
             for root, dirs, files in os.walk(folder_path):
                 for file in files:
@@ -881,8 +877,19 @@ def Print_Admit_Cards(request):
         messages.success(request, 'The Admit Cards folder has been successfully downloaded.')
 
         # Redirect back to the same page after download
-        return HttpResponseRedirect(reverse('Print_Admit_Cards'))
-
+        return response
+    if request.method == 'POST' and 'single' in request.POST:
+        cbse_no = request.POST.get("cbse_no")
+        file_path = os.path.join(folder_path, cbse_no + "_admit_card.png")
+        if os.path.exists(file_path):
+            with open(file_path, "rb") as admit_card:
+                response = HttpResponse(admit_card.read(), content_type="image/png")
+                response['Content-Disposition'] = f'attachment; filename={cbse_no}s_admit_card.png'
+            response.close()
+            messages.success(request, "Admin card downloaded successfully")
+            return response
+        else:
+            messages.error(request, "Admit card not available for this CBSE No.")
     # Render the template for GET requests
     return render(request, "clerk/Print_Admit_Cards.html")
 
@@ -1139,6 +1146,8 @@ def Register_Students(request):
                 # Process each row in the DataFrame
                 for _, row in df.iterrows():
                     student_data = {field: row[idx] for field, idx in column_indices.items()}
+                    student_data["name_hindi"]=utility.translate_names("hi", student_data["Name"])
+                    student_data["fathers_name_hindi"]=utility.translate_names("hi", student_data["Fathers_Name"])
                     student_data["Certificate_type"]=certificate_type
                     student_data["Wing"]=wing
                     student_data["clerk"] = clerk
@@ -1221,7 +1230,9 @@ def update_student(request):
         
         # Updating fields
         student.Name = get_value('Name')
+        student.name_hindi = get_value("Name_Hindi")
         student.Fathers_Name = get_value('Fathers_Name')
+        student.fathers_name_hindi = get_value("Fathers_Name_Hindi")
         student.DOB = get_value('DOB')
         student.Home_Address = get_value('Home_Address')
         student.School_College_Class = get_value('School_College_Class')

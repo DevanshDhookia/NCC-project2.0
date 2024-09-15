@@ -25,7 +25,9 @@ function openModalOnClick(index, event_type) {
     $('#modal-student-name').html(student_object["Name"]);
     $('#modal-cbse-no').val(student_object["CBSE_No"]);
     $('#modal-full-name').val(student_object["Name"]).prop("readonly", event_type === 'view' ? true : false);
+    $('#modal-full-name-hindi').val(student_object["name_hindi"]).prop("readonly", event_type === 'view' ? true : false);
     $('#modal-father-name').val(student_object["Fathers_Name"]).prop("readonly", event_type === 'view' ? true : false);
+    $('#modal-father-name-hindi').val(student_object["fathers_name_hindi"]).prop("readonly", event_type === 'view' ? true : false);
     $('#modal-dob').val(student_object["DOB"]).prop("readonly", event_type === 'view' ? true : false);
     $('#modal-address').html(student_object["Home_Address"]).prop("readonly", event_type === 'view' ? true : false);
     $('#modal-unit').val(student_object["Unit"]).prop("readonly", event_type === 'view' ? true : false);

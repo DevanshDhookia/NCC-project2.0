@@ -58,8 +58,10 @@ class Certificate(models.Model):
 class Student(models.Model):
     CBSE_No = models.CharField(max_length=15, unique=True)
     Name = models.CharField(max_length=100)
+    name_hindi = models.TextField(max_length=100, null=True)
     DOB = models.CharField(max_length=20)
     Fathers_Name = models.CharField(max_length=100)
+    fathers_name_hindi = models.TextField(max_length=100, null=True)
     School_College_Class = models.CharField(max_length=100)
     Home_Address = models.CharField(max_length=100)
     Admit_Card_No = models.IntegerField()

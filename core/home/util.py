@@ -3,8 +3,12 @@ from .models import OTP
 from django.conf import settings
 from random import randint
 from datetime import datetime, timedelta
+from googletrans import Translator as Trans
 
 class Util():
+    translator = None
+    def __init__(self):
+        self.translator = Trans()
     def generate_and_save_otp(self, username):
         try:
             otp_length = settings.OTP_LENGTH
@@ -52,3 +56,6 @@ class Util():
             print("Unable to validate otp: ", e)
             return False, "Unable to validate"
                     
+    def translate_names(self, language_code, name):
+        translation = self.translator.translate(name, dest=language_code)
+        return translation
