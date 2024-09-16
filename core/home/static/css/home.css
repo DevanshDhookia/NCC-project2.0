@@ -96,7 +96,7 @@ body{
 .login-container{
     position: absolute;
     left: 4px;
-    width: 500px;
+    width: 100%;
     display: flex;
     flex-direction: column;
     transition: .5s ease-in-out;
@@ -240,6 +240,11 @@ header{
     }
     
 }
+@media only screen and (max-width: 768px) {
+    .corsl {
+        display: none;
+    }
+}
 @media only screen and (max-width: 540px) {
     .wrapper{
         min-height: 100vh;
@@ -255,6 +260,9 @@ header{
     .register-container .two-forms{
         flex-direction: column;
         gap: 0;
+    }
+    .corsl {
+        display: none;
     }
 }
 
@@ -322,5 +330,10 @@ header{
 }
 
 .row {
-    gap: 50px;
+    gap: 10%;
+}
+
+.corsl {
+    align-content: center;
+    margin-top: 70px;
 }
