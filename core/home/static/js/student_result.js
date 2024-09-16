@@ -1,6 +1,11 @@
 const data = document.currentScript.dataset
 students_result = JSON.parse(data["result"])
 
+function clearButtonClick(href) {
+    console.log("Function clled")
+    window.location.replace(href)
+}
+
 function dataToJson(data) {
     return JSON.parse(data.replaceAll("'", '"').replace(' <ImageFieldFile: ', '"').replaceAll(">", '"').replaceAll("True", "true").replaceAll(": False", ": false").replaceAll("None", "null"))
 }

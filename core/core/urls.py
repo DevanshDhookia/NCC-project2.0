@@ -34,8 +34,8 @@ urlpatterns = [
     path('generate-otp/',generate_otp,name='generate_otp'),
     path('user-logout/', user_logout, name='logout'),
     path('index/',index,name='index'),
-    path('clerk/',clerk_page,name='clerk_p'),
-    path('clerk/<str:user_id>',clerk_page,name='clerk'),
+    path('user/',clerk_page,name='clerk_p'),
+    path('user/<str:user_id>',clerk_page,name='clerk'),
     path('Preview Admit Card/',Preview_Admit_Card,name='Preview_Admit_Card'),
     path('Preview Certificates/',Preview_Certificates,name='Preview_Certificates'),
     path('Print Admit Cards/',Print_Admit_Cards,name='Print_Admit_Cards'),
@@ -51,13 +51,16 @@ urlpatterns = [
     path('can_send_admit_card_for_approval/<str:cbse_no>/', approve_admit_card, name='approve_admit_card'),
     path('reject_admit_card/<str:cbse_no>/', reject_admit_card, name='reject_admit_card'),
     path('search/', search_student, name='search_student'),
+    path('search-result/', search_result, name='search_result'),
     path('update/', update_student, name='update_student'),
     path('send_for_approval/<str:cbse_no>/', send_for_approval, name='send_for_approval'),
     path('generate_certificate/<str:cbse_no>/', generate_certificate_action, name="generate_certificate"),
     path('approve_certificate/<str:cbse_no>/', approve_certificate, name='approve_certificate'),
     path('reject_certificate/<str:cbse_no>/', reject_certificate, name='reject_certificate'),
+    path('print-certificate/', print_certificate, name='print_certificate'),
     path('download-admit-card/', Download_Admit_Card, name='Download_Admit_Card'),
     # Other paths...
     path("admin/", admin.site.urls),
+    path('404/', custom_404_view, name='custom_404'),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

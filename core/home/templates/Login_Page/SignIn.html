@@ -2,45 +2,70 @@
 {% load static %}
 
 {% block css_block %}
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
 {% endblock css_block %}
 {% block title %}
     Ludiflex | Login
 {% endblock %}
 {% block start %}
- 
-<div class="form-box">
-    <div class="login-container" id="login">
-        <form method='POST'>
-            {% csrf_token %}
-            {% if messages %}
-                <div class="alert alert-primary alert-dismissible" id="success-alert">
-                    {% for message in messages %}
-                        {{message}}
-                    {% endfor %}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="container">
+    <div class="row main-container">
+        <div class="form-box col col-sm-0 mx-auto">
+            <div id="carouselExampleInterval" class="carousel slide carousel-fade" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                  <div class="carousel-item active" data-bs-interval="2000">
+                    <img src="https://cdnbbsr.s3waas.gov.in/s307811dc6c422334ce36a09ff5cd6fe71/uploads/2022/01/2022013169-1024x689.jpg" class="d-block c-image" alt="NCC1">
+                  </div>
+                  <div class="carousel-item" data-bs-interval="2000">
+                    <img src="https://cdnbbsr.s3waas.gov.in/s307811dc6c422334ce36a09ff5cd6fe71/uploads/2022/01/2022012523-2-1024x683.jpg" class="d-block c-image" alt="NCC2">
                 </div>
-            {% endif %}
-            <div class="input-box">
-                <input type="text" class="input-field" placeholder="Username" name="username">
-                <i class="bx bx-user"></i>
-            </div>
-            <div class="input-box">
-                <input type="password" class="input-field" placeholder="Password" name="password">
-                <i class="bx bx-lock-alt"></i>
-            </div>
-            <div class="input-box">
-                <input type="submit" class="submit" value="Sign In">
-            </div>
-            <div class="two-col">
-                <div class="one">
+                  <div class="carousel-item">
+                    <img src="https://cdnbbsr.s3waas.gov.in/s307811dc6c422334ce36a09ff5cd6fe71/uploads/2022/01/2022012567-2-1024x683.jpg" class="d-block c-image" alt="NCC3">
+                  </div>
                 </div>
-                <div class="two">
-                    <label><a href="/forgot-password/">Forgot password?</a></label>
-                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleInterval" data-bs-slide="prev" hidden>
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleInterval" data-bs-slide="next" hidden>
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </button>
+              </div>
+        </div>
+        <div class="form-box col">
+            <div class="login-container" id="login">
+                <form method='POST'>
+                    {% csrf_token %}
+                    {% if messages %}
+                        <div class="alert alert-primary alert-dismissible" id="success-alert">
+                            {% for message in messages %}
+                                {{message}}
+                            {% endfor %}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endif %}
+                    <div class="input-box">
+                        <input type="text" class="input-field" placeholder="Username" name="username">
+                        <i class="bx bx-user"></i>
+                    </div>
+                    <div class="input-box">
+                        <input type="password" class="input-field" placeholder="Password" name="password">
+                        <i class="bx bx-lock-alt"></i>
+                    </div>
+                    <div class="input-box">
+                        <input type="submit" class="submit" value="Sign In">
+                    </div>
+                    <div class="two-col">
+                        <div class="one">
+                        </div>
+                        <div class="two">
+                            <label><a href="/forgot-password/">Forgot password?</a></label>
+                        </div>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
 </div>
-
 {% endblock %}

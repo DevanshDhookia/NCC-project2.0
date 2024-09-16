@@ -30,7 +30,7 @@
         {% if user.is_authenticated %}
             <div class="nav-menu" id="navMenu">
                 <ul class="ul1">
-                <li><a href="/clerk/" class="link active">Home</a></li>
+                <li><a href="/user/" class="link active">Home</a></li>
                 {% if perms.home.can_create_new_candidates %}
                     <li>
                         <a href="/Register Students/" class="link">Register Students</a>
@@ -91,8 +91,23 @@
                     </li>
                 {% endif %}
                 {% if perms.home.can_send_certificate_for_approval or perms.home.can_generate_certificate %}
-                    <li>
-                        <a href="/Preview Certificates/" class="link">Preview Certificates</a>
+                    <li class="nav2">
+                        <a class="link" href="#">Certificates</a>
+                        <div class="dropdown">
+                        <ul class="ul2">
+                            <li>
+                                <a class="dropdown-i" href="/Preview Certificates/"
+                                    >Preview Certificates</a
+                                >
+                            </li>
+                                
+                            <li>
+                                <a class="dropdown-i" href="/print-certificate/"
+                                    >Print Certificates</a
+                                >
+                            </li>
+                        </ul>
+                        </div>
                     </li>
                 {% endif %}
                 {% if perms.home.can_view_student_details %}
@@ -122,8 +137,6 @@
         {% else %}
             <div class="nav-menu" id="navMenu">
                 <ul>
-                    <li><a href="/index/" class="link">Home</a></li>
-                    <li><a href="/contact/" class="link">Contacts</a></li>
                     <button class="btn white-btn link" id="loginBtn" onclick="window.location.href='/SignIn/'">Sign In</button>
                 </ul>
             </div>

@@ -26,15 +26,15 @@
     <div class="page-content">
       <div class="container">
         <div class="row">
-          {% if juniors is not None %}
+          {% if juniors is not None or groupp != 'cl' %}
             <div class="col-md-3 col-sm-0 dashboard-juniors">
               <ul class="list-group">
                 <div class="list-group-item list-group-item-action">
-                  <a href="/clerk/" class="list-group-item"> Current User<i class="bx bx-chevron-right dashboard-juniors-icon"></i></a>
+                  <a href="/user/" class="list-group-item"> Current User<i class="bx bx-chevron-right dashboard-juniors-icon"></i></a>
                 </div>
                 {% for junior in juniors %}
                   <div class="list-group-item list-group-item-action">
-                    <a href="/clerk/{{junior.id}}" class="list-group-item"> {{junior.username}}<i class="bx bx-chevron-right dashboard-juniors-icon"></i> </a>
+                    <a href="/user/{{junior.id}}" class="list-group-item"> {{junior.username}}<i class="bx bx-chevron-right dashboard-juniors-icon"></i> </a>
                   </div>
                 {% endfor %}
               </ul>
@@ -47,13 +47,13 @@
                 <ul class="dropdown-menu">
                   <li>
                     <div class="dropdown-item">
-                      <a href="/clerk/" class="list-group-item">Current User<i class="bx bx-chevron-right dashboard-juniors-icon"></i> </a>
+                      <a href="/user/" class="list-group-item">Current User<i class="bx bx-chevron-right dashboard-juniors-icon"></i> </a>
                     </div>
                   </li>
                   {% for junior in juniors %}
                     <li>
                       <div class="dropdown-item">
-                        <a href="/clerk/{{junior.id}}" class="list-group-item"> {{junior.username}}<i class="bx bx-chevron-right dashboard-juniors-icon"></i> </a>
+                        <a href="/user/{{junior.id}}" class="list-group-item"> {{junior.username}}<i class="bx bx-chevron-right dashboard-juniors-icon"></i> </a>
                       </div>
                     </li>
                   {% endfor %}
@@ -61,7 +61,11 @@
               </div>
             </div>
           {% endif %}
-          <div class="col-md-9 col-sm-12" id="dashboard-cards">
+          {% if juniors is not None or groupp != 'cl' %}
+            <div class="col-md-9 col-sm-12" id="dashboard-cards">
+          {% else %}
+            <div class="col" id="dashboard-cards">
+          {% endif %}
             {% if messages %}
                 <div class="alert alert-primary alert-dismissible" id="success-alert">
                     {% for message in messages %}

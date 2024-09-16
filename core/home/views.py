@@ -20,6 +20,7 @@ from common_utils.jwt_manager import JwtUtility
 from common_utils.smtp_manager import SMTPManager
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
+from django.views.decorators.cache import cache_control, never_cache
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.forms.models import model_to_dict
@@ -29,20 +30,24 @@ import png
 from datetime import date
 from .util import Util
 
+
 login_validator = LoginValidator()
 jwt_utility = JwtUtility()
 utility = Util()
 smtp = SMTPManager()
 
 def home(request):
-    return render(request, "Login_Page/index.html")
+    return redirect("/SignIn/")
 
 def contact(request):
     return render(request, "Login_Page/contact.html")
 
+def custom_404_view(request):
+    return render(request, '404.html', status=404)
+
 def SignIn(request):
     if request.user is None:
-        return redirect('/clerk/')
+        return redirect('/user/')
     if request.method == 'POST':
         data = request.POST
         user = authenticate(username=data.get("username"), password=data.get("password"))
@@ -54,7 +59,7 @@ def SignIn(request):
             request.session["token"] = token
             login(request, user)
 
-            return redirect("/clerk/")
+            return redirect("/user/")
         else:
             messages.info(request, "Invalid Login Credentials")
             return redirect("/SignIn/")
@@ -133,7 +138,7 @@ def change_password(request):
                     user.set_password(new_pass)
                     user.save()
                     messages.info(request, "Password updated successfully")
-                    return redirect("/clerk/")
+                    return redirect("/user/")
                 else:
                     messages.error(request, "New password and confirm pasword does not match.")
         else:
@@ -294,7 +299,10 @@ def user_logout(request):
 
 #-------------- Home Page Views -------------#
 def index(request):
-    return render(request, "Login_Page/index.html")
+    if request.user.is_authenticated:
+        return redirect("/user/")
+    else:
+        return redirect("/SignIn/")
 
 @login_required
 def clerk_page(request, user_id='default'):
@@ -317,10 +325,12 @@ def clerk_page(request, user_id='default'):
         total_cert_approved = 0
         total_cert_pending_approval = 0
         total_rejected_certs = 0
+        groupp = None
         
         juniors = None
         students_list = None
         if request.user.groups.filter(name='Director_General').exists():
+            groupp = "dg"
             juniors = Brigadier.objects.filter(director_general_id = Director_General.objects.get(user_id=request.user.id).id)
             if user_id != 'default':
                 try:
@@ -331,11 +341,12 @@ def clerk_page(request, user_id='default'):
                 except Exception as e:
                     print(e)
                     messages.info(request, "You are not entitled to view this user details")
-                    return redirect("/clerk/")
+                    return redirect("/user/")
             else:
                 students_list = Student.objects.filter(director_general_id = Director_General.objects.get(user_id=request.user.id).id)
         
         if request.user.groups.filter(name='Brigadier').exists():
+            groupp = "bg"
             juniors = Colonel.objects.filter(brigadier_id = Brigadier.objects.get(user_id=request.user.id).id)
             if user_id != 'default':
                 try:
@@ -346,11 +357,12 @@ def clerk_page(request, user_id='default'):
                 except Exception as e:
                     print(e)
                     messages.info(request, "You are not entitled to view this user details")
-                    return redirect("/clerk/")
+                    return redirect("/user/")
             else:
                 students_list = Student.objects.filter(brigadier_id = Brigadier.objects.get(user_id=request.user.id).id)
 
         if request.user.groups.filter(name='Colonel').exists():
+            groupp = "co"
             print("Searching for juniors")
             print(request.user.id)
             juniors = Clerk.objects.filter(colonel_id = Colonel.objects.get(user_id=request.user.id).id)
@@ -363,10 +375,11 @@ def clerk_page(request, user_id='default'):
                 except Exception as e:
                     print(e)
                     messages.info(request, "You are not entitled to view this user details")
-                    return redirect("/clerk/")
+                    return redirect("/user/")
             else:
                 students_list = Student.objects.filter(colonel_id = Colonel.objects.get(user_id=request.user.id).id)
         if request.user.groups.filter(name='Clerk').exists():
+            groupp = "cl"
             juniors = None
             students_list = Student.objects.filter(clerk_id = Clerk.objects.get(user_id=request.user.id).id)
         if juniors is not None :
@@ -434,7 +447,8 @@ def clerk_page(request, user_id='default'):
             "total_certificates": total_certificates,
             "total_cert_approved": total_cert_approved,
             "total_cert_pending_approval": total_cert_pending_approval,
-            "total_rejected_certs": total_rejected_certs
+            "total_rejected_certs": total_rejected_certs,
+            "groupp": groupp
         }
 
 
@@ -445,6 +459,7 @@ def clerk_page(request, user_id='default'):
 def Add_Result(request):
     return render(request, "clerk/Add_Result.html")
 
+@login_required
 def add_result_data(request):
     if request.method == 'POST':
         request_data = request.POST
@@ -655,6 +670,7 @@ def results(request):
 
 
 @login_required
+@never_cache
 def Preview_Admit_Card(request):
     if login_validator.is_user_logged_in(request) and request.user.is_authenticated:
         # Retrieve all pending students ordered by ID
@@ -666,7 +682,7 @@ def Preview_Admit_Card(request):
             pending_students = Student.objects.filter(admit_card_approved=False, admit_card_send_for_approval=False, clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
         else:
             messages.error(request, "You do not have permission to perform this action.")
-            return redirect('/clerk/')
+            return redirect('/user/')
         if not pending_students.exists():
             # If no students are left to preview, render the "All Students Previewed" page
             return render(request, "clerk/All_Students_Previewed.html")
@@ -747,6 +763,7 @@ def generate_certificate_action(request, cbse_no):
 
 
 @login_required
+@never_cache
 def Preview_Certificates(request):
      # Determine the user's role and fetch pending students accordingly
     pending_students=[]
@@ -789,7 +806,7 @@ def Preview_Certificates(request):
        ).order_by('id')
     else:
         messages.error(request, "You do not have permission to perform this action.")
-        return redirect('/clerk/')
+        return redirect('/user/')
 
     # pending_students=Student.objects.all()
     # If no pending students, render the "All Students Previewed" page
@@ -829,6 +846,76 @@ def Preview_Certificates(request):
     }
     return render(request, "clerk/Preview_Certificates.html", context)
 
+def print_certificate(request):
+    folder_path = os.path.join(settings.MEDIA_ROOT, 'Certificates')
+    if request.method == 'POST' and 'download' in request.POST:
+        zip_file_name = 'certificates.zip'
+        zip_file_path = os.path.join(settings.MEDIA_ROOT, zip_file_name)
+        with zipfile.ZipFile(zip_file_path, 'w') as zipf:
+            for root, dirs, files in os.walk(folder_path):
+                for file in files:
+                    cbse_no = "_".join(file.split("_")[0:-1])
+                    if check_generated_by_cbse_no(cbse_no, 'c')[0]:
+                        file_path = os.path.join(root, file)
+                        zipf.write(file_path, os.path.relpath(file_path, folder_path))
+
+        # Serve the zip file as a downloadable response
+        with open(zip_file_path, 'rb') as zipf:
+            response = HttpResponse(zipf.read(), content_type='application/zip')
+            response['Content-Disposition'] = f'attachment; filename={zip_file_name}'
+        
+        # Close the response before deleting the file
+        response.close()
+
+        # Delete the ZIP file from the server after the download
+        os.remove(zip_file_path)
+
+        # Set a success message
+        messages.success(request, 'The Certificates folder has been successfully downloaded.')
+
+        # Redirect back to the same page after download
+        return response
+    if request.method == 'POST' and 'single' in request.POST:
+        cbse_no = request.POST.get("cbse_no")
+        st_check_result = check_generated_by_cbse_no(cbse_no, 'c')
+        if st_check_result[0]:
+            file_path = os.path.join(folder_path, cbse_no + "_certificate.png")
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as certificate:
+                    response = HttpResponse(certificate.read(), content_type="image/png")
+                    response['Content-Disposition'] = f'attachment; filename={cbse_no}_certificate.png'
+                response.close()
+                return response
+            else:
+                messages.error(request, "Certificate not available for this CBSE No.")
+        else:
+            messages.error(request, st_check_result[1])
+    # Render the template for GET requests
+    return render(request, "clerk/print_certificate.html")
+
+def check_generated_by_cbse_no(cbse_no, rtype):
+    student_data = Student.objects.filter(CBSE_No = cbse_no)
+    if student_data:
+        if rtype == 'c':
+            if student_data[0].certificate:
+                if student_data[0].certificate.Approved==True:
+                    print("Certificate is generated for this student")
+                    return True, ""
+                else:
+                    return False, "Certificate is not approved for the student"
+            else:
+                return False, "Certificate not available for this student"
+        if rtype == 'a':
+            if student_data[0].admit_card_generated:
+                if student_data[0].admit_card_approved==True:
+                    return True, ""
+                else:
+                    return False, "Admit Card is not approved for the student"
+            else:
+                return False, "Admit Card not available for this student"
+    else:
+        return False, "Student details does not exist"
+
 def generate_qr_code(student):
     # The data to encode in the QR code
     # data = "www.google.com"
@@ -859,8 +946,10 @@ def Print_Admit_Cards(request):
         with zipfile.ZipFile(zip_file_path, 'w') as zipf:
             for root, dirs, files in os.walk(folder_path):
                 for file in files:
-                    file_path = os.path.join(root, file)
-                    zipf.write(file_path, os.path.relpath(file_path, folder_path))
+                    cbse_no = "_".join(file.split("_")[0:-2])
+                    if check_generated_by_cbse_no(cbse_no, 'a')[0]:
+                        file_path = os.path.join(root, file)
+                        zipf.write(file_path, os.path.relpath(file_path, folder_path))
 
         # Serve the zip file as a downloadable response
         with open(zip_file_path, 'rb') as zipf:
@@ -880,16 +969,20 @@ def Print_Admit_Cards(request):
         return response
     if request.method == 'POST' and 'single' in request.POST:
         cbse_no = request.POST.get("cbse_no")
-        file_path = os.path.join(folder_path, cbse_no + "_admit_card.png")
-        if os.path.exists(file_path):
-            with open(file_path, "rb") as admit_card:
-                response = HttpResponse(admit_card.read(), content_type="image/png")
-                response['Content-Disposition'] = f'attachment; filename={cbse_no}s_admit_card.png'
-            response.close()
-            messages.success(request, "Admin card downloaded successfully")
-            return response
+        gene_check = check_generated_by_cbse_no(cbse_no, 'a')
+        if gene_check[0]:
+            file_path = os.path.join(folder_path, cbse_no + "_admit_card.png")
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as admit_card:
+                    response = HttpResponse(admit_card.read(), content_type="image/png")
+                    response['Content-Disposition'] = f'attachment; filename={cbse_no}s_admit_card.png'
+                response.close()
+                messages.success(request, "Admin card downloaded successfully")
+                return response
+            else:
+                messages.error(request, "Admit card not available for this CBSE No.")
         else:
-            messages.error(request, "Admit card not available for this CBSE No.")
+            messages.error(request, gene_check[1])
     # Render the template for GET requests
     return render(request, "clerk/Print_Admit_Cards.html")
 
@@ -1281,6 +1374,27 @@ def search_student(request):
             'students_json': json.dumps([str(model_to_dict(student))], cls=DjangoJSONEncoder)
         }
     return render(request, 'clerk/Student_Details.html', context)
+
+
+@login_required
+def search_result(request):
+    cbse_no = request.POST.get("cbse_no")
+    print("Cbse no", cbse_no)
+    if cbse_no:
+        if request.user.groups.filter(name='Colonel').exists():
+            results_data = Student.objects.filter(result__isnull=False, colonel=Colonel.objects.get(user_id=request.user.id), CBSE_No = cbse_no).order_by('id')
+        elif request.user.groups.filter(name='Clerk').exists():
+            results_data = Student.objects.filter(result__isnull=False, clerk=Clerk.objects.get(user_id=request.user.id), CBSE_No = cbse_no).order_by('id')
+        elif request.user.groups.filter(name='Brigadier').exists():
+            results_data = Student.objects.filter(result__isnull=False, brigadier=Brigadier.objects.get(user_id=request.user.id), CBSE_No = cbse_no).order_by('id')
+        elif request.user.groups.filter(name='Director_General').exists():
+            results_data = Student.objects.filter(result__isnull=False, director_general=Director_General.objects.get(user_id=request.user.id), CBSE_No = cbse_no).order_by('id')
+        print(results_data)
+        return_data = [{"id": student.id,"student_id": student.CBSE_No, "result": model_to_dict(student.result), "student_name": student.Name, "college": student.School_College_Class, "unit": student.Unit,"rank": student.Rank, "p_1_total": student.result.Paper1_T, "p_2_total": student.result.Paper2_T, "p_3_total": student.result.Paper3_W, "p_4_total": student.result.Paper4_T, "cert_generated": student.certificate_id != None} for student in results_data]
+        serialized_return_data = json.dumps(list(return_data), cls=DjangoJSONEncoder)
+        return render(request, "clerk/view_results.html", {"result_data": return_data, "serialized_result_data": serialized_return_data })
+    else:
+        return redirect("/view-results/")
 
 @login_required
 def reject_certificate(request, cbse_no):
