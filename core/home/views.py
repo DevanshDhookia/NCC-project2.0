@@ -1318,6 +1318,7 @@ def update_student(request):
                 return None
             return value
         
+        pagee = get_value("page")
         # Updating fields
         student.Name = get_value('Name')
         student.name_hindi = get_value("Name_Hindi")
@@ -1354,8 +1355,10 @@ def update_student(request):
         # Save the student object
         student.save()
         generate_admit_card(student)
-
-        return redirect('/Student Details')  # Redirect after saving
+        if pagee == 'result':
+            return redirect('/Rejected Admit Cards/')
+        elif page == 'student':
+            return redirect('/Student Details')  # Redirect after saving
 
     return render(request, 'clerk/Student_Details.html', {'student': student})
 

@@ -1,7 +1,7 @@
 {% extends "Login_Page/login_base_template.html" %}
 {% load static %}
 
-{% block csss_block %}
+{% block css_block %}
 <link rel="stylesheet" href="{% static 'css/contact.css' %}">
 <script src="{% static 'js/student_detail.js' %}"
   data-students = "{{ students_json }}"
@@ -162,8 +162,23 @@
                                           readonly
                                           hidden
                                         />
+                                        <input name="page" value="result" hidden/>
                                       </div>
                                     </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>DOB</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-dob"
+                                          type="text"
+                                          name="DOB"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="row">
                                     <div class="col">
                                       <div class="form-group">
                                         <label>Full Name</label>
@@ -176,8 +191,6 @@
                                         />
                                       </div>
                                     </div>
-                                  </div>
-                                  <div class="row">
                                     <div class="col">
                                       <div class="form-group">
                                         <label>Father's Name</label>
@@ -190,14 +203,28 @@
                                         />
                                       </div>
                                     </div>
+                                  </div>
+                                  <div class="row">
                                     <div class="col">
                                       <div class="form-group">
-                                        <label>DOB</label>
+                                        <label>Full Name Hindi</label>
                                         <input
                                           class="form-control"
-                                          id="modal-dob"
+                                          id="modal-full-name-hindi"
                                           type="text"
-                                          name="DOB"
+                                          name="Name_Hindi"
+                                          value=""
+                                        />
+                                      </div>
+                                    </div>
+                                    <div class="col">
+                                      <div class="form-group">
+                                        <label>Father's Name Hindi</label>
+                                        <input
+                                          class="form-control"
+                                          id="modal-father-name-hindi"
+                                          type="text"
+                                          name="Fathers_Name_Hindi"
                                           value=""
                                         />
                                       </div>
