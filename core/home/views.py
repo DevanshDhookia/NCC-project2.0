@@ -815,18 +815,20 @@ def Preview_Certificates(request):
     else:
         student = pending_students.first()
     
-    # certificate_image_path = generate_certificate(student)
+    certificate_image_path = student.certificate.certificate_path
+    if not os.path.exists(certificate_image_path):
+        certificate_image_path = generate_certificate(student)
     # Generate the certificate if it hasn't been generated yet
     # if not student.certificate.certificate_generated:
     #     certificate_image_path = generate_certificate(student)
     #     student.certificate.save()
     # else:
     # certificate_image_path = os.path.join(settings.MEDIA_URL, 'Certificates', f'{student.CBSE_No}_certificate.png')
-    certificate_image_path = student.certificate.certificate_path
+    
     # print(certificate_image_path)
     # root_cert_path = settings.MEDIA_ROOT + "/"+"/".join(certificate_image_path.split("/")[2:])
+    
     blob_image = base64.b64encode(open(certificate_image_path, "rb").read()).decode()
-
     # Get the current student's position in the list
     student_ids = list(pending_students.values_list('id', flat=True))
     current_index = student_ids.index(student.id)
