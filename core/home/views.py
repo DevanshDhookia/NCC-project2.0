@@ -1431,7 +1431,7 @@ def approve_certificate(request, cbse_no):
        certificate.save()
 
 
-   return redirect('Preview_Admit_Card')
+   return redirect('/Preview Certificates/')
 
 def Download_Admit_Card(request):
     if request.method == 'POST':
