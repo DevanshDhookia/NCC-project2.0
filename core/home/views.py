@@ -395,7 +395,7 @@ def clerk_page(request, user_id='default'):
                 army_students += 1
             if student.Wing == 'Navy':
                 navy_students += 1
-            if student.Wing == 'Air-Force':
+            if student.Wing == 'Air Force':
                 af_students += 1
             if student.Certificate_type == 'A' and student.certificate and student.certificate.Approved == True:
                 total_certificates += 1
@@ -686,15 +686,16 @@ def Preview_Admit_Card(request):
             student = get_object_or_404(Student, id=student_id, admit_card_approved=False, rejection_reason=None)
         else:
             student = pending_students.first()
-
+        root_cert_path = None
         # Generate the admit card if it hasn't been generated yet
         if not student.admit_card_generated:
             admit_card_image_path = generate_admit_card(student)
             student.admit_card_generated = True
+            root_cert_path = admit_card_image_path
             student.save()
         else:
             admit_card_image_path = os.path.join(settings.MEDIA_URL, 'Admit_Cards', f'{student.CBSE_No}_admit_card.png')
-        root_cert_path = settings.MEDIA_ROOT + "/"+"/".join(admit_card_image_path.split("/")[2:])
+            root_cert_path = settings.MEDIA_ROOT + "/"+"/".join(admit_card_image_path.split("/")[2:])
         blob_image = base64.b64encode(open(root_cert_path, "rb").read()).decode()
         # Get the current student's position in the list
         student_ids = list(pending_students.values_list('id', flat=True))

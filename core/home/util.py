@@ -58,4 +58,4 @@ class Util():
                     
     def translate_names(self, language_code, name):
         translation = self.translator.translate(name, dest=language_code)
-        return translation
+        return translation.text
