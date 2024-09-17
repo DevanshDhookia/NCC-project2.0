@@ -90,7 +90,7 @@
                         </div>
                     </li>
                 {% endif %}
-                {% if perms.home.can_send_certificate_for_approval or perms.home.can_generate_certificate %}
+                {% if perms.home.can_send_certificate_for_approval or perms.home.can_generate_certificate or perms.home.can_approve_certificate %}
                     <li class="nav2">
                         <a class="link" href="#">Certificates</a>
                         <div class="dropdown">

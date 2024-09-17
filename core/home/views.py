@@ -21,6 +21,7 @@ from common_utils.smtp_manager import SMTPManager
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.views.decorators.cache import cache_control, never_cache
+from django.utils.decorators import method_decorator
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.forms.models import model_to_dict
@@ -29,6 +30,7 @@ import pyqrcode
 import png
 from datetime import date
 from .util import Util
+import base64
 
 
 login_validator = LoginValidator()
@@ -71,7 +73,6 @@ def forgot_password(request):
         user_name = request.POST.get("username")
         otp = request.POST.get("otp")
         isotpcall = request.POST.get("isotp")
-        print("This is an otp call", isotpcall)
         try:
             user = User.objects.get(username=user_name)
             context["username"] = user_name
@@ -153,7 +154,6 @@ def generate_otp(request):
             username = request.POST.get('otp-username')
             typee = request.POST.get("type")
             otpp = request.POST.get("otp")
-            print("The type is: :", typee, otpp, username)
 
 @login_required
 def register(request):
@@ -363,8 +363,6 @@ def clerk_page(request, user_id='default'):
 
         if request.user.groups.filter(name='Colonel').exists():
             groupp = "co"
-            print("Searching for juniors")
-            print(request.user.id)
             juniors = Clerk.objects.filter(colonel_id = Colonel.objects.get(user_id=request.user.id).id)
             if user_id != 'default':
                 try:
@@ -426,8 +424,6 @@ def clerk_page(request, user_id='default'):
             if student.certificate and  student.certificate.Approved == False and student.certificate.Rejected_reason is not None:
                 total_rejected_certs += 1
                 
-                
-        print(students_list)
         context = {
             'total_students': students_list,
             'admitcard_generated_students': admitcard_generated_students,
@@ -510,7 +506,6 @@ def add_result_data(request):
             # try:
             excel_file = request.FILES.get("excel_file")
             if excel_file:
-                print("Reading the excel file")
                 file_extension = os.path.splitext(excel_file.name)[1]
                 df = None
                 if file_extension in ['.csv']:
@@ -670,11 +665,9 @@ def results(request):
 
 
 @login_required
-@never_cache
 def Preview_Admit_Card(request):
     if login_validator.is_user_logged_in(request) and request.user.is_authenticated:
         # Retrieve all pending students ordered by ID
-        print(request.user.id)
         pending_students = []
         if request.user.groups.filter(name='Colonel').exists():
             pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, admit_card_send_for_approval=True, colonel_id=Colonel.objects.filter(user_id=request.user.id)[0].id).order_by('id')
@@ -701,7 +694,8 @@ def Preview_Admit_Card(request):
             student.save()
         else:
             admit_card_image_path = os.path.join(settings.MEDIA_URL, 'Admit_Cards', f'{student.CBSE_No}_admit_card.png')
-
+        root_cert_path = settings.MEDIA_ROOT + "/"+"/".join(admit_card_image_path.split("/")[2:])
+        blob_image = base64.b64encode(open(root_cert_path, "rb").read()).decode()
         # Get the current student's position in the list
         student_ids = list(pending_students.values_list('id', flat=True))
         current_index = student_ids.index(student.id)
@@ -713,9 +707,9 @@ def Preview_Admit_Card(request):
         # Render the template with the appropriate context
         context = {
             'student': student,
-            'admit_card_image_path': admit_card_image_path,
             'next_student': next_student,
             'prev_student': prev_student,
+            'blob_image': blob_image
         }
         return render(request, "clerk/Preview_Admit_Card.html", context)
     else:
@@ -746,7 +740,8 @@ def generate_certificate_action(request, cbse_no):
         student.save()
         try:
             certificate_image_path = generate_certificate(student)
-            cert.certificate_path = certificate_image_path,
+            cert.certificate_path = certificate_image_path
+            cert.save()
             student.certificate = cert
             student.save()
         except Exception as e:
@@ -820,7 +815,7 @@ def Preview_Certificates(request):
     else:
         student = pending_students.first()
     
-    certificate_image_path = generate_certificate(student)
+    # certificate_image_path = generate_certificate(student)
     # Generate the certificate if it hasn't been generated yet
     # if not student.certificate.certificate_generated:
     #     certificate_image_path = generate_certificate(student)
@@ -828,6 +823,9 @@ def Preview_Certificates(request):
     # else:
     # certificate_image_path = os.path.join(settings.MEDIA_URL, 'Certificates', f'{student.CBSE_No}_certificate.png')
     certificate_image_path = student.certificate.certificate_path
+    # print(certificate_image_path)
+    # root_cert_path = settings.MEDIA_ROOT + "/"+"/".join(certificate_image_path.split("/")[2:])
+    blob_image = base64.b64encode(open(certificate_image_path, "rb").read()).decode()
 
     # Get the current student's position in the list
     student_ids = list(pending_students.values_list('id', flat=True))
@@ -840,9 +838,9 @@ def Preview_Certificates(request):
     # Render the template with the appropriate context
     context = {
         'student': student,
-        'certificate_image_path': certificate_image_path,
         'next_student': next_student,
         'prev_student': prev_student,
+        'blob_image': blob_image
     }
     return render(request, "clerk/Preview_Certificates.html", context)
 
@@ -899,7 +897,6 @@ def check_generated_by_cbse_no(cbse_no, rtype):
         if rtype == 'c':
             if student_data[0].certificate:
                 if student_data[0].certificate.Approved==True:
-                    print("Certificate is generated for this student")
                     return True, ""
                 else:
                     return False, "Certificate is not approved for the student"
@@ -1009,7 +1006,6 @@ def generate_admit_card(student):
         raise ValueError("Could not load the specified font.")
 
     # Define the text and their corresponding positions
-    print(model_to_dict(student))
     texts_with_positions = [
         (student.Unit, (242, 246)),
         (student.Admit_Card_No, (920, 230)),
@@ -1042,7 +1038,6 @@ def generate_admit_card(student):
     if student.Photo:
         try:
             insert_image_path = student.Photo.path
-            print("image path", insert_image_path)
             insert_image = Image.open(insert_image_path)
             insert_image = insert_image.resize((170, 170))
             image_position = (870, 274)
@@ -1379,7 +1374,6 @@ def search_student(request):
 @login_required
 def search_result(request):
     cbse_no = request.POST.get("cbse_no")
-    print("Cbse no", cbse_no)
     if cbse_no:
         if request.user.groups.filter(name='Colonel').exists():
             results_data = Student.objects.filter(result__isnull=False, colonel=Colonel.objects.get(user_id=request.user.id), CBSE_No = cbse_no).order_by('id')
@@ -1389,7 +1383,6 @@ def search_result(request):
             results_data = Student.objects.filter(result__isnull=False, brigadier=Brigadier.objects.get(user_id=request.user.id), CBSE_No = cbse_no).order_by('id')
         elif request.user.groups.filter(name='Director_General').exists():
             results_data = Student.objects.filter(result__isnull=False, director_general=Director_General.objects.get(user_id=request.user.id), CBSE_No = cbse_no).order_by('id')
-        print(results_data)
         return_data = [{"id": student.id,"student_id": student.CBSE_No, "result": model_to_dict(student.result), "student_name": student.Name, "college": student.School_College_Class, "unit": student.Unit,"rank": student.Rank, "p_1_total": student.result.Paper1_T, "p_2_total": student.result.Paper2_T, "p_3_total": student.result.Paper3_W, "p_4_total": student.result.Paper4_T, "cert_generated": student.certificate_id != None} for student in results_data]
         serialized_return_data = json.dumps(list(return_data), cls=DjangoJSONEncoder)
         return render(request, "clerk/view_results.html", {"result_data": return_data, "serialized_result_data": serialized_return_data })

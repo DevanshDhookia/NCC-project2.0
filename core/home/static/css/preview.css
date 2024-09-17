@@ -301,4 +301,7 @@ body{
     background-color: #c0392b; /* Darker red on hover */
 }
 
+form{
+    align-self: center;
+}
 
