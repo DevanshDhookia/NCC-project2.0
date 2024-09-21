@@ -174,8 +174,11 @@ body{
 /* Content Styles */
 .content {
     padding-top: 80px; /* Adjust this to account for the height of the fixed navbar */
-    flex: 1;
-    overflow: hidden; /* Allow scrolling if content overflows */
+    /* flex: 1; */
+    /* overflow: auto; Allow scrolling if content overflows */
+    width: 100%;
+    padding-left: 30px;
+    padding-right: 30px;
 }
 
 /* Admit Card Preview Section */
@@ -305,3 +308,6 @@ form{
     align-self: center;
 }
 
+.center-heading {
+    align-content: start;
+}

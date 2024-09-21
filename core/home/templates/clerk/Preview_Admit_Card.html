@@ -3,7 +3,10 @@
 
 {% block css_block %}
   <link rel="stylesheet" href="{% static 'css/preview.css' %}">
-{% endblock %}
+  <link rel="stylesheet" href="{% static 'css/student_details.css' %}" />
+  <script src="{% static 'js/preview.js' %}"
+  data-students = "{{ certificates }}"></script>
+  {% endblock %}
 
 {% block title %}
     NCC (National Cadet Corps)
@@ -12,6 +15,143 @@
 {% block start %}
   <div class="content">
       <!-- Admit Card Preview Section -->
+      <div class="rectangular-box">
+        <form class="form" method="GET" action="{% url 'search_student' %}">
+          <input
+            class="form-control mr-sm-2"
+            id="search-students-box"
+            type="search"
+            name="cbse_no"
+            placeholder="Enter Regiment No."
+            aria-label="Enter Regiment No."
+            required
+          />
+          <button class="ctm-btn" type="submit">Search</button>
+        </form>
+        <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/Student Details/')">Clear</button>
+      </div>
+      <form class="form m-1" id="bulk-approve-form" hidden>
+        {% if perms.home.can_send_admit_card_for_approval %}
+          <button class="btn btn-primary m-2" type="button" onclick="bulk_action('send', '{{csrf_token}}', 'admit_card')">Send for Approval</button>
+        {% endif %}
+        {% if perms.home.can_approve_admit_card %}
+          <button class="btn btn-success m-2" type="button" onclick="bulk_action('approve', '{{csrf_token}}', 'admit_card')">Approve</button>
+        {% endif %}  
+        {% if perms.home.can_reject_admit_card %}
+          <button class="btn btn-danger m-2" type="button" onclick="bulk_action('reject', '{{csrf_token}}', 'admit_card')">Reject</button>
+        {% endif %}
+      </form>
+      <div class="table-container">
+        <table class="table table-bordered table2">
+          <thead>
+            <tr>
+              <th scope="col"><center><div>Select All</div><input class="form-check-input checkbox-main" type="checkbox" value="" id="flexCheckDefault" onchange="onMainCheckboxToggle()"></center></th>
+              <th scope="col" class="center-heading">Sr.No.</th>
+              <th scope="col" class="center-heading">Student ID</th>
+              <th scope="col" class="center-heading">Name</th>
+              <th scope="col" class="center-heading">Admit Card No.</th>
+              <th scope="col" class="center-heading">Unit</th>
+              <th scope="col" class="center-heading">Rank</th>
+              <th scope="col" class="center-heading">Fresh/Faliure</th>
+              <th scope="col" class="center-heading">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in pending_students %}
+            <tr>
+              <th scope="col"><center><input class="form-check-input sub-checkbox sub-checkbox-{{forloop.counter}}" type="checkbox" value="{{ student.CBSE_No }}" name={{ student.CBSE_No }} onchange="onSubCheckboxToggle('{{forloop.counter}}', '{{student.CBSE_No}}')"></center></th>
+              <th scope="row">{{ forloop.counter }}</th>
+              <td>{{ student.CBSE_No }}</td>
+              <td>{{ student.Name }}</td>
+              <td>{{ student.Admit_Card_No }}</td>
+              <td>{{ student.Unit }}</td>
+              <td>{{ student.Rank }}</td>
+              <td>{{ student.Fresh_Failure }}</td>
+              <td>
+                <button
+                  class="btn btn-info"
+                  data-bs-toggle="modal"
+                  data-bs-target="#staticBackdrop"
+                  {% comment %} onclick="view_student({{student}}, 'view')" {% endcomment %}
+                  onclick="openModalOnClick('{{forloop.counter}}', '{{student.CBSE_No}}')"
+                >
+                  View
+                </button> 
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5">No studnets are registered .</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div
+      class="modal fade modal-lg"
+      id="staticBackdrop"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+      tabindex="-1"
+      aria-labelledby="staticBackdropLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="staticBackdropLabel">
+              Admit Card
+            </h1>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="container">
+              <center><img src="data:image/png;base64,{{blob_image}}" alt="Admit Card" class="admit-card-image"></center>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Close
+            </button>
+            {% if perms.home.can_approve_admit_card %}
+              <form id='admit-card-approval-form' method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn green-btn">Approve</button>
+              </form>
+            {% endif %}
+            {% if perms.home.can_send_admit_card_for_approval %}
+              <!-- Approval Form -->
+              <form id='admit-card-send-approval-form'  method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">Send For Approval</button>
+              </form>
+            {% endif %}
+            {% if perms.home.can_reject_admit_card %}
+              <!-- Rejection Form -->
+              <form id='admit-card-reject-form' method="post">
+                {% csrf_token %}
+                <div class="reject-bar">
+                    <textarea name="rejection_reason" placeholder="Enter reason for rejection" class="reject-textarea"></textarea>
+                    <button type="submit" class="btn red-btn reject-btn">Reject</button>
+                </div>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+{% comment %} 
+
+
+       Old section 
       <div class="admit-card-preview">
           <h1>Preview Admit Card for {{ student.Name }}</h1>
           <img src="data:image/png;base64,{{blob_image}}" alt="Admit Card" class="admit-card-image">
@@ -53,7 +193,7 @@
                   <a href="{% url 'Preview_Admit_Card' %}?student_id={{ next_student.id }}&action=next" class="btn">Next</a>
               {% endif %}
           </div>            
-      </div>
+      </div> {% endcomment %}
   </div>
 {% endblock %}
 

@@ -48,6 +48,7 @@ urlpatterns = [
     path('Student Details/',Student_Details,name='Student_Details'),
     path('All Students Previewed/',All_Students_Previewed,name='All_Students_Previewed'),
     path('approve_admit_card/<str:cbse_no>/', approve_admit_card, name='approve_admit_card'),
+    path('bulk_action/', bulk_approve_admit_card, name='bulk_action'),
     path('can_send_admit_card_for_approval/<str:cbse_no>/', approve_admit_card, name='approve_admit_card'),
     path('reject_admit_card/<str:cbse_no>/', reject_admit_card, name='reject_admit_card'),
     path('search/', search_student, name='search_student'),
@@ -57,6 +58,7 @@ urlpatterns = [
     path('generate_certificate/<str:cbse_no>/', generate_certificate_action, name="generate_certificate"),
     path('approve_certificate/<str:cbse_no>/', approve_certificate, name='approve_certificate'),
     path('reject_certificate/<str:cbse_no>/', reject_certificate, name='reject_certificate'),
+    path('rejected-certificate/', rejected_certificates, name='rejected_certificate'),
     path('print-certificate/', print_certificate, name='print_certificate'),
     path('download-admit-card/', Download_Admit_Card, name='Download_Admit_Card'),
     # Other paths...

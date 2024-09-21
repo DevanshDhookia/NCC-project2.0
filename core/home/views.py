@@ -31,6 +31,8 @@ import png
 from datetime import date
 from .util import Util
 import base64
+import pymupdf
+import fitz
 
 
 login_validator = LoginValidator()
@@ -669,7 +671,7 @@ def results(request):
         bonus_marks_ser = json.dumps([model_to_dict(item) for item in bonus_marks_cat], cls=DjangoJSONEncoder)
         return_data = [{"id": student.id,"student_id": student.CBSE_No, "result": model_to_dict(student.result), "student_name": student.Name, "college": student.School_College_Class, "unit": student.Unit,"rank": student.Rank, "p_1_total": student.result.Paper1_T, "p_2_total": student.result.Paper2_T, "p_3_total": student.result.Paper3_W, "p_4_total": student.result.Paper4_T, "cert_generated": student.certificate_id != None} for student in results_data]
         serialized_return_data = json.dumps(list(return_data), cls=DjangoJSONEncoder)
-        return render(request, "clerk/view_results.html", {"result_data": return_data, "serialized_result_data": serialized_return_data })
+        return render(request, "clerk/view_results.html", {"result_data": return_data, "serialized_result_data": serialized_return_data, "bonus_marks_ser": bonus_marks_ser, "bonus_marks": bonus_marks_cat})
     else:
         return redirect('/index/')
 
@@ -683,6 +685,7 @@ def Preview_Admit_Card(request):
             pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, admit_card_send_for_approval=True, colonel_id=Colonel.objects.filter(user_id=request.user.id)[0].id).order_by('id')
         elif request.user.groups.filter(name='Clerk').exists():
             pending_students = Student.objects.filter(admit_card_approved=False, admit_card_send_for_approval=False, clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+            # pending_students = Student.objects.filter(clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
         else:
             messages.error(request, "You do not have permission to perform this action.")
             return redirect('/user/')
@@ -691,36 +694,33 @@ def Preview_Admit_Card(request):
             return render(request, "clerk/All_Students_Previewed.html")
 
         # Get the current student ID from the request or default to the first pending student
-        student_id = request.GET.get('student_id')
-        if student_id:
-            student = get_object_or_404(Student, id=student_id, admit_card_approved=False, rejection_reason=None)
-        else:
-            student = pending_students.first()
-        root_cert_path = None
-        # Generate the admit card if it hasn't been generated yet
-        if not student.admit_card_generated:
-            admit_card_image_path = generate_admit_card(student)
-            student.admit_card_generated = True
-            root_cert_path = admit_card_image_path
-            student.save()
-        else:
-            admit_card_image_path = os.path.join(settings.MEDIA_URL, 'Admit_Cards', f'{student.CBSE_No}_admit_card.png')
-            root_cert_path = settings.MEDIA_ROOT + "/"+"/".join(admit_card_image_path.split("/")[2:])
-        blob_image = base64.b64encode(open(root_cert_path, "rb").read()).decode()
+        certificates = []
+        for student in pending_students:
+            root_cert_path = None
+            # Generate the admit card if it hasn't been generated yet
+            if not student.admit_card_generated:
+                admit_card_image_path = generate_admit_card(student)
+                student.admit_card_generated = True
+                root_cert_path = admit_card_image_path
+                student.save()
+            else:
+                admit_card_image_path = os.path.join(settings.MEDIA_URL, 'Admit_Cards', f'{student.CBSE_No}_admit_card.png')
+                root_cert_path = settings.MEDIA_ROOT + "/"+"/".join(admit_card_image_path.split("/")[2:])
+            blob_image = base64.b64encode(open(root_cert_path, "rb").read()).decode()
+            certificates.append(blob_image)
         # Get the current student's position in the list
-        student_ids = list(pending_students.values_list('id', flat=True))
-        current_index = student_ids.index(student.id)
+        # student_ids = list(pending_students.values_list('id', flat=True))
+        # current_index = student_ids.index(student.id)
 
-        # Determine the next and previous student indices
-        next_student = pending_students[current_index + 1] if current_index + 1 < len(student_ids) else None
-        prev_student = pending_students[current_index - 1] if current_index - 1 >= 0 else None
+        # # Determine the next and previous student indices
+        # next_student = pending_students[current_index + 1] if current_index + 1 < len(student_ids) else None
+        # prev_student = pending_students[current_index - 1] if current_index - 1 >= 0 else None
 
         # Render the template with the appropriate context
+        print("The number of certs", len(certificates))
         context = {
-            'student': student,
-            'next_student': next_student,
-            'prev_student': prev_student,
-            'blob_image': blob_image
+            "certificates": json.dumps(certificates, cls=DjangoJSONEncoder),   
+            'pending_students': pending_students
         }
         return render(request, "clerk/Preview_Admit_Card.html", context)
     else:
@@ -735,16 +735,30 @@ def generate_certificate_action(request, cbse_no):
         id = str(student.id)
         year = str(date.today().year)
         try:
-            cert = Certificate.objects.create(
-                certificate_id = cbse_no+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year + "/" +id.zfill(5), 
-                certificate_generated = True,
-                Date = date.today(),
-                Approval_stage='0',
-                Generation_date = date.today(),
-                Place = "Kanpur"
-            )
+            cert = None
+            certificate_id = cbse_no+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year + "/" +id.zfill(5)
+            certificate = Certificate.objects.filter(certificate_id=certificate_id)
+            if certificate.exists():
+                cert = certificate[0]
+                cert.certificate_generated = True
+                cert.Date = date.today()
+                cert.Approval_stage='0'
+                cert.Generation_date = date.today()
+                cert.Place = "Kanpur"
+                cert.Rejected_by=None
+                cert.Rejected_reason=None
+                cert.save()
+            else:
+                cert = Certificate.objects.create(
+                    certificate_id = cbse_no+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year + "/" +id.zfill(5), 
+                    certificate_generated = True,
+                    Date = date.today(),
+                    Approval_stage='0',
+                    Generation_date = date.today(),
+                    Place = "Kanpur"
+                )
         except Exception as error:
-            error.with_traceback
+            print(error)
             messages.error(request, "Certificate already generated for the student")
             return redirect("/view-results")
         student.certificate = cert
@@ -825,10 +839,24 @@ def Preview_Certificates(request):
         student = get_object_or_404(Student, id=student_id, certificate__Approved=False,)
     else:
         student = pending_students.first()
-    
-    certificate_image_path = student.certificate.certificate_path
-    if not os.path.exists(certificate_image_path):
-        certificate_image_path = generate_certificate(student)
+    certificates = []
+    for student in pending_students:
+        certificate_image_path = None
+        if student.certificate_id is not None:
+            certificate_image_path = student.certificate.certificate_path
+            if not os.path.exists(certificate_image_path):
+                certificate_image_path = generate_certificate(student)
+                certi = student.certificate
+                certi.certificate_path = certificate_image_path
+                certi.save()
+        else:
+            certificate_image_path = generate_certificate(student)
+            certi = student.certificate
+            certi.certificate_path = certificate_image_path
+            certi.save()
+        blob_image = base64.b64encode(open(certificate_image_path, "rb").read()).decode()
+        certificates.append(blob_image) 
+                
     # Generate the certificate if it hasn't been generated yet
     # if not student.certificate.certificate_generated:
     #     certificate_image_path = generate_certificate(student)
@@ -839,24 +867,23 @@ def Preview_Certificates(request):
     # print(certificate_image_path)
     # root_cert_path = settings.MEDIA_ROOT + "/"+"/".join(certificate_image_path.split("/")[2:])
     
-    blob_image = base64.b64encode(open(certificate_image_path, "rb").read()).decode()
-    # Get the current student's position in the list
-    student_ids = list(pending_students.values_list('id', flat=True))
-    current_index = student_ids.index(student.id)
+    # blob_image = base64.b64encode(open(certificate_image_path, "rb").read()).decode()
+    # # Get the current student's position in the list
+    # student_ids = list(pending_students.values_list('id', flat=True))
+    # current_index = student_ids.index(student.id)
 
-    # Determine the next and previous student indices
-    next_student = pending_students[current_index + 1] if current_index + 1 < len(student_ids) else None
-    prev_student = pending_students[current_index - 1] if current_index - 1 >= 0 else None
+    # # Determine the next and previous student indices
+    # next_student = pending_students[current_index + 1] if current_index + 1 < len(student_ids) else None
+    # prev_student = pending_students[current_index - 1] if current_index - 1 >= 0 else None
 
     # Render the template with the appropriate context
     context = {
-        'student': student,
-        'next_student': next_student,
-        'prev_student': prev_student,
-        'blob_image': blob_image
+        "certificates": json.dumps(certificates, cls=DjangoJSONEncoder),   
+        'pending_students': pending_students
     }
     return render(request, "clerk/Preview_Certificates.html", context)
 
+@login_required
 def print_certificate(request):
     folder_path = os.path.join(settings.MEDIA_ROOT, 'Certificates')
     if request.method == 'POST' and 'download' in request.POST:
@@ -866,7 +893,7 @@ def print_certificate(request):
             for root, dirs, files in os.walk(folder_path):
                 for file in files:
                     cbse_no = "_".join(file.split("_")[0:-1])
-                    if check_generated_by_cbse_no(cbse_no, 'c')[0]:
+                    if check_generated_by_cbse_no(cbse_no, 'c', request.user)[0]:
                         file_path = os.path.join(root, file)
                         zipf.write(file_path, os.path.relpath(file_path, folder_path))
 
@@ -888,14 +915,58 @@ def print_certificate(request):
         return response
     if request.method == 'POST' and 'single' in request.POST:
         cbse_no = request.POST.get("cbse_no")
-        st_check_result = check_generated_by_cbse_no(cbse_no, 'c')
+        st_check_result = check_generated_by_cbse_no(cbse_no, 'c', request.user)
         if st_check_result[0]:
             file_path = os.path.join(folder_path, cbse_no + "_certificate.png")
+            file_back_path = os.path.join(folder_path, cbse_no + "_back_certificate.png")
+            pdf_path = os.path.join(folder_path, cbse_no+"_certificate.pdf")
             if os.path.exists(file_path):
-                with open(file_path, "rb") as certificate:
-                    response = HttpResponse(certificate.read(), content_type="image/png")
-                    response['Content-Disposition'] = f'attachment; filename={cbse_no}_certificate.png'
+                doc = fitz.open()
+                
+                page = doc.new_page()
+                image_rectangle = fitz.Rect(100, 100, 200, 200)
+                page.insert_image(image_rectangle, stream=open(file_path, "rb").read(), xref=0)
+                page2 = doc.new_page()
+                page2.insert_image(image_rectangle, stream=open(file_back_path, "rb").read(), xref=0)
+                doc.save(pdf_path)
+                
+                
+                with open(pdf_path, "rb") as certificate:
+                    response = HttpResponse(certificate.read(), content_type="application/pdf")
+                    response['Content-Disposition'] = f'attachment; filename={cbse_no}_certificate.pdf'
                 response.close()
+                return response
+            else:
+                messages.error(request, "Certificate not available for this CBSE No.")
+        else:
+            messages.error(request, st_check_result[1])
+    if request.method == 'POST' and 'duplicate' in request.POST:
+        cbse_no = request.POST.get("cbse_no")
+        st_check_result = check_generated_by_cbse_no(cbse_no, 'c', request.user)
+        if st_check_result[0]:
+            new_file_name=cbse_no+"_dup_certificate.png"
+            file_path = os.path.join(folder_path, cbse_no + "_certificate.png")
+            duplicate_file_path = os.path.join(folder_path, new_file_name)
+            if os.path.exists(file_path):
+                
+                certificate_image = cv2.imread(file_path)
+                template_pil = Image.fromarray(cv2.cvtColor(certificate_image, cv2.COLOR_BGR2RGB))
+                draw = ImageDraw.Draw(template_pil)
+                # Load the font
+                font_path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'Saans2.ttf')
+                font_size = 20
+                try:
+                    font = ImageFont.truetype(font_path, font_size)
+                except IOError:
+                    raise ValueError("Could not load the specified font.")
+
+                draw.text((850, 20), "DUPLICATE", font=font, fill=(255,255,255))
+                template_pil.save(duplicate_file_path)
+                with open(duplicate_file_path, "rb") as certificate:
+                    response = HttpResponse(certificate.read(), content_type="image/png")
+                    response['Content-Disposition'] = f'attachment; filename={new_file_name}'
+                response.close()
+                os.remove(duplicate_file_path)
                 return response
             else:
                 messages.error(request, "Certificate not available for this CBSE No.")
@@ -904,8 +975,37 @@ def print_certificate(request):
     # Render the template for GET requests
     return render(request, "clerk/print_certificate.html")
 
-def check_generated_by_cbse_no(cbse_no, rtype):
-    student_data = Student.objects.filter(CBSE_No = cbse_no)
+def check_generated_by_cbse_no(cbse_no, rtype, user):
+    student_data = None
+    if user.groups.filter(name='Director_General').exists():
+        director_general_id = Director_General.objects.get(user_id=user.id).id
+        student_data = Student.objects.filter(
+           director_general_id=director_general_id,
+           CBSE_No = cbse_no
+        ).order_by('id')
+
+    elif user.groups.filter(name='Brigadier').exists():
+        brigadier_id = Brigadier.objects.get(user_id=user.id).id
+        student_data = Student.objects.filter(
+           brigadier_id=brigadier_id,
+           CBSE_No = cbse_no
+       ).order_by('id')
+
+    elif user.groups.filter(name='Colonel').exists():
+       colonel_id = Colonel.objects.get(user_id=user.id).id
+       student_data = Student.objects.filter(
+           colonel_id=colonel_id,
+           CBSE_No = cbse_no
+       ).order_by('id')
+    elif user.groups.filter(name='Clerk').exists():
+       clerk_id = Clerk.objects.get(user_id=user.id).id
+       student_data = Student.objects.filter(
+           clerk_id=clerk_id,
+           CBSE_No = cbse_no
+       ).order_by('id')
+    else:
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('/user/')
     if student_data:
         if rtype == 'c':
             if student_data[0].certificate:
@@ -957,7 +1057,7 @@ def Print_Admit_Cards(request):
             for root, dirs, files in os.walk(folder_path):
                 for file in files:
                     cbse_no = "_".join(file.split("_")[0:-2])
-                    if check_generated_by_cbse_no(cbse_no, 'a')[0]:
+                    if check_generated_by_cbse_no(cbse_no, 'a', request.user)[0]:
                         file_path = os.path.join(root, file)
                         zipf.write(file_path, os.path.relpath(file_path, folder_path))
 
@@ -979,7 +1079,7 @@ def Print_Admit_Cards(request):
         return response
     if request.method == 'POST' and 'single' in request.POST:
         cbse_no = request.POST.get("cbse_no")
-        gene_check = check_generated_by_cbse_no(cbse_no, 'a')
+        gene_check = check_generated_by_cbse_no(cbse_no, 'a', request.user)
         if gene_check[0]:
             file_path = os.path.join(folder_path, cbse_no + "_admit_card.png")
             if os.path.exists(file_path):
@@ -1086,12 +1186,13 @@ def generate_certificate(student):
         raise ValueError("Invalid Wing or Certificate Type.")
 
     template = cv2.imread(template_path)
+    width, height = template.shape[1], template.shape[0]
     if template is None:
         raise ValueError("Could not load the certificate template image.")
 
     # Convert the template image from OpenCV format (BGR) to PIL format (RGB)
     template_pil = Image.fromarray(cv2.cvtColor(template, cv2.COLOR_BGR2RGB))
-
+    cert_back = Image.fromarray(np.ones((height, width, 3), dtype=np.uint8) * 255)
     # Initialize ImageDraw object
     draw = ImageDraw.Draw(template_pil)
 
@@ -1165,29 +1266,68 @@ def generate_certificate(student):
     output_dir = os.path.join(settings.MEDIA_ROOT, 'Certificates')
     os.makedirs(output_dir, exist_ok=True)
     final_image_path = os.path.join(output_dir, f'{student.CBSE_No}_certificate.png')
+    final_back_image_path = os.path.join(output_dir, f'{student.CBSE_No}_back_certificate.png')
 
     try:
         template_pil.save(final_image_path)
+        cert_back.save(final_back_image_path)
         print(f"Certificate saved at: {final_image_path}")
     except Exception as e:
         raise ValueError(f"Could not save the certificate image. Error: {e}")
 
     return final_image_path
+
 @login_required
 def send_for_approval(request, cbse_no):
-    student = get_object_or_404(Student, CBSE_No=cbse_no)
-    student.rejection_reason = None
-    student.admit_card_send_for_approval=True
-    student.save()
+    _send_for_approval(cbse_no, request.user)
     return redirect('Preview_Admit_Card')
+
+def _send_for_approval(cbse_no, user):
+    try:
+        student = Student.objects.get(CBSE_No=cbse_no, clerk_id=Clerk.objects.get(user_id=user.id).id)
+        student.rejection_reason = None
+        student.admit_card_send_for_approval=True
+        student.save()
+    except Exception as e:
+        print("Not able to send admit card for approval for: ", cbse_no, " due to error ", e)
+
+def bulk_approve_admit_card(request):
+    cbse_no_list = request.POST.getlist("checkedBoxes[]")
+    action = request.POST.get("action")
+    page = request.POST.get("page")
+    print(cbse_no_list, action, page)
+    try:
+        for cbse_no in cbse_no_list:
+            if action == 'approve':
+                if page == 'cert':
+                    _approve_certificate(request, cbse_no)
+                elif page == 'admit_card':
+                    _approve_admit_card(cbse_no)
+            elif action == 'reject':
+                pass
+            elif action == 'send':
+                if page == 'cert':
+                    _approve_certificate(request, cbse_no)
+                elif page == 'admit_card':
+                    _send_for_approval(cbse_no, request.user)
+        return HttpResponse({"status": 200, "message": "success"}, content_type='application/json', status=200)
+    except Exception as e:
+        return HttpResponse({"status": 500, "message": "failed"}, content_type='application/json', status=200)
 
 @login_required
 def approve_admit_card(request, cbse_no):
-    student = get_object_or_404(Student, CBSE_No=cbse_no)
-    student.rejection_reason = None
-    student.admit_card_approved = True
-    student.save()
+    _approve_admit_card(cbse_no)
     return redirect('Preview_Admit_Card')
+
+def _approve_admit_card(cbse_no):
+    try:
+        print("Approving admit card for: ", cbse_no)
+        student = Student.objects.get(CBSE_No=cbse_no)
+        student.rejection_reason = None
+        student.admit_card_approved = True
+        student.save()
+    except Exception as e:
+        print("Unable to approve admit card for student with CBSE No. ", cbse_no, " due to exception: ", e)
 
 @login_required
 def reject_admit_card(request, cbse_no):
@@ -1367,6 +1507,7 @@ def update_student(request):
         student.Date_camp_2 = get_value('Date_camp_2')
         student.Location_camp_2 = get_value('Location_camp_2')
         student.rejection_reason=None
+        student.certificate_id=None
 
         # Save the student object
         student.save()
@@ -1375,6 +1516,8 @@ def update_student(request):
             return redirect('/Rejected Admit Cards/')
         elif pagee == 'student':
             return redirect('/Student Details')  # Redirect after saving
+        elif pagee == 'certificate':
+            return redirect("/rejected-certificate/")
 
     return render(request, 'clerk/Student_Details.html', {'student': student})
 
@@ -1415,15 +1558,32 @@ def reject_certificate(request, cbse_no):
    if request.method == 'POST':
        student = get_object_or_404(Student, CBSE_No=cbse_no)
        reason = request.POST.get('rejection_reason')
-       student.certificate.Approved = False
-       student.certificate.Approval_stage=0
-       student.certificate.Rejected_reason = reason
-       student.certificate.Rejected_by=request.user.groups.first()
+       certificate=student.certificate
+       certificate.Approved = False
+       certificate.Approval_stage=0
+       certificate.Rejected_reason = reason
+       certificate.Rejected_by=request.user.groups.first().name + ": " + request.user.username
+       certificate.save()
        student.save()
    return redirect('Preview_Admit_Card')
 
+def rejected_certificates(request):
+    try:
+        students = Student.objects.filter(certificate__Approved=False, certificate__Rejected_by__isnull=False)
+        context={
+            "certificate_list": students,
+            'students_json': json.dumps(list([str(model_to_dict(i)) for i in students]), cls=DjangoJSONEncoder)
+        }
+        return render(request, "clerk/rejected_certificates.html", context)
+    except Exception as e:
+        print("Unable to get rejected certificate list: ", e)
+
 @login_required
 def approve_certificate(request, cbse_no):
+   _approve_certificate(request, cbse_no)
+   return redirect('/Preview Certificates/')
+
+def _approve_certificate(request, cbse_no):
    if request.user.groups.filter(name='Clerk').exists():
        student = get_object_or_404(Student, CBSE_No=cbse_no)
        certificate = student.certificate
@@ -1449,9 +1609,7 @@ def approve_certificate(request, cbse_no):
        certificate.Approved = True
        certificate.save()
 
-
-   return redirect('/Preview Certificates/')
-
+@login_required
 def Download_Admit_Card(request):
     if request.method == 'POST':
         cbse_no = request.POST.get('cbse_no')
