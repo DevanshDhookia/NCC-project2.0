@@ -48,81 +48,91 @@ def custom_404_view(request):
     return render(request, '404.html', status=404)
 
 def SignIn(request):
-    if request.user is None:
-        return redirect('/user/')
-    if request.method == 'POST':
-        data = request.POST
-        user = authenticate(username=data.get("username"), password=data.get("password"))
-        if user is not None:
-            token = jwt_utility.get_jwt_token({
-                "username": user.username
-            })
-            request.user = user
-            request.session["token"] = token
-            login(request, user)
-
-            return redirect("/user/")
-        else:
-            messages.info(request, "Invalid Login Credentials")
-            return redirect("/SignIn/")
-    return render(request, "Login_Page/SignIn.html", {"page_name": "Ludiflex | Login & Registration"})
-
-def forgot_password(request):
-    context = {"page_name": "Ludiflex | Login & Registration", "otp": False}
-    if request.method == "POST":
-        user_name = request.POST.get("username")
-        otp = request.POST.get("otp")
-        isotpcall = request.POST.get("isotp")
+    if not request.user.is_authenticated:
         try:
-            user = User.objects.get(username=user_name)
-            context["username"] = user_name
-            if not otp and isotpcall == 'True':
-                context["otp"] = True
-                messages.error(request, "OTP is required")
-            elif not otp:
+            if request.user is None:
+                return redirect('/user/')
+            if request.method == 'POST':
+                data = request.POST
+                user = authenticate(username=data.get("username"), password=data.get("password"))
                 if user is not None:
-                    email = user.email
-                    if not email:
-                        messages.error(request,"Email address not found for the user")
-                    else:
-                        data = utility.generate_and_save_otp(user_name)
-                        if(data[0]):
-                            try:
-                                smtp.send_email(user_name, email, data[1])
-                                messages.info(request, "OTP Generated. Valid for 10 minutes.")
-                                context["otp"] = True
-                            except Exception as e:
-                                print("Exception occured while sending email", e)
-                                messages.error(request, "Unable to send email")
-                        else:
-                            messages.error(request, "Unable to generate OTP. Please try later.")
+                    token = jwt_utility.get_jwt_token({
+                        "username": user.username
+                    })
+                    request.user = user
+                    request.session["token"] = token
+                    login(request, user)
+
+                    return redirect("/user/")
                 else:
-                    messages.error(reqest, "User details not found")
-            else:
-                otp_validation_result = utility.validate_otp(user_name, otp)
-                if otp_validation_result[0]:
-                    password1 = request.POST.get("new-pass")
-                    password2 = request.POST.get("new-pass-1")
-                    if not password1 or not password2:
-                        context["otp"] = False
-                        messages.error(request, "All fields are required, Please regerate the OTP")
-                    else:
-                        if password1 != password2:
-                            context["otp"] = True
-                            messages.error(request, "Passwords does not match")
-                        else:
-                            user.set_password(password1)
-                            user.save()
-                            messages.info(request, "Password updated successfully, Please login")
-                else:
-                    context["username"]=user_name
-                    context["otp"] = True
-                    messages.error(request, otp_validation_result[1])
-                                        
+                    messages.info(request, "Invalid Login Credentials")
+                    return redirect("/SignIn/")
         except Exception as e:
-            print("User not found", e)
-            messages.info(request, "User not found")
-    return render(request, "Login_Page/reset_password.html", context=context)
+            print("Some exception occurred: ", e)
+            messages.error(request, "Some error occurred")
+        return render(request, "Login_Page/SignIn.html", {"page_name": "Ludiflex | Login & Registration"})
+    else:
+        return redirect("/index/")
+    
+def forgot_password(request):
+    if request.user.is_authenticated:
+        return redirect("/change-password/")
+    else:
+        context = {"page_name": "Ludiflex | Login & Registration", "otp": False}
+        if request.method == "POST":
+            user_name = request.POST.get("username")
+            otp = request.POST.get("otp")
+            isotpcall = request.POST.get("isotp")
+            try:
+                user = User.objects.get(username=user_name)
+                context["username"] = user_name
+                if not otp and isotpcall == 'True':
+                    context["otp"] = True
+                    messages.error(request, "OTP is required")
+                elif not otp:
+                    if user is not None:
+                        email = user.email
+                        if not email:
+                            messages.error(request,"Email address not found for the user")
+                        else:
+                            data = utility.generate_and_save_otp(user_name)
+                            if(data[0]):
+                                try:
+                                    smtp.send_email(user_name, email, data[1])
+                                    messages.info(request, "OTP Generated. Valid for 10 minutes.")
+                                    context["otp"] = True
+                                except Exception as e:
+                                    print("Exception occured while sending email", e)
+                                    messages.error(request, "Unable to send email")
+                            else:
+                                messages.error(request, "Unable to generate OTP. Please try later.")
+                    else:
+                        messages.error(reqest, "User details not found")
+                else:
+                    otp_validation_result = utility.validate_otp(user_name, otp)
+                    if otp_validation_result[0]:
+                        password1 = request.POST.get("new-pass")
+                        password2 = request.POST.get("new-pass-1")
+                        if not password1 or not password2:
+                            context["otp"] = False
+                            messages.error(request, "All fields are required, Please regerate the OTP")
+                        else:
+                            if password1 != password2:
+                                context["otp"] = True
+                                messages.error(request, "Passwords does not match")
+                            else:
+                                user.set_password(password1)
+                                user.save()
+                                messages.info(request, "Password updated successfully, Please login")
+                    else:
+                        context["username"]=user_name
+                        context["otp"] = True
+                        messages.error(request, otp_validation_result[1])
+                                            
+            except Exception as e:
+                print("User not found", e)
+                messages.info(request, "User not found")
+        return render(request, "Login_Page/reset_password.html", context=context)
 
 @login_required
 def change_password(request):
@@ -1193,76 +1203,81 @@ def reject_admit_card(request, cbse_no):
 @login_required
 def Register_Students(request):
     if request.user.has_perm('home.can_create_new_candidates'):
-        if request.method == 'POST':
-            certificate_type=request.POST.get('certificate_type')
-            wing=request.POST.get('wing')
-            data_file = request.FILES.get('excel_file')
-            photos_folder = request.FILES.getlist('photos_folder')
-            if data_file:
-                file_extension = os.path.splitext(data_file.name)[1].lower()
+        try:
+            if request.method == 'POST':
+                certificate_type=request.POST.get('certificate_type')
+                wing=request.POST.get('wing')
+                data_file = request.FILES.get('excel_file')
+                photos_folder = request.FILES.getlist('photos_folder')
+                if data_file:
+                    file_extension = os.path.splitext(data_file.name)[1].lower()
 
-                # Read the file based on its extension
-                if file_extension in ['.csv']:
-                    df = pd.read_csv(data_file)
-                elif file_extension in ['.xls', '.xlsx']:
-                    df = pd.read_excel(data_file)
-                else:
-                    return HttpResponseBadRequest("Unsupported file format")
+                    # Read the file based on its extension
+                    if file_extension in ['.csv']:
+                        df = pd.read_csv(data_file)
+                    elif file_extension in ['.xls', '.xlsx']:
+                        df = pd.read_excel(data_file)
+                    else:
+                        return HttpResponseBadRequest("Unsupported file format")
 
-                # Define the column indices corresponding to the model fields
-                column_indices = {
-                    'CBSE_No': 0, 
-                    'Name': 1,     
-                    'DOB': 2,      
-                    'Fathers_Name': 3,
-                    'School_College_Class': 4,
-                    'Home_Address': 5,
-                    'Admit_Card_No': 6,
-                    'Unit': 7,
-                    'Rank': 8,
-                    'Fresh_Failure': 9,
-                    'Year_of_passing_B_Certificate':10,
-                    'Attendance_1st_year':11,
-                    'Attendance_2nd_year':12,
-                    'Attendance_3rd_year':13,
-                    'Name_of_camp_attended_1':14,
-                    'Date_camp_1':15,
-                    'Location_camp_1':16,
-                    'Name_of_camp_attended_2':17,
-                    'Date_camp_2':18,
-                    'Location_camp_2':19
-                }
+                    # Define the column indices corresponding to the model fields
+                    column_indices = {
+                        'CBSE_No': 0, 
+                        'Name': 1,     
+                        'DOB': 2,      
+                        'Fathers_Name': 3,
+                        'School_College_Class': 4,
+                        'Home_Address': 5,
+                        'Admit_Card_No': 6,
+                        'Unit': 7,
+                        'Rank': 8,
+                        'Fresh_Failure': 9,
+                        'Year_of_passing_B_Certificate':10,
+                        'Attendance_1st_year':11,
+                        'Attendance_2nd_year':12,
+                        'Attendance_3rd_year':13,
+                        'Name_of_camp_attended_1':14,
+                        'Date_camp_1':15,
+                        'Location_camp_1':16,
+                        'Name_of_camp_attended_2':17,
+                        'Date_camp_2':18,
+                        'Location_camp_2':19
+                    }
 
-                clerk = Clerk.objects.filter(user=request.user).first()
-                # Process each row in the DataFrame
-                for _, row in df.iterrows():
-                    student_data = {field: row[idx] for field, idx in column_indices.items()}
-                    student_data["name_hindi"]=utility.translate_names("hi", student_data["Name"])
-                    student_data["fathers_name_hindi"]=utility.translate_names("hi", student_data["Fathers_Name"])
-                    student_data["Certificate_type"]=certificate_type
-                    student_data["Wing"]=wing
-                    student_data["clerk"] = clerk
-                    student_data["colonel"] = clerk.colonel
-                    student_data["brigadier"] = clerk.colonel.brigadier
-                    student_data["director_general"] = clerk.colonel.brigadier.director_general
-                    # Ensure CBSE_No is not missing
-                    if pd.isna(student_data['CBSE_No']):
-                        return HttpResponseBadRequest("CBSE_No is missing for some records.")
+                    clerk = Clerk.objects.filter(user=request.user).first()
+                    # Process each row in the DataFrame
+                    for _, row in df.iterrows():
+                        student_data = {field: row[idx] for field, idx in column_indices.items()}
+                        student_data["name_hindi"]=utility.translate_names("hi", student_data["Name"])
+                        student_data["fathers_name_hindi"]=utility.translate_names("hi", student_data["Fathers_Name"])
+                        student_data["Certificate_type"]=certificate_type
+                        student_data["Wing"]=wing
+                        student_data["clerk"] = clerk
+                        student_data["colonel"] = clerk.colonel
+                        student_data["brigadier"] = clerk.colonel.brigadier
+                        student_data["director_general"] = clerk.colonel.brigadier.director_general
+                        # Ensure CBSE_No is not missing
+                        if pd.isna(student_data['CBSE_No']):
+                            return HttpResponseBadRequest("CBSE_No is missing for some records.")
 
-                    # Update or create the student record
-                    student, created = Student.objects.update_or_create(
-                        CBSE_No=student_data['CBSE_No'],
-                        defaults=student_data
-                    )
+                        # Update or create the student record
+                        student, created = Student.objects.update_or_create(
+                            CBSE_No=student_data['CBSE_No'],
+                            defaults=student_data
+                        )
 
-                    # Handle photo upload
-                    for photo in photos_folder:
-                        if photo.name.startswith(str(student_data['CBSE_No'])):
-                            student.Photo.save(photo.name, photo)
-                            break
+                        # Handle photo upload
+                        for photo in photos_folder:
+                            if photo.name.startswith(str(student_data['CBSE_No'])):
+                                student.Photo.save(photo.name, photo)
+                                break
 
-            return redirect('/Register Students/')  # Redirect after processing
-        return render(request, "clerk/Register_Students.html")
+                return redirect('/Register Students/')  # Redirect after processing
+            return render(request, "clerk/Register_Students.html")
+        except Exception as e:
+            print("Exception is : ", e)
+            messages.info(request, "Some error occurred, Please try again")
+            return render(request, "clerk/Register_Students.html")
     else:
         return redirect('/index/')
 
@@ -1358,7 +1373,7 @@ def update_student(request):
         generate_admit_card(student)
         if pagee == 'result':
             return redirect('/Rejected Admit Cards/')
-        elif page == 'student':
+        elif pagee == 'student':
             return redirect('/Student Details')  # Redirect after saving
 
     return render(request, 'clerk/Student_Details.html', {'student': student})
