@@ -10,20 +10,20 @@
 {% block start %}
 <div></div>
 <div class="rectangular-box">
-  <form class="form" method="POST" action="/search-result/">
+  <form class="form" method="POST" action="/search-result/{{current_page}}/">
     <input
       class="form-control mr-sm-2"
       id="search-students-box"
       type="search"
       name="cbse_no"
-      placeholder="Enter Regiment No."
-      aria-label="Enter Regiment No."
+      placeholder="Enter Regimental No."
+      aria-label="Enter Regimental No."
       required
     />
     {% csrf_token %}
     <button class="ctm-btn" type="submit">Search</button>
   </form>
-  <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/view-results/')">Clear <i class="bx bx-message-square-x"></i></button>
+  <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/view-results/{{current_page}}/')">Clear <i class="bx bx-message-square-x"></i></button>
 </div>
 {% if messages %}
 <div class="alert alert-primary alert-dismissible" id="success-alert">
@@ -77,8 +77,8 @@
           >
             View
           </button>
-          {% if student.cert_generated == False and student.result.Pass == True %}
-            <a href="/generate_certificate/{{student.student_id}}" class="btn btn-info" id="student-approval-button">
+          {% if student.cert_generated == False and student.result.Pass == True and perms.home.can_generate_certificate %}
+            <a href="/generate_certificate/{{student.student_id}}/{{current_page}}/" class="btn btn-info" id="student-approval-button">
               Generate Certificate
             </a>
           {% endif %}
@@ -137,7 +137,7 @@
                       class="form"
                       id="result-form"
                       method="POST"
-                      action="{% url 'update-results' %}"
+                      action="/update-results/{{current_page}}/"
                     >
                       {% csrf_token %}
                       <div class="e-profile">
@@ -158,7 +158,7 @@
                               class="form"
                               id="result-form-2"
                               method="POST"
-                              action="{% url 'update-results' %}"
+                              action="/update-results/{{current_page}}/"
                             >
                               {% csrf_token %}
                               <div class="row mt-3 mb-3">
@@ -167,7 +167,7 @@
                                   <div class="row">
                                     <div class="col">
                                       <div class="form-group">
-                                        <label>Regiment No.</label>
+                                        <label>Regimental No.</label>
                                         <input
                                           class="form-control"
                                           id='modal-cbse-no'
@@ -532,5 +532,24 @@
     </div>
   </div>
 </div>
-
+</div>
+<center>
+  <nav aria-label="Page navigation example">
+    <ul class="pagination">
+      <li class="page-item {% if disable_prev %}disabled{% endif %}">
+        <a class="page-link" href="/view-results/{{prev_page}}/" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      </li>
+      {% for i in page_range %}
+        <li class="page-item {% if i == current_page %}active{% endif %}"><a class="page-link" href="/view-results/{{i}}/">{{i}}</a></li>
+      {% endfor %}
+      <li class="page-item {% if disable_next%}disabled{% endif %}">
+        <a class="page-link" href="/view-results/{{next_page}}/" aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</center>
 {% if student %} {% endif %} {% endblock %}

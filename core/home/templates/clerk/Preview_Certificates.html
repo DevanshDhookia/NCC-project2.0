@@ -16,29 +16,29 @@
   <div class="content">
       <!-- Admit Card Preview Section -->
       <div class="rectangular-box">
-        <form class="form" method="GET" action="{% url 'search_student' %}">
+        <form class="form" method="GET" action="/search-certificate/1/">
           <input
             class="form-control mr-sm-2"
             id="search-students-box"
             type="search"
             name="cbse_no"
-            placeholder="Enter Regiment No."
-            aria-label="Enter Regiment No."
+            placeholder="Enter Regimental No."
+            aria-label="Enter Regimental No."
             required
           />
           <button class="ctm-btn" type="submit">Search</button>
         </form>
-        <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/Student Details/')">Clear</button>
+        <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/Preview Certificates/1/')">Clear</button>
       </div>
       <form class="form m-1" id="bulk-approve-form" hidden>
         {% if perms.home.can_send_admit_card_for_approval %}
-          <button class="btn btn-primary m-2" type="button" onclick="bulk_action('send', '{{csrf_token}}', 'cert')">Send for Approval</button>
+          <button class="btn btn-primary m-2" type="button" onclick="bulk_action('send', '{{csrf_token}}', 'cert', {{current_page}})">Send for Approval</button>
         {% endif %}
         {% if perms.home.can_approve_admit_card %}
-          <button class="btn btn-success m-2" type="button" onclick="bulk_action('approve', '{{csrf_token}}', 'cert')">Approve</button>
+          <button class="btn btn-success m-2" type="button" onclick="bulk_action('approve', '{{csrf_token}}', 'cert', {{current_page}})">Approve</button>
         {% endif %}  
         {% if perms.home.can_reject_admit_card %}
-          <button class="btn btn-danger m-2" type="button" onclick="bulk_action('reject', '{{csrf_token}}', 'cert')">Reject</button>
+          <button class="btn btn-danger m-2" type="button" onclick="bulk_action('reject', '{{csrf_token}}', 'cert', {{current_page}})">Reject</button>
         {% endif %}
       </form>
       <div class="table-container">
@@ -71,7 +71,7 @@
                   data-bs-toggle="modal"
                   data-bs-target="#staticBackdrop"
                   {% comment %} onclick="view_student({{student}}, 'view')" {% endcomment %}
-                  onclick="openModalOnClick('{{forloop.counter}}', '{{student.CBSE_No}}', 'cert')"
+                  onclick="openModalOnClick('{{forloop.counter}}', '{{student.CBSE_No}}', 'cert', {{current_page}})"
                 >
                   View
                 </button> 
@@ -144,6 +144,25 @@
         </div>
       </div>
     </div>
+    <center>
+      <nav aria-label="Page navigation example">
+        <ul class="pagination">
+          <li class="page-item {% if disable_prev %}disabled{% endif %}">
+            <a class="page-link" href="/Preview Certificates/{{prev_page}}/" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+          {% for i in page_range %}
+            <li class="page-item {% if i == current_page %}active{% endif %}"><a class="page-link" href="/Preview Certificates/{{i}}/">{{i}}</a></li>
+          {% endfor %}
+          <li class="page-item {% if disable_next%}disabled{% endif %}">
+            <a class="page-link" href="/Preview Certificates/{{next_page}}/" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </center>
   </div>
 {% endblock %}
 

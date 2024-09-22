@@ -1,7 +1,10 @@
 let selectedCheckBoxes = []
 const data = document.currentScript.dataset
 students_certs = JSON.parse(data.students)
-
+function clearButtonClick(href) {
+    console.log("Function clled")
+    window.location.replace(href)
+}
 
 function onMainCheckboxToggle() {
     checked = $(".checkbox-main").prop('checked');
@@ -37,16 +40,16 @@ function display_bulk_form() {
     }
 }
 
-function bulk_action(action, csrf_token, page) {
+function bulk_action(action, csrf_token, page, current_page) {
     $.ajax({
         type: "POST",
         url: "/bulk_action/",
         data: { checkedBoxes: selectedCheckBoxes, action, csrfmiddlewaretoken: csrf_token, page},
         complete: function(data) {
             if(page==='cert'){
-                window.location.href="/Preview Certificates/"
+                window.location.href="/Preview Certificates/"+current_page+"/"
             } else {
-                window.location.href="/Preview Admit Card/"
+                window.location.href="/Preview Admit Card/"+current_page+"/"
             }
         }
       });
@@ -54,15 +57,15 @@ function bulk_action(action, csrf_token, page) {
     $(".sub-cbeckbox").prop('checked', false);
 }
 
-function openModalOnClick(index, cbse_no, page){
+function openModalOnClick(index, cbse_no, page, current_page){
     $(".admit-card-image").attr("src", "data:image/png;base64,"+students_certs[index-1])
     if(page === 'cert') {
-        $("#admit-card-approval-form").attr("action", "/approve_certificate/"+cbse_no+"/")
-        $("#admit-card-send-approval-form").attr("action", "/approve_certificate/"+cbse_no+"/")
-        $("#admit-card-reject-form").attr("action", "/reject_certificate/"+cbse_no+"/")
+        $("#admit-card-approval-form").attr("action", "/approve_certificate/"+cbse_no+"/"+current_page.toString()+'/')
+        $("#admit-card-send-approval-form").attr("action", "/approve_certificate/"+cbse_no+"/"+current_page.toString()+'/')
+        $("#admit-card-reject-form").attr("action", "/reject_certificate/"+cbse_no+"/"+current_page.toString()+'/')
     } else {
-        $("#admit-card-approval-form").attr("action", "/approve_admit_card/"+cbse_no+"/")
-        $("#admit-card-send-approval-form").attr("action", "/send_for_approval/"+cbse_no+"/")
-        $("#admit-card-reject-form").attr("action", "/reject_admit_card/"+cbse_no+"/")
+        $("#admit-card-approval-form").attr("action", "/approve_admit_card/"+cbse_no+"/"+current_page.toString()+'/')
+        $("#admit-card-send-approval-form").attr("action", "/send_for_approval/"+cbse_no+"/"+current_page.toString()+'/')
+        $("#admit-card-reject-form").attr("action", "/reject_admit_card/"+cbse_no+"/"+current_page.toString()+'/')
     }
 }

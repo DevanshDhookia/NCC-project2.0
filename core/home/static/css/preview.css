@@ -311,3 +311,7 @@ form{
 .center-heading {
     align-content: start;
 }
+
+.pagination {
+    justify-content: center;
+}

@@ -55,10 +55,10 @@
         <form class="register-students" method="post" enctype="multipart/form-data" action="/print-certificate/">
             {% csrf_token %}
             <header>Download Certificate</header>
-            <header>by Regiment No.</header>
+            <header>by Regimental No.</header>
             <input name="single" hidden/>
             <div class="form-group admcd">
-                <label>Regiment No.</label>
+                <label>Regimental No.</label>
                 <input
                   class="form-control"
                   id="cbse_no"
@@ -75,16 +75,16 @@
         <form class="register-students" method="post" enctype="multipart/form-data" action="/print-certificate/">
             {% csrf_token %}
             <header>Download Duplicate</header>
-            <header>Certificate by Regiment No.</header>
+            <header>Certificate by Regimental No.</header>
             <input name="duplicate" hidden/>
             <div class="form-group admcd">
-                <label>Regiment No.</label>
+                <label>Regimental No.</label>
                 <input
                   class="form-control"
                   id="cbse_no"
                   type="text"
                   name="cbse_no"
-                  placeholder="Please enter Regiment No."
+                  placeholder="Please enter Regimental No."
                   value=""
                 />
               </div>

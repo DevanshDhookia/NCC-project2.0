@@ -55,16 +55,16 @@
         <form class="register-students" method="post" enctype="multipart/form-data" action="/Print Admit Cards/">
             {% csrf_token %}
             <header>Download Admit Cards</header>
-            <header>by Regiment No.</header>
+            <header>by Regimental No.</header>
             <input name="single" hidden/>
             <div class="form-group admcd">
-                <label>Regiment No.</label>
+                <label>Regimental No.</label>
                 <input
                   class="form-control"
                   id="cbse_no"
                   type="text"
                   name="cbse_no"
-                  placeholder="Please enter Regiment No."
+                  placeholder="Please enter Regimental No."
                   value=""
                 />
               </div>

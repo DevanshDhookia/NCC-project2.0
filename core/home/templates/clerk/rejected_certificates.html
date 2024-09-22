@@ -90,7 +90,7 @@
                       class="form"
                       id="student-detail-form"
                       method="POST"
-                      action="{% url 'update_student' %}"
+                      action="/update/{{current_page}}/"
                     >
                       {% csrf_token %}
                       <div class="e-profile">
@@ -141,7 +141,7 @@
                             <form
                               class="form"
                               method="POST"
-                              action="{% url 'update_student' %}"
+                              action="/update/{{current_page}}/"
                             >
                               {% csrf_token %}
                               <div class="row">
@@ -490,5 +490,24 @@
     </div>
   </div>
 </div>
+<center>
+  <nav aria-label="Page navigation example">
+    <ul class="pagination">
+      <li class="page-item {% if disable_prev %}disabled{% endif %}">
+        <a class="page-link" href="/rejected-certificate/{{prev_page}}/" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      </li>
+      {% for i in page_range %}
+        <li class="page-item {% if i == current_page %}active{% endif %}"><a class="page-link" href="/rejected-certificate/{{i}}/">{{i}}</a></li>
+      {% endfor %}
+      <li class="page-item {% if disable_next%}disabled{% endif %}">
+        <a class="page-link" href="/rejected-certificate/{{next_page}}/" aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</center>
 
 {% endblock %}

@@ -142,3 +142,5 @@ OTP_LENGTH = 6
 USE_TZ = False
 
 handler404 = 'myapp.views.custom_404_view'
+
+APPEND_SLASH=False

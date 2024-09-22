@@ -43,7 +43,7 @@
                         <ul class="ul2">
                             {% if perms.home.can_preview_admit_card %}
                                 <li>
-                                <a class="dropdown-i" href="/Preview Admit Card/"
+                                <a class="dropdown-i" href="/Preview Admit Card/1/"
                                     >Preview Admit Cards</a
                                 >
                                 </li>
@@ -57,7 +57,7 @@
                             {% endif %}
                             {% if perms.home.can_view_rejected_applications %}
                                 <li>
-                                <a class="dropdown-i" href="/Rejected Admit Cards/"
+                                <a class="dropdown-i" href="/Rejected Admit Cards/1/"
                                     >Rejected Admit Cards</a
                                 >
                                 </li>
@@ -80,7 +80,7 @@
                                 {% endif %}
                                 {% if perms.home.view_result or perms.home.change_result %}
                                     <li>
-                                    <a class="dropdown-i" href="/view-results/"
+                                    <a class="dropdown-i" href="/view-results/1/"
                                         >Student Results</a
                                     >
                                     </li>
@@ -96,7 +96,7 @@
                         <div class="dropdown">
                         <ul class="ul2">
                             <li>
-                                <a class="dropdown-i" href="/Preview Certificates/"
+                                <a class="dropdown-i" href="/Preview Certificates/1/"
                                     >Preview Certificates</a
                                 >
                             </li>
@@ -108,7 +108,7 @@
                             </li>
                                 
                             <li>
-                                <a class="dropdown-i" href="/rejected-certificate/"
+                                <a class="dropdown-i" href="/rejected-certificate/1/"
                                     >Rejected Certificates</a
                                 >
                             </li>
@@ -118,7 +118,7 @@
                 {% endif %}
                 {% if perms.home.can_view_student_details %}
                     <li>
-                        <a href="/Student Details/" class="link"
+                        <a href="/Student Details/1/" class="link"
                         >Student Details</a
                         >
                     </li>
