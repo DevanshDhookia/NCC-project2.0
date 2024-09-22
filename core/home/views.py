@@ -1722,7 +1722,7 @@ def search_admit_card(request, page):
     print("The number of certs", len(certificates))
     context = {
         "certificates": json.dumps(certificates, cls=DjangoJSONEncoder),   
-        'pending_students': fending_students,
+        'pending_students': pending_students,
     }
     return render(request, "clerk/Preview_Admit_Card.html", context)
 
