@@ -117,7 +117,7 @@
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
               Close
             </button>
-            {% if perms.home.can_approve_admit_card %}
+            {% if perms.home.can_approve_certificate %}
               <form id='admit-card-approval-form' method="post">
                 {% csrf_token %}
                 <button type="submit" class="btn green-btn">Approve</button>
@@ -130,7 +130,7 @@
                 <button type="submit" class="btn btn-primary">Send For Approval</button>
               </form>
             {% endif %}
-            {% if perms.home.can_reject_admit_card %}
+            {% if perms.home.can_approve_certificate %}
               <!-- Rejection Form -->
               <form id='admit-card-reject-form' method="post">
                 {% csrf_token %}
