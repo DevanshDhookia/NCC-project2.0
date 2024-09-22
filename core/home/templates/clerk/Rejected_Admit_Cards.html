@@ -43,7 +43,7 @@
         </tr>
         {% empty %}
         <tr>
-            <td colspan="3">No rejected admit cards found.</td>
+            <td colspan="5"><center>No rejected admit cards found.</center></td>
         </tr>
         {% endfor %}
     </tbody>
@@ -84,7 +84,7 @@
                       class="form"
                       id="student-detail-form"
                       method="POST"
-                      action="{% url 'update_student' %}"
+                      action="/update/{{current_page}}/"
                     >
                       {% csrf_token %}
                       <div class="e-profile">
@@ -135,7 +135,7 @@
                             <form
                               class="form"
                               method="POST"
-                              action="{% url 'update_student' %}"
+                              action="update/{{current_page}}/"
                             >
                               {% csrf_token %}
                               <div class="row">
@@ -484,5 +484,24 @@
     </div>
   </div>
 </div>
+<center>
+  <nav aria-label="Page navigation example">
+    <ul class="pagination">
+      <li class="page-item {% if disable_prev %}disabled{% endif %}">
+        <a class="page-link" href="/Rejected Admit Cards/{{prev_page}}/" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      </li>
+      {% for i in page_range %}
+        <li class="page-item {% if i == current_page %}active{% endif %}"><a class="page-link" href="/Rejected Admit Cards/{{i}}/">{{i}}</a></li>
+      {% endfor %}
+      <li class="page-item {% if disable_next%}disabled{% endif %}">
+        <a class="page-link" href="/Rejected Admit Cards/{{next_page}}/" aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</center>
 
 {% endblock %}

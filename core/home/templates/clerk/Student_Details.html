@@ -11,19 +11,19 @@
 {% block start %}
 <div></div>
 <div class="rectangular-box">
-  <form class="form" method="GET" action="{% url 'search_student' %}">
+  <form class="form" method="GET" action="/search/{{current_page}}/">
     <input
       class="form-control mr-sm-2"
       id="search-students-box"
       type="search"
       name="cbse_no"
-      placeholder="Enter CBSE No."
-      aria-label="Enter CBSE No."
+      placeholder="Enter Regimental No."
+      aria-label="Enter Regimental No."
       required
     />
     <button class="ctm-btn" type="submit">Search</button>
   </form>
-  <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/Student Details/')">Clear</button>
+  <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/Student Details/{{current_page}}/')">Clear</button>
 </div>
 <div class="table-container">
   <table class="table table-bordered table2">
@@ -112,7 +112,7 @@
                       class="form"
                       id="student-detail-form"
                       method="POST"
-                      action="{% url 'update_student' %}"
+                      action="/update/{{current_page}}/"
                     >
                       {% csrf_token %}
                       <div class="e-profile">
@@ -163,7 +163,7 @@
                             <form
                               class="form"
                               method="POST"
-                              action="{% url 'update_student' %}"
+                              action="/update/{{current_page}}/"
                             >
                               {% csrf_token %}
                               <div class="row">
@@ -172,7 +172,7 @@
                                   <div class="row">
                                     <div class="col">
                                       <div class="form-group">
-                                        <label>CBSE No.</label>
+                                        <label>Regimental No.</label>
                                         <input
                                           class="form-control"
                                           id='modal-cbse-no'
@@ -512,5 +512,24 @@
     </div>
   </div>
 </div>
+<center>
+  <nav aria-label="Page navigation example">
+    <ul class="pagination">
+      <li class="page-item {% if disable_prev %}disabled{% endif %}">
+        <a class="page-link" href="/Student Details/{{prev_page}}/" aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      </li>
+      {% for i in page_range %}
+        <li class="page-item {% if i == current_page %}active{% endif %}"><a class="page-link" href="/Student Details/{{i}}/">{{i}}</a></li>
+      {% endfor %}
+      <li class="page-item {% if disable_next%}disabled{% endif %}">
+        <a class="page-link" href="/Student Details/{{next_page}}/" aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</center>
 
 {% if student %} {% endif %} {% endblock %}

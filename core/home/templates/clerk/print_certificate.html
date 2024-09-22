@@ -55,16 +55,36 @@
         <form class="register-students" method="post" enctype="multipart/form-data" action="/print-certificate/">
             {% csrf_token %}
             <header>Download Certificate</header>
-            <header>by CBSE No.</header>
+            <header>by Regimental No.</header>
             <input name="single" hidden/>
             <div class="form-group admcd">
-                <label>CBSE No.</label>
+                <label>Regimental No.</label>
                 <input
                   class="form-control"
                   id="cbse_no"
                   type="text"
                   name="cbse_no"
-                  placeholder="Please enter CBSE No."
+                  placeholder="Please enter Regiment No."
+                  value=""
+                />
+              </div>
+            <div class="submit-container">
+                <button type="Download" class="submit-btn">Download</button>
+            </div>
+        </form>
+        <form class="register-students" method="post" enctype="multipart/form-data" action="/print-certificate/">
+            {% csrf_token %}
+            <header>Download Duplicate</header>
+            <header>Certificate by Regimental No.</header>
+            <input name="duplicate" hidden/>
+            <div class="form-group admcd">
+                <label>Regimental No.</label>
+                <input
+                  class="form-control"
+                  id="cbse_no"
+                  type="text"
+                  name="cbse_no"
+                  placeholder="Please enter Regimental No."
                   value=""
                 />
               </div>
