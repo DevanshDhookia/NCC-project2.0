@@ -1288,6 +1288,7 @@ def generate_certificate(student):
             (student.Year,(200,200)),
             (student.Year,(100,100)),
             (student.Directorate,(300,300))
+            (student.Certificate_id,())
         ]
     else:
         texts_with_positions = [
