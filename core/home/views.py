@@ -1271,7 +1271,7 @@ def generate_certificate(student):
     template_filenames = {
         'Army': {'A': 'Army_A.png', 'B': 'Army_B.png', 'C': 'c_cert.jpeg'},
         'Navy': {'A': 'Navy_A.png', 'B': 'Navy_B.png', 'C': 'c_cert.jpeg'},
-        'Air Force': {'A': 'Air_Force_A.png', 'B': 'Air_Force_B.png', 'C': 'c_cert.jpeg'},
+        'Air Force': {'A': 'Air_Force_A.png', 'B': 'Air_Force_B.png', 'C': 'c_cert.jpg'},
     }
 
     try:
@@ -1292,7 +1292,7 @@ def generate_certificate(student):
 
     # Load the font
     font_path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'Devnagri.ttf')  # Use regular font
-    font_size = 20
+    font_size = 15
     try:
         font = ImageFont.truetype(font_path, font_size)
     except IOError:
@@ -1302,43 +1302,47 @@ def generate_certificate(student):
     if student.Certificate_type == "C":
         hindi_certificate_type=utility.translate_names("hi", student.Certificate_type)
         texts_with_positions = [
-            (student.Unit, (226, 842)),
-            (student.CBSE_No, (226, 697)),
-            (student.Rank, (748, 697)),
-            (student.Name, (226, 760)),
-            (student.DOB, (820, 842)),
-            (student.Fathers_Name, (829, 764)),
-            (student.fathers_name_hindi, (744, 470)),
-            (student.Certificate_type, (384, 1156)),
-            (student.certificate.Place, (217, 1387)),
-            (student.certificate.Date, (217, 1477)),
-            (student.name_hindi, (246, 470)),
-            (student.certificate.Date, (217, 1477)),
-            (student.Year, (200, 200)),
-            (student.Year, (100, 100)),
-            (student.Directorate, (300, 300)),
-            (student.certificate.certificate_id, (710, 20)),
-            (hindi_certificate_type,(100,100))
+            (student.Unit, (141, 515)),
+            (student.CBSE_No, (122, 422)),
+            (student.Rank, (431, 394)),
+            (student.Name, (141, 465)),
+            (student.name_hindi, (128,444)),
+            (student.fathers_name_hindi, (492, 444)),
+            (student.DOB, (498, 515)),
+            (student.Fathers_Name, (518, 465)),
+            (student.Certificate_type, (491, 360)),
+            (student.Certificate_type, (243, 717)),
+            (hindi_certificate_type,(464,638)),
+            (student.certificate.Place, (141, 848)),
+            (student.certificate.Date, (141, 906)),
+            (student.Year, (210, 633)),
+            (student.Year, (426, 717)),
+            (student.Directorate, (224, 561)),
+            (student.certificate.certificate_id, (430, 10)),
+            (hindi_certificate_type,(444,321)),
+             (student.result.Grade,(182,597))
         ]
     else:
         hindi_certificate_type=utility.translate_names("hi", student.Certificate_type)
         texts_with_positions = [
-            (student.Unit, (227, 550)),
-            (student.CBSE_No, (229, 443)),
-            (student.Rank, (660, 443)),
-            (student.Name, (244, 498)),
-            (student.name_hindi, (246, 470)),
-            (student.fathers_name_hindi, (744, 470)),
-            (student.DOB, (743, 546)),
-            (student.Fathers_Name, (740, 490)),
-            (student.Certificate_type, (305, 783)),
-            (student.certificate.Place, (230, 934)),
-            (student.certificate.Date, (227, 989)),
-            (student.Year, (770, 780)),
-            (student.Year, (388, 712)),
-            (student.Directorate, (350, 633)),
-            (student.certificate.certificate_id, (710, 20)),
-            (hindi_certificate_type,(700,600))
+            (student.Unit, (152, 394)),
+            (student.CBSE_No, (152, 323)),
+            (student.Rank, (431, 323)),
+            (student.Name, (152, 360)),
+            (student.name_hindi, (152,345)),
+            (student.fathers_name_hindi, (456, 340)),
+            (student.DOB, (465, 390)),
+            (student.Fathers_Name, (488, 356)),
+            (student.Certificate_type, (233, 547)),
+            (student.certificate.Place, (150, 647)),
+            (student.certificate.Date, (150, 683)),
+            (student.Year, (257, 503)),
+            (student.Year, (507, 547)),
+            (student.Directorate, (218, 449)),
+            (student.certificate.certificate_id, (430, 10)),
+            (hindi_certificate_type,(380,502)),
+            (student.result.Grade,(182,597))
+
         ]
 
     # Add text to the image with bold effect
@@ -1346,7 +1350,7 @@ def generate_certificate(student):
         if text:
             # Simulate bold by drawing the text multiple times with slight offsets
             x, y = position
-            for offset in [(.5, 0), (-.5, 0), (0, .5), (0, -.5)]:
+            for offset in [(.2, 0), (-.2, 0), (0, .2), (0, -.2)]:
                 draw.text((x + offset[0], y + offset[1]), str(text), font=font, fill=(0, 0, 0))
             draw.text((x, y), str(text), font=font, fill=(0, 0, 0))  # Draw the main text
 
@@ -1355,8 +1359,8 @@ def generate_certificate(student):
         try:
             insert_image_path = student.Photo.path
             insert_image = Image.open(insert_image_path)
-            insert_image = insert_image.resize((170, 170))
-            image_position = (800, 80)
+            insert_image = insert_image.resize((120, 120))
+            image_position = (545, 35)
             template_pil.paste(insert_image, image_position)
         except Exception as e:
             raise ValueError(f"Could not process the student's photo. Error: {e}, Photo Path: {insert_image_path}")
@@ -1366,8 +1370,8 @@ def generate_certificate(student):
     if qr_image_path:
         try:
             qr_image = Image.open(qr_image_path)
-            qr_image = qr_image.resize((170, 170))  # Resize QR code as needed
-            qr_position = (80, 80)  # Set QR code position
+            qr_image = qr_image.resize((120, 120))  # Resize QR code as needed
+            qr_position = (45, 35)  # Set QR code position
             template_pil.paste(qr_image, qr_position)
         except Exception as e:
             raise ValueError(f"Could not process the QR code image. Error: {e}, QR Code Path: {qr_image_path}")
