@@ -18,3 +18,5 @@ migrate_working_dir/
 *.iws
 .idea/
 
+*.pyc
+db.sqlite3

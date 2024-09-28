@@ -829,7 +829,6 @@ def generate_certificate_action(request, cbse_no, page):
         messages.error(request, "Student not found with provided CBSE No.")
     return redirect("/view-results/"+str(page)+"/")
 
-
 @login_required
 @never_cache
 def Preview_Certificates(request, page):
@@ -1244,9 +1243,9 @@ def generate_admit_card(student):
 def generate_certificate(student):
     # Define template paths based on the student's Wing and Certificate_Type
     template_filenames = {
-        'Army': {'A': 'Army_A.png', 'B': 'Army_B.png', 'C': 'Army_C.png'},
-        'Navy': {'A': 'Navy_A.png', 'B': 'Navy_B.png', 'C': 'Navy_C.png'},
-        'Air Force': {'A': 'Air_Force_A.png', 'B': 'Air_Force_B.png', 'C': 'Air_Force_C.png'},
+        'Army': {'A': 'Army_A.png', 'B': 'Army_B.png', 'C': 'c_cert.jpeg'},
+        'Navy': {'A': 'Navy_A.png', 'B': 'Navy_B.png', 'C': 'c_cert.jpeg'},
+        'Air Force': {'A': 'Air_Force_A.png', 'B': 'Air_Force_B.png', 'C': 'c_cert.jpeg'},
     }
 
     try:
@@ -1266,8 +1265,8 @@ def generate_certificate(student):
     draw = ImageDraw.Draw(template_pil)
 
     # Load the font
-    font_path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'Saans2.ttf')
-    font_size = 17
+    font_path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'Devnagri.ttf')
+    font_size = 20
     try:
         font = ImageFont.truetype(font_path, font_size)
     except IOError:
@@ -1282,13 +1281,16 @@ def generate_certificate(student):
             (student.Name, (226, 760)),
             (student.DOB, (820, 842)),
             (student.Fathers_Name, (829, 764)),
+            (student.fathers_name_hindi, (744, 470)),
             (student.Certificate_type, (384, 1156)),
             (student.certificate.Place, (217, 1387)),
             (student.certificate.Date, (217, 1477)),
+            (student.name_hindi, (246, 470)),
+            (student.certificate.Date, (217, 1477)),
             (student.Year,(200,200)),
             (student.Year,(100,100)),
-            (student.Directorate,(300,300))
-            (student.Certificate_id,())
+            (student.Directorate,(300,300)),
+            (student.certificate.certificate_id,(710,20))
         ]
     else:
         texts_with_positions = [
@@ -1296,14 +1298,18 @@ def generate_certificate(student):
             (student.CBSE_No, (229, 443)),
             (student.Rank, (660, 443)),
             (student.Name, (244, 498)),
+            (student.name_hindi, (246, 470)),
+            (student.fathers_name_hindi, (744, 470)),
             (student.DOB, (743, 546)),
             (student.Fathers_Name, (740, 490)),
             (student.Certificate_type, (305, 783)),
             (student.certificate.Place, (230, 934)),
             (student.certificate.Date, (227, 989)),
             (student.Year,(770,780)),
-            (student.Year,(370,712)),
-            (student.Directorate,(350,633))
+            (student.Year,(388,712)),
+            (student.Directorate,(350,633)),
+            (student.certificate.certificate_id,(710,20))
+
         ]
 
     # Add text to the image

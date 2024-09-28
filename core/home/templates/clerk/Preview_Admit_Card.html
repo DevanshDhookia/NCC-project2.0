@@ -29,6 +29,7 @@
           <button class="ctm-btn" type="submit">Search</button>
         </form>
         <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/Preview Admit Card/1/')">Clear</button>
+        <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('')">View All</button>
       </div>
       <form class="form m-1" id="bulk-approve-form" hidden>
         {% if perms.home.can_send_admit_card_for_approval %}
