@@ -25,7 +25,11 @@
   </form>
   <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/view-results/{{current_page}}/')">Clear <i class="bx bx-message-square-x"></i></button>
 </div>
-
+<form class="form m-1" id="bulk-approve-form" hidden>
+  {% if perms.home.can_generate_certificate %}
+    <button class="btn btn-primary m-2" type="button" onclick="bulk_action('generate', '{{csrf_token}}', 'result', '{{current_page}}')">Generate All Certificate</button>
+  {% endif %}
+</form>
 {% if messages %}
 <div class="alert alert-primary alert-dismissible" id="success-alert">
     {% for message in messages %}
@@ -38,23 +42,23 @@
   <table class="table table-bordered table2">
     <thead>
       <tr>
-        <th scope="col">Sr.No.</th>
-        <th scope="col">Student ID</th>
-        <th scope="col">Name</th>
-        <th scope="col">Paper-I(Drill)</th>
-        <th scope="col">Paper-II(WT)</th>
-        <th scope="col">Paper-III(Misc)</th>
-        <th scope="col">Paper-IV(Spl to Corps)</th>
-        <th scope="col">Bonus Marks</th>
-        <th scope="col">Total</th>
-        <th scope="col">Result</th>
-        <th scope="col">Actions</th>
+        <th scope="col"><center><div>Select All</div><input class="form-check-input checkbox-main" type="checkbox" value="" id="flexCheckDefault" onchange="onMainCheckboxToggle()"></center></th>
+        <th scope="col" class="center-heading">Student ID</th>
+        <th scope="col" class="center-heading">Name</th>
+        <th scope="col" class="center-heading">Paper-I(Drill)</th>
+        <th scope="col" class="center-heading">Paper-II(WT)</th>
+        <th scope="col" class="center-heading">Paper-III(Misc)</th>
+        <th scope="col" class="center-heading">Paper-IV(Spl to Corps)</th>
+        <th scope="col" class="center-heading">Bonus Marks</th>
+        <th scope="col" class="center-heading">Total</th>
+        <th scope="col" class="center-heading">Result</th>
+        <th scope="col" class="center-heading">Actions</th>
       </tr>
     </thead>
     <tbody>
       {% for student in result_data %}
       <tr>
-        <th scope="row">{{ forloop.counter }}</th>
+        <th scope="col"><center><input class="form-check-input sub-checkbox sub-checkbox-{{forloop.counter}}" type="checkbox" value="{{ student.student_id }}" name='{{ student.student_id }}' onchange="onSubCheckboxToggle('{{forloop.counter}}', '{{student.student_id}}')"></center></th>
         <td>{{ student.student_id }}</td>
         <td>{{ student.student_name }}</td>
         <td>{{ student.p_1_total |floatformat:2 }}</td>
