@@ -252,3 +252,8 @@ body{
 #modal-heading{
     font-weight: bold;
 }
+
+
+.center-heading {
+    align-content: start;
+}

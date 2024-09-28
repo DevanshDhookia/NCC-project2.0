@@ -5,7 +5,7 @@
   <link rel="stylesheet" href="{% static 'css/preview.css' %}">
   <link rel="stylesheet" href="{% static 'css/student_details.css' %}" />
   <script src="{% static 'js/preview.js' %}"
-  data-students = "{{ certificates }}"></script>
+  data-students = "{{ all_students }}"></script>
   {% endblock %}
 
 {% block title %}
@@ -29,7 +29,9 @@
           <button class="ctm-btn" type="submit">Search</button>
         </form>
         <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/Preview Certificates/1/')">Clear</button>
-        <button class="ctm-btn" id="view-all-btn" onclick="window.location.href='/Preview_Certificates/1/?view_all=true';">View All</button>
+        <button class="ctm-btn" id="view-all-btn"  onclick="view_all_function('cert', '{{current_page}}')"
+        data-bs-toggle="modal"
+        data-bs-target="#staticBackdrop">View All</button>
 
       </div>
       <form class="form m-1" id="bulk-approve-form" hidden>
@@ -108,11 +110,17 @@
             ></button>
           </div>
           <div class="modal-body">
-            <div class="container">
-              <center><img src="data:image/png;base64,{{blob_image}}" alt="Admit Card" class="admit-card-image"></center>
+            <div class="container card-container">
+              <center><img src="" alt="Admit Card" class="admit-card-image"></center>
             </div>
           </div>
           <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="preview_prev_button" onclick="prevButtonClick('cert', '{{current_page}}')">
+              Prev
+            </button>
+            <button type="button" class="btn btn-secondary" id="preview_next_button" onclick="nextButtonClick('cert', '{{current_page}}')">
+              Next
+            </button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
               Close
             </button>

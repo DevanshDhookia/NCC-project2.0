@@ -60,10 +60,13 @@ urlpatterns = [
     path('generate_certificate/<str:cbse_no>/<int:page>/', generate_certificate_action, 
     name="generate_certificate"),
     path('approve_certificate/<str:cbse_no>/<int:page>/', approve_certificate, name='approve_certificate'),
+    path('approve_cert_no_red/<str:cbse_no>/<int:page>/', approve_cert_no_red, name='approve_cert_no_red'),
     path('reject_certificate/<str:cbse_no>/<int:page>/', reject_certificate, name='reject_certificate'),
     path('rejected-certificate/<int:page>/', rejected_certificates, name='rejected_certificate'),
     path('print-certificate/', print_certificate, name='print_certificate'),
     path('download-admit-card/', Download_Admit_Card, name='Download_Admit_Card'),
+    path('get-admit-card/<str:page_type>/<str:cbse_no>', get_admit_card, name='get_admit_card'),
+    path('generate_all_certs/', bulk_generate_certs, name='bulk_generate_certs'),
     # Other paths...
     path("admin/", admin.site.urls),
     path('404/', custom_404_view, name='custom_404'),

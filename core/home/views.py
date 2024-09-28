@@ -738,26 +738,12 @@ def Preview_Admit_Card(request, page):
             if last_record_index > len(pending_students):
                 last_record_index = len(pending_students)
             
-            pending_students = pending_students[offset: last_record_index]
+            curr_pending_students = pending_students[offset: last_record_index]
+            pending_students = [student.CBSE_No for student in pending_students]
             # Get the current student ID from the request or default to the first pending student
-            certificates = []
-            for student in pending_students:
-                root_cert_path = None
-                # Generate the admit card if it hasn't been generated yet
-                if not student.admit_card_generated:
-                    admit_card_image_path = generate_admit_card(student)
-                    student.admit_card_generated = True
-                    root_cert_path = admit_card_image_path
-                    student.save()
-                else:
-                    admit_card_image_path = os.path.join(settings.MEDIA_URL, 'Admit_Cards', f'{student.CBSE_No}_admit_card.png')
-                    root_cert_path = settings.MEDIA_ROOT + "/"+"/".join(admit_card_image_path.split("/")[2:])
-                blob_image = base64.b64encode(open(root_cert_path, "rb").read()).decode()
-                certificates.append(blob_image)
-            print("The number of certs", len(certificates))
             context = {
-                "certificates": json.dumps(certificates, cls=DjangoJSONEncoder),   
-                'pending_students': pending_students,
+                "all_students": json.dumps(pending_students, cls=DjangoJSONEncoder),   
+                'pending_students': curr_pending_students,
                 'current_page': current_page,
                 'total_pages': total_pages,
                 'disable_prev': current_page == 1,
@@ -774,6 +760,63 @@ def Preview_Admit_Card(request, page):
         messages.error(request, "Some error occurred")
         return redirect("/index/")
     
+@login_required
+def bulk_generate_certs(request):
+    cbse_no_list = request.POST.getlist("checkedBoxes[]")
+    page = request.POST.get("page")
+    try:
+        for cbse_no in cbse_no_list:
+            student = Student.objects.filter(CBSE_No = cbse_no)
+            if student.exists():
+                student = student[0]
+                id = str(student.id)
+                year = str(date.today().year)
+                try:
+                    cert = None
+                    certificate_id = cbse_no+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year + "/" +id.zfill(5)
+                    certificate = Certificate.objects.filter(certificate_id=certificate_id)
+                    if certificate.exists():
+                        cert = certificate[0]
+                        cert.certificate_generated = True
+                        cert.Date = date.today()
+                        cert.Approval_stage='0'
+                        cert.Generation_date = date.today()
+                        cert.Place = "Kanpur"
+                        cert.Rejected_by=None
+                        cert.Rejected_reason=None
+                        cert.save()
+                    else:
+                        cert = Certificate.objects.create(
+                            certificate_id = cbse_no+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year + "/" +id.zfill(5), 
+                            certificate_generated = True,
+                            Date = date.today(),
+                            Approval_stage='0',
+                            Generation_date = date.today(),
+                            Place = "Kanpur"
+                        )
+                except Exception as error:
+                    print(error)
+                    messages.error(request, "Certificate already generated for the student")
+                student.certificate = cert
+                student.save()
+                try:
+                    certificate_image_path = generate_certificate(student)
+                    cert.certificate_path = certificate_image_path
+                    cert.save()
+                    student.certificate = cert
+                    student.save()
+                except Exception as e:
+                    print("Unable to generate certificate", e)
+                    student.certificate = None
+                    student.save()
+                    cert.delete()
+                    messages.info(request, "Error while generating certificate")
+        messages.info(request, "Certificate Sent for Approval")
+    except Exception as e:
+        print("Exception occurred while generating certificate", e)
+        messages.error(request, "Error occurred")
+    return HttpResponse({"status": 200, "message": "success"}, content_type='application/json', status=200)
+
 @login_required
 def generate_certificate_action(request, cbse_no, page):
     student = Student.objects.filter(CBSE_No = cbse_no)
@@ -891,30 +934,13 @@ def Preview_Certificates(request, page):
         if last_record_index > len(pending_students):
             last_record_index = len(pending_students)
             
-        pending_students = pending_students[offset: last_record_index]
-        # Get the current student from request or default to the first in the list
-        
-        certificates = []
-        for student in pending_students:
-            certificate_image_path = None
-            if student.certificate_id is not None:
-                certificate_image_path = student.certificate.certificate_path
-                if not os.path.exists(certificate_image_path):
-                    certificate_image_path = generate_certificate(student)
-                    certi = student.certificate
-                    certi.certificate_path = certificate_image_path
-                    certi.save()
-            else:
-                certificate_image_path = generate_certificate(student)
-                certi = student.certificate
-                certi.certificate_path = certificate_image_path
-                certi.save()
-            blob_image = base64.b64encode(open(certificate_image_path, "rb").read()).decode()
-            certificates.append(blob_image) 
+        curr_pending_students = pending_students[offset: last_record_index]
+        pending_students = [student.CBSE_No for student in pending_students]
+        # Get the current student from request or default to the first in the list 
         
         context = {
-            "certificates": json.dumps(certificates, cls=DjangoJSONEncoder),   
-            'pending_students': pending_students,
+            'pending_students': curr_pending_students,
+            'all_students': json.dumps(pending_students, cls=DjangoJSONEncoder),
             'current_page': current_page,
             'total_pages': total_pages,
             'disable_prev': current_page == 1,
@@ -1366,6 +1392,7 @@ def _send_for_approval(cbse_no, user):
         student.save()
     except Exception as e:
         print("Not able to send admit card for approval for: ", cbse_no, " due to error ", e)
+
 
 @login_required
 def bulk_approve_admit_card(request):
@@ -1876,6 +1903,10 @@ def rejected_certificates(request, page):
         return render(request, "clerk/rejected_certificates.html", context)
     except Exception as e:
         print("Unable to get rejected certificate list: ", e)
+@login_required
+def approve_cert_no_red(request, cbse_no, page):
+    _approve_certificate(request, cbse_no)
+    return HttpResponse({"status": 200, "message": "success"}, content_type='application/json', status=200)
 
 @login_required
 def approve_certificate(request, cbse_no, page):
@@ -1932,3 +1963,143 @@ def Download_Admit_Card(request):
             return redirect('Download_Admit_Card')
 
     return render(request, 'clerk/Download_Admit_Card.html')
+
+def get_admit_card(request, page_type, cbse_no):
+    try:
+        response = None
+        data = None
+        if cbse_no and page_type:
+            if page_type == 'cert':
+                pending_students=[]
+                if request.user.groups.filter(name='Director_General').exists():
+                    director_general_id = Director_General.objects.get(user_id=request.user.id).id
+                    pending_students = Student.objects.filter(
+                        CBSE_No=cbse_no,
+                        certificate__Approval_stage=3,
+                        certificate__Rejected_reason=None,
+                        director_general_id=director_general_id,
+                        certificate__certificate_generated=True
+                    ).order_by('id')
+
+                elif request.user.groups.filter(name='Brigadier').exists():
+                    brigadier_id = Brigadier.objects.get(user_id=request.user.id).id
+                    pending_students = Student.objects.filter(
+                        CBSE_No=cbse_no,
+                        certificate__Approved=False,
+                        certificate__Approval_stage=2,
+                        certificate__Rejected_reason=None,
+                        brigadier_id=brigadier_id,
+                        certificate__certificate_generated=True
+                    ).order_by('id')
+
+                elif request.user.groups.filter(name='Colonel').exists():
+                    colonel_id = Colonel.objects.get(user_id=request.user.id).id
+                    pending_students = Student.objects.filter(
+                        CBSE_No=cbse_no,
+                        certificate__Approved=False,
+                        certificate__Approval_stage=1,
+                        certificate__Rejected_reason=None,
+                        colonel_id=colonel_id,
+                        certificate__certificate_generated=True
+                    ).order_by('id')
+                elif request.user.groups.filter(name='Clerk').exists():
+                    clerk_id = Clerk.objects.get(user_id=request.user.id).id
+                    pending_students = Student.objects.filter(
+                        CBSE_No=cbse_no,
+                        certificate__Approved=False,
+                        certificate__Approval_stage=0,
+                        certificate__Rejected_reason=None,
+                        clerk_id=clerk_id,
+                        certificate__certificate_generated=True
+                    ).order_by('id')
+                else:
+                    messages.error(request, "You do not have permission to perform this action.")
+                    return redirect('/user/')
+                if pending_students.exists():
+                    student = pending_students[0]
+                    certificate_image_path = None
+                    if student.certificate_id is not None:
+                        certificate_image_path = student.certificate.certificate_path
+                        if not os.path.exists(certificate_image_path):
+                            certificate_image_path = generate_certificate(student)
+                            certi = student.certificate
+                            certi.certificate_path = certificate_image_path
+                            certi.save()
+                    else:
+                        certificate_image_path = generate_certificate(student)
+                        certi = student.certificate
+                        certi.certificate_path = certificate_image_path
+                        certi.save()
+                    blob_image = base64.b64encode(open(certificate_image_path, "rb").read()).decode()
+                    data = {
+                        "status": 200,
+                        "message": "Success",
+                        "data": {
+                            "cbse_no": cbse_no,
+                            "image": blob_image
+                        }
+                    }
+                    
+                    response = HttpResponse(data, content_type='application/json', status=200)
+                else:
+                    data = {
+                        "status": 400,
+                        "message": "No Student found",
+                    }
+            elif page_type == 'admit_card':
+                pending_students = []
+                if request.user.groups.filter(name='Colonel').exists():
+                    pending_students = Student.objects.filter(CBSE_No=cbse_no, admit_card_approved=False, rejection_reason=None, admit_card_send_for_approval=True, colonel_id=Colonel.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+                elif request.user.groups.filter(name='Clerk').exists():
+                    pending_students = Student.objects.filter(CBSE_No=cbse_no, admit_card_approved=False, rejection_reason=None, admit_card_send_for_approval=False, clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+                    # pending_students = Student.objects.filter(clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+                else:
+                    messages.error(request, "You do not have permission to perform this action.")
+                    return redirect('/user/')
+                if pending_students.exists():
+                    root_cert_path = None
+                    student = pending_students[0]
+                    # Generate the admit card if it hasn't been generated yet
+                    if not student.admit_card_generated:
+                        admit_card_image_path = generate_admit_card(student)
+                        student.admit_card_generated = True
+                        root_cert_path = admit_card_image_path
+                        student.save()
+                    else:
+                        admit_card_image_path = os.path.join(settings.MEDIA_URL, 'Admit_Cards', f'{student.CBSE_No}_admit_card.png')
+                        root_cert_path = settings.MEDIA_ROOT + "/"+"/".join(admit_card_image_path.split("/")[2:])
+                    blob_image = base64.b64encode(open(root_cert_path, "rb").read()).decode()
+                    data = {
+                        "status": 200,
+                        "message": "Success",
+                        "data": {
+                            "cbse_no": cbse_no,
+                            "image": blob_image
+                        }
+                    }
+                else:
+                    data = {
+                        "status": 400,
+                        "message": "No Student found",
+                    }
+            else:
+                data = {
+                    "status": 400,
+                    "message": "Failed",
+                }
+        else:
+            data = {
+                "status": 400,
+                "message": "Failed",
+            }
+    except Exception as e:
+        print("Some exception occurred", e) 
+        messages.error(request, "Some error occurred")
+        data = {
+            "status": 500,
+            "message": "Failed",
+        }
+    data = json.dumps(data, cls=DjangoJSONEncoder)
+    response = HttpResponse(data, content_type='application/json', status=200)
+    return response
+            
