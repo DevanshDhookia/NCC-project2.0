@@ -1265,7 +1265,7 @@ def generate_certificate(student):
     draw = ImageDraw.Draw(template_pil)
 
     # Load the font
-    font_path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'Devnagri.ttf')
+    font_path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'Devnagri.ttf')  # Use regular font
     font_size = 20
     try:
         font = ImageFont.truetype(font_path, font_size)
@@ -1274,6 +1274,7 @@ def generate_certificate(student):
 
     # Define text and their corresponding positions based on the certificate type
     if student.Certificate_type == "C":
+        hindi_certificate_type=utility.translate_names("hi", student.Certificate_type)
         texts_with_positions = [
             (student.Unit, (226, 842)),
             (student.CBSE_No, (226, 697)),
@@ -1287,12 +1288,14 @@ def generate_certificate(student):
             (student.certificate.Date, (217, 1477)),
             (student.name_hindi, (246, 470)),
             (student.certificate.Date, (217, 1477)),
-            (student.Year,(200,200)),
-            (student.Year,(100,100)),
-            (student.Directorate,(300,300)),
-            (student.certificate.certificate_id,(710,20))
+            (student.Year, (200, 200)),
+            (student.Year, (100, 100)),
+            (student.Directorate, (300, 300)),
+            (student.certificate.certificate_id, (710, 20)),
+            (hindi_certificate_type,(100,100))
         ]
     else:
+        hindi_certificate_type=utility.translate_names("hi", student.Certificate_type)
         texts_with_positions = [
             (student.Unit, (227, 550)),
             (student.CBSE_No, (229, 443)),
@@ -1305,17 +1308,21 @@ def generate_certificate(student):
             (student.Certificate_type, (305, 783)),
             (student.certificate.Place, (230, 934)),
             (student.certificate.Date, (227, 989)),
-            (student.Year,(770,780)),
-            (student.Year,(388,712)),
-            (student.Directorate,(350,633)),
-            (student.certificate.certificate_id,(710,20))
-
+            (student.Year, (770, 780)),
+            (student.Year, (388, 712)),
+            (student.Directorate, (350, 633)),
+            (student.certificate.certificate_id, (710, 20)),
+            (hindi_certificate_type,(700,600))
         ]
 
-    # Add text to the image
+    # Add text to the image with bold effect
     for text, position in texts_with_positions:
         if text:
-            draw.text(position, str(text), font=font, fill=(0, 0, 0))
+            # Simulate bold by drawing the text multiple times with slight offsets
+            x, y = position
+            for offset in [(.5, 0), (-.5, 0), (0, .5), (0, -.5)]:
+                draw.text((x + offset[0], y + offset[1]), str(text), font=font, fill=(0, 0, 0))
+            draw.text((x, y), str(text), font=font, fill=(0, 0, 0))  # Draw the main text
 
     # Add the student's photo to the certificate
     if student.Photo:
@@ -1328,6 +1335,7 @@ def generate_certificate(student):
         except Exception as e:
             raise ValueError(f"Could not process the student's photo. Error: {e}, Photo Path: {insert_image_path}")
 
+    # Generate and insert QR code
     qr_image_path = generate_qr_code(student)
     if qr_image_path:
         try:
@@ -1337,7 +1345,7 @@ def generate_certificate(student):
             template_pil.paste(qr_image, qr_position)
         except Exception as e:
             raise ValueError(f"Could not process the QR code image. Error: {e}, QR Code Path: {qr_image_path}")
-        
+
     # Save the final image
     output_dir = os.path.join(settings.MEDIA_ROOT, 'Certificates')
     os.makedirs(output_dir, exist_ok=True)
