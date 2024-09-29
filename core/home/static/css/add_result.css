@@ -1,0 +1,358 @@
+/* POPPINS FONT */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+
+*{  
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+body{
+    background: url('/static/images/1_copy.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.wrapper{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 110vh;
+    background: rgba(39, 39, 39, 0.4);
+}
+.nav{
+    position: fixed;
+    top: 0;
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    height: 80px;
+    line-height: 80px;
+    background:rgba(255, 255, 255, 1);
+    z-index: 100;
+}
+.nav-logo img{
+    margin-top: 7px;
+    height: 70px;
+    width: 70px;
+}
+.nav-menu ul{
+    display: flex;
+}
+.nav-menu ul li{
+    list-style-type: none;
+}
+.nav-menu ul li .link{
+    text-decoration: none;
+    font-weight: 500;
+    color: #000000;
+    padding-bottom: 15px;
+    margin: 0px 25px;
+}
+.link:hover, .active{
+    border-bottom: 2px solid #000000;
+}
+.nav-button .btn{
+    width: 130px;
+    height: 40px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.4);
+    border: 2px solid black;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: .3s ease;
+}
+.btn:hover{
+    background: rgba(255, 255, 255, 0.3);
+}
+#registerBtn{
+    margin-left: 15px;
+}
+.btn.white-btn{
+    background: rgba(255, 255, 255, 0.7);
+}
+.btn.btn.white-btn:hover{
+    background: rgba(255, 255, 255, 0.5);
+}
+.nav-menu-btn{
+    display: none;
+}
+/* Dropdown Menu Styles */
+.nav2 {
+    position: relative;
+}
+
+.nav2 .dropdown {
+    display: none;
+    position: absolute;
+    left: 20px;
+    margin:0px;
+    padding: 0px;
+    list-style: none;
+    z-index: 200;
+    background-color: rgba(255, 255, 255,1);
+    
+}
+.nav-menu .ul2{
+    display: block;
+    line-height: 50px;
+}
+
+.nav2:hover .dropdown {
+    display: block;
+}
+
+.dropdown-i{
+    display: block;
+    height: 50px;
+    width: 180px;
+    text-align: center;
+    color: rgb(0, 0, 0);
+    text-decoration: none;
+    align-items: center;
+    justify-items: center;
+    text-decoration: none;
+    font-weight: 500;
+    color: #000000;
+    margin: 0 10px;
+}
+.dropdown-i:hover, .active{
+    border-bottom: 2px solid #000000;
+}
+.contacts{
+    display: flex;
+    flex-direction: row;
+    height:500px;
+    width: 1200px;
+    /* border: 2px solid black; */
+    align-items: center;
+    justify-content: space-evenly;
+    
+}
+.box{
+    height:90%;
+    width:25%;
+    /* font-size: 15px; */
+    background: rgba(255, 255, 255, 1);
+    color: #fff;
+    padding: 0 10px 0 45px;
+    border: none;
+    border-radius: 30px;
+    outline: none;
+    transition: .2s ease;
+}
+
+
+@media only screen and (max-width: 786px){
+    .nav-button{
+        display: none;
+    }
+    .nav-menu.responsive{
+        top: 100px;
+    }
+    .nav-menu{
+        position: absolute;
+        top: -800px;
+        display: flex;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.2);
+        width: 100%;
+        height: 90vh;
+        backdrop-filter: blur(20px);
+        transition: .3s;
+    }
+    .nav-menu ul{
+        flex-direction: column;
+        text-align: center;
+    }
+    .nav-menu-btn{
+        display: block;
+    }
+    .nav-menu-btn i{
+        font-size: 25px;
+        color: #fff;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        cursor: pointer;
+        transition: .3s;
+    }
+    .nav-menu-btn i:hover{
+        background: rgba(255, 255, 255, 0.15);
+    }
+}
+.center-area{
+    padding-top:4rem;
+    width: 80%;
+}
+.register-students {
+    height: fit-content;
+    width: 90%;
+    max-width: 600px;  /* Limit the maximum width */
+    /* border-radius: 30px; */
+    color: #fff;
+    font-size: 20px;
+    background: rgba(255, 255, 255, 0.5);
+    padding-top: 10px; 
+    padding-left: 30px; /* Add padding inside the container */
+    padding-right: 30px;
+    padding-bottom: 10px;
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2);  /* Add a subtle shadow */
+    margin: 0 auto;  /* Center the form horizontally */
+}
+
+.register-students header {
+    /* margin-top: 30px; */
+    font-size: 30px;
+    text-align: center;
+    color: #333;  /* Darker color for the header */
+    font-weight: bold;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 30px;
+      /* Add space between header and input group */
+}
+
+.file-input, .folder-input {
+    width: 80%;  /* Make input elements take up 80% of the container width */
+    margin-bottom: 20px;  /* Add spacing between the input elements */
+    position: relative;
+}
+
+input[type="file"] {
+    opacity: 0;
+    position: absolute;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+label.input-group-text {
+    display: inline-block;
+    background: #f5f4f3;  /* Nice button color */
+    color: #000000;
+    padding: 5px 20px;
+    border-radius: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.3s ease;  /* Smooth transition effect */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+label.input-group-text:hover {
+    background: #ff4f41;  /* Darker shade on hover */
+}
+
+.file-input input[type="file"] + label,
+.folder-input input[type="file"] + label {
+    position: relative;
+    z-index: 0;
+}
+.submit-container {
+    display: flex;
+    justify-content: center;  /* Center the button horizontally */
+    margin-top: 0px;  /* Add space above the button */
+    font-size: 20px;
+}
+
+.submit-btn{
+    font-size: 18px;
+    width: 130px;
+    height: 40px;
+    font-weight: 500;
+    background: #87b291;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: .3s ease;
+}
+.submit-btn:hover{
+    background: rgba(33, 140, 72);
+}
+
+
+.notice {
+    width: 60%;
+    background: rgba(255, 255, 255, 0.5); /* Light yellow background */
+    padding: 15px;
+    text-align: center;
+    /* border-radius: 20px; Rounded top corners */
+    font-size: 20px;
+    color: #000000;
+    margin: 0 auto;
+    margin-top:20px ; /* Dark text color for readability */
+}
+
+.notice strong {
+    font-weight: bold;
+    font-size: 25px;
+    color: #1f1e1e; /* Red color for emphasis */
+}
+
+@media only screen and (max-width: 540px) {
+    .wrapper{
+        min-height: 100vh;
+    }
+    .form-box{
+        width: 100%;
+        height: 500px;
+    }
+    .register-container, .login-container{
+        width: 100%;
+        padding: 0 20px;
+    }
+    .register-container .two-forms{
+        flex-direction: column;
+        gap: 0;
+    }
+    .notice {
+        width: 90%;
+        max-width: 100%;
+    }
+    .register-students {
+        width: 90%;
+        max-width: 100%;
+    }
+
+    .drpdwn{
+        flex-direction: column !important;
+        select {
+            width: 83%;
+            border-radius: 10px;
+            margin-top: 5px;
+        }
+    }
+
+    .input-group-text {
+        text-wrap: pretty;
+    }
+}
+.drpdwn{
+    display: flex;
+    flex-direction: row;
+    margin-top: 10px;
+}
+.form-select{
+    margin-left: 25px;
+    margin-right: 25px ;
+
+}
+
+.manual-submit {
+    align-self: flex-end;
+    margin-top: 20px;
+}
+
+.add-result-cbse {
+    margin: auto;
+    max-width: 70%;
+}

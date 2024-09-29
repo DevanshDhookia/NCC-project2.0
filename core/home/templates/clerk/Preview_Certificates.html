@@ -1,0 +1,600 @@
+{% extends "Login_Page/login_base_template.html" %}
+{% load static %}
+
+{% block css_block %}
+  <link rel="stylesheet" href="{% static 'css/preview.css' %}">
+  <link rel="stylesheet" href="{% static 'css/student_details.css' %}" />
+  <script src="{% static 'js/preview.js' %}"
+  data-students = "{{ all_students }}"></script>
+  {% endblock %}
+
+{% block title %}
+    NCC (National Cadet Corps)
+{% endblock %}
+
+{% block start %}
+  <div class="content">
+      <!-- Admit Card Preview Section -->
+      <div class="rectangular-box">
+        <form class="form" method="GET" action="/search-certificate/1/">
+          <input
+            class="form-control mr-sm-2"
+            id="search-students-box"
+            type="search"
+            name="cbse_no"
+            placeholder="Enter Regimental No."
+            aria-label="Enter Regimental No."
+            required
+          />
+          <button class="ctm-btn" type="submit">Search</button>
+        </form>
+        <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/Preview Certificates/1/')">Clear</button>
+        <button class="ctm-btn" id="view-all-btn"  onclick="view_all_function('cert', '{{current_page}}')"
+        data-bs-toggle="modal"
+        data-bs-target="#staticBackdrop">View All</button>
+
+      </div>
+      <form class="form m-1" id="bulk-approve-form" hidden>
+        {% if perms.home.can_send_admit_card_for_approval %}
+          <button class="btn btn-primary m-2" type="button" onclick="bulk_action('send', '{{csrf_token}}', 'cert', {{current_page}})">Send for Approval</button>
+        {% endif %}
+        {% if perms.home.can_approve_certificate %}
+          <button class="btn btn-success m-2" type="button" onclick="bulk_action('approve', '{{csrf_token}}', 'cert', {{current_page}})">Approve</button>
+        {% endif %} 
+      </form>
+      <div class="table-container">
+        <table class="table table-bordered table2">
+          <thead>
+            <tr>
+              <th scope="col"><center><div>Select All</div><input class="form-check-input checkbox-main" type="checkbox" value="" id="flexCheckDefault" onchange="onMainCheckboxToggle()"></center></th>
+              <th scope="col" class="center-heading">Sr.No.</th>
+              <th scope="col" class="center-heading">Student ID</th>
+              <th scope="col" class="center-heading">Name</th>
+              <th scope="col" class="center-heading">Certificate ID</th>
+              <th scope="col" class="center-heading">Unit</th>
+              <th scope="col" class="center-heading">Rank</th>
+              <th scope="col" class="center-heading">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in pending_students %}
+            <tr>
+              <th scope="col"><center><input class="form-check-input sub-checkbox sub-checkbox-{{forloop.counter}}" type="checkbox" value="{{ student.CBSE_No }}" name={{ student.CBSE_No }} onchange="onSubCheckboxToggle('{{forloop.counter}}', '{{student.CBSE_No}}')"></center></th>
+              <th scope="row">{{ forloop.counter }}</th>
+              <td>{{ student.CBSE_No }}</td>
+              <td>{{ student.Name }}</td>
+              <td>{{ student.certificate.certificate_id }}</td>
+              <td>{{ student.Unit }}</td>
+              <td>{{ student.Rank }}</td>
+              <td>
+                <button
+                  class="btn btn-info"
+                  data-bs-toggle="modal"
+                  data-bs-target="#staticBackdrop"
+                  {% comment %} onclick="view_student({{student}}, 'view')" {% endcomment %}
+                  onclick="openModalOnClick('{{forloop.counter}}', '{{student.CBSE_No}}', 'cert', {{current_page}})"
+                >
+                  View
+                </button> 
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3">No studnets are registered .</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div
+      class="modal fade modal-lg"
+      id="staticBackdrop"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+      tabindex="-1"
+      aria-labelledby="staticBackdropLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="staticBackdropLabel">
+              Certificate
+            </h1>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+              onclick="window.location='/Preview Certificates/{{current_page}}/'"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="container card-container" id = 'image-container'>
+              <center><img src="" alt="Certificate" class="admit-card-image"></center>
+            </div>
+            <div class="container" id='form-container'>
+              <div class="row flex-lg-nowrap">
+                <div class="col">
+                  <div class="row">
+                    <div class="card">
+                      <div class="card-body">
+                        <form
+                          class="form"
+                          id="student-detail-form"
+                          method="POST"
+                          action="/update/{{current_page}}/"
+                        >
+                          {% csrf_token %}
+                          <div class="e-profile">
+                            <div class="row">
+                              <div class="col-12 col-sm-auto mb-3">
+                                <div class="mx-auto" style="width: 140px">
+                                  <div
+                                    class="d-flex justify-content-center align-items-center rounded"
+                                    style="
+                                      height: 140px;
+                                      background-color: rgb(233, 236, 239);
+                                    "
+                                  >
+                                    <img
+                                      id='student-image'
+                                      src="/media/student_photos/{{ student.CBSE_No }}.jpeg"
+                                      alt="Student Photo"
+                                      style="max-width: 170px; max-height: 170px"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div
+                                class="col d-flex flex-column flex-sm-row justify-content-between mb-3"
+                              >
+                                <div class="text-center text-sm-left mb-2 mb-sm-0">
+                                  <h4 class="pt-sm-2 pb-1 mb-0 ml-3 text-nowrap" id="modal-student-name">
+                                    
+                                  </h4>
+                                  <div class="container mt-5">
+                                    <button
+                                      class="change-photo-btn"
+                                      onclick="document.getElementById('fileInput').click();"
+                                    >
+                                      Change Photo
+                                    </button>
+                                    <input
+                                      type="file"
+                                      id="fileInput"
+                                      accept="image/*"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="tab-content pt-3">
+                              <div class="tab-pane active">
+                                <form
+                                  class="form"
+                                  method="POST"
+                                  action="/update/{{current_page}}/"
+                                >
+                                  {% csrf_token %}
+                                  <div class="row">
+                                    <div class="col">
+                                      <hr />
+                                      <div class="row">
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>Regimental No.</label>
+                                            <input
+                                              class="form-control"
+                                              id='modal-cbse-no'
+                                              type="text"
+                                              name="CBSE_No"
+                                              value=""
+                                              readonly
+                                            />
+                                            <input
+                                              class="form-control"
+                                              id='student-id'
+                                              type="text"
+                                              name="id"
+                                              value=""
+                                              readonly
+                                              hidden
+                                            />
+                                            <input name="page" value="cert_modify" hidden/>
+                                          </div>
+                                        </div>
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>DOB</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-dob"
+                                              type="text"
+                                              name="DOB"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="row">
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>Full Name</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-full-name"
+                                              type="text"
+                                              name="Name"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>Father's Name</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-father-name"
+                                              type="text"
+                                              name="Fathers_Name"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="row">
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>Full Name Hindi</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-full-name-hindi"
+                                              type="text"
+                                              name="Name_Hindi"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>Father's Name Hindi</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-father-name-hindi"
+                                              type="text"
+                                              name="Fathers_Name_Hindi"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="row">
+                                        <div class="col mb-3">
+                                          <div class="form-group">
+                                            <label>Address</label>
+                                            <textarea
+                                              class="form-control"
+                                              id="modal-address"
+                                              rows="2"
+                                              name="Home_Address"
+                                            >
+                                            </textarea>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <hr />
+                                    </div>
+                                  </div>
+    
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="row">
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>Unit</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-unit"
+                                              type="text"
+                                              name="Unit"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>Rank</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-rank"
+                                              type="text"
+                                              name="Rank"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="row">
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label
+                                              >Year of passsing B certificate</label
+                                            >
+                                            <input
+                                              class="form-control"
+                                              id="modal-yopb-cert"
+                                              type="text"
+                                              name="Year_of_passing_B_Certificate"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>Fresh/Faliure</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-fresh-failure"
+                                              type="text"
+                                              name="Fresh_Failure"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="row">
+                                        <div class="col mb-3">
+                                          <div class="form-group">
+                                            <label
+                                              >School/College & Class in which
+                                              studying</label
+                                            >
+                                            <textarea
+                                              class="form-control"
+                                              id="modal-school"
+                                              rows="2"
+                                              name="School_College_Class"
+                                            >
+                                            
+                                            </textarea>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <hr />
+                                    </div>
+                                  </div>
+    
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="row">
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>1st Year</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-1st-year"
+                                              type="text"
+                                              name="Attendance_1st_year"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>2nd Year</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-2nd-year"
+                                              type="text"
+                                              name="Attendance_2nd_year"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>Total</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-3rd-year"
+                                              type="text"
+                                              name="Attendance_3rd_year"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <hr />
+                                    </div>
+                                  </div>
+    
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="row">
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>Name of Camp Attended</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-camp-name"
+                                              type="text"
+                                              name="Name_of_camp_attended_1"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>Date of Camp</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-camp-date"
+                                              type="text"
+                                              name="Date_camp_1"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="row">
+                                        <div class="col mb-3">
+                                          <div class="form-group">
+                                            <label>Location</label>
+                                            <textarea
+                                              class="form-control"
+                                              id="modal-camp-location"
+                                              rows="2"
+                                              name="Location_camp_1"
+                                            >
+                                            </textarea>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <hr />
+                                    </div>
+                                  </div>
+    
+                                  <div class="row">
+                                    <div class="col">
+                                      <div class="row">
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>Name of Camp Attended</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-camp-name-2"
+                                              type="text"
+                                              name="Name_of_camp_attended_2"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                        <div class="col">
+                                          <div class="form-group">
+                                            <label>Date of Camp</label>
+                                            <input
+                                              class="form-control"
+                                              id="modal-camp-date-2"
+                                              type="text"
+                                              name="Date_camp_2"
+                                              value=""
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="row">
+                                        <div class="col mb-3">
+                                          <div class="form-group">
+                                            <label>Location</label>
+                                            <textarea
+                                              class="form-control"
+                                              id="modal-camp-location-2"
+                                              rows="2"
+                                              name="Location_camp_2"
+                                            >
+                                            </textarea>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <hr />
+                                    </div>
+                                  </div>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            {% if perms.home.can_edit_student_details %}
+              <button type="button" class="btn btn-secondary" id="preview_modify_button" onclick="modifyButtonClick()">
+                Modify
+              </button>
+              <button type="button" class="btn btn-secondary" id="preview_back_button" onclick="backButtonClick()">
+                Back
+              </button>
+            <button type="button" id="student-submit-button" class="btn btn-primary" onclick="studentDetailFormSubmit('cert', '{{current_page}}')">
+              Submit
+            </button>
+            {% endif %}
+            <button type="button" class="btn btn-secondary" id="preview_prev_button" onclick="prevButtonClick('cert', '{{current_page}}')">
+              Prev
+            </button>
+            <button type="button" class="btn btn-secondary" id="preview_next_button" onclick="nextButtonClick('cert', '{{current_page}}')">
+              Next
+            </button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="window.location='/Preview Certificates/{{current_page}}/'">
+              Close
+            </button>
+            {% if perms.home.can_approve_certificate %}
+              <form id='admit-card-approval-form' method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn green-btn">Approve</button>
+              </form>
+            {% endif %}
+            {% if perms.home.can_send_admit_card_for_approval %}
+              <!-- Approval Form -->
+              <form id='admit-card-send-approval-form'  method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">Send For Approval</button>
+              </form>
+            {% endif %}
+            {% if perms.home.can_approve_certificate %}
+              <!-- Rejection Form -->
+              <form id="admit-card-reject-form" method="post">
+                {% csrf_token %}
+                <div class="reject-bar">
+                  <textarea id="rejection-reason" name="rejection_reason" placeholder="Enter reason for rejection" class="reject-textarea"></textarea>
+                  <button type="submit" id="reject-btn" class="btn red-btn reject-btn" disabled>Reject</button>
+                </div>
+              </form>
+              <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                  const rejectionReason = document.getElementById('rejection-reason');
+                  const rejectBtn = document.getElementById('reject-btn');
+
+                  // Enable the button if the textarea is not empty
+                  rejectionReason.addEventListener('input', function() {
+                    if (rejectionReason.value.trim().length > 0) {
+                      rejectBtn.disabled = false;  // Enable the button
+                    } else {
+                      rejectBtn.disabled = true;  // Disable the button
+                    }
+                  });
+                });
+              </script>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <center>
+      <nav aria-label="Page navigation example">
+        <ul class="pagination">
+          <li class="page-item {% if disable_prev %}disabled{% endif %}">
+            <a class="page-link" href="/Preview Certificates/{{prev_page}}/" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+          {% for i in page_range %}
+            <li class="page-item {% if i == current_page %}active{% endif %}"><a class="page-link" href="/Preview Certificates/{{i}}/">{{i}}</a></li>
+          {% endfor %}
+          <li class="page-item {% if disable_next%}disabled{% endif %}">
+            <a class="page-link" href="/Preview Certificates/{{next_page}}/" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </center>
+  </div>
+{% endblock %}
+

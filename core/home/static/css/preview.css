@@ -161,13 +161,24 @@ body{
     .nav-menu-btn i:hover {
         background: rgba(255, 255, 255, 0.15);
     }
+
+    .admit-card-actions {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 20px;
+    }
 }
 
 /* Content Styles */
 .content {
     padding-top: 80px; /* Adjust this to account for the height of the fixed navbar */
-    flex: 1;
-    overflow: auto; /* Allow scrolling if content overflows */
+    /* flex: 1; */
+    /* overflow: auto; Allow scrolling if content overflows */
+    width: 100%;
+    padding-left: 30px;
+    padding-right: 30px;
 }
 
 /* Admit Card Preview Section */
@@ -175,7 +186,7 @@ body{
     text-align: center;
     padding: 20px;
     margin: 20px auto;
-    max-width: 800px;
+    max-width: 100%;
 }
 
 .admit-card-preview h1 {
@@ -200,9 +211,9 @@ body{
     gap: 20px;
 }
 
-.admit-card-actions form {
+/* .admit-card-actions form {
     display: inline-block;
-}
+} */
 
 .admit-card-actions .btn {
     padding: 10px 20px;
@@ -257,6 +268,7 @@ body{
     align-items: center;
     width: 70%;
     margin:0px;
+    align-self: center;
 }
 
 .reject-bar {
@@ -292,4 +304,14 @@ body{
     background-color: #c0392b; /* Darker red on hover */
 }
 
+form{
+    align-self: center;
+}
 
+.center-heading {
+    align-content: start;
+}
+
+.pagination {
+    justify-content: center;
+}

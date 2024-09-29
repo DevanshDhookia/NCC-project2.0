@@ -89,6 +89,12 @@ def create_permissions_and_groups():
         content_type=student_type
     )
 
+    can_approve_certificate = Permission.objects.get_or_create(
+        codename="can_approve_certificate",
+        name="Can Approve Certificate",
+        content_type=student_type
+    )
+
     can_view_student_results = Permission.objects.get_or_create(
         codename="can_view_student_results",
         name="Can View Student Results",
@@ -96,46 +102,3 @@ def create_permissions_and_groups():
     )
 
 
-
-    clerk1, created = Group.objects.get_or_create(
-        name="clerk"
-    )
-    clerk1.permissions.add(48)
-    clerk1.permissions.add(51)
-    clerk1.permissions.add(54)
-    clerk1.permissions.add(55)
-    clerk1.permissions.add(56)
-    clerk1.permissions.add(57)
-    clerk1.permissions.add(58)
-    clerk1.permissions.add(59)
-    clerk1.permissions.add(60)
-    clerk1.permissions.add(61)
-    clerk1.save()
-
-    colonel, created = Group.objects.get_or_create(
-        name="Colonel"
-    )
-    colonel.permissions.add(55)
-    colonel.permissions.add(57)
-    colonel.permissions.add(56)
-    colonel.permissions.add(52)
-    colonel.permissions.add(53)
-    colonel.permissions.add(50)
-    colonel.permissions.add(46)
-    colonel.save()
-    
-    brigadier, created = Group.objects.get_or_create(
-        name="Brigadier"
-    )
-    brigadier.permissions.add(57)
-    brigadier.permissions.add(50)
-    brigadier.permissions.add(46)
-    brigadier.save()
-
-    dg, created = Group.objects.get_or_create(
-        name="Director_General"
-    )
-    dg.permissions.add(57)
-    dg.permissions.add(50)
-    dg.permissions.add(46)
-    dg.save()

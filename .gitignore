@@ -11,10 +11,16 @@
 .history
 .svn/
 migrate_working_dir/
-
+./core/media/Certificates
+./core/media/Admit_Cards
+./core/media/student_photos
+./core/media/Qrcode
 # IntelliJ related
 *.iml
 *.ipr
 *.iws
 .idea/
+
+*.pyc
+db.sqlite3
 

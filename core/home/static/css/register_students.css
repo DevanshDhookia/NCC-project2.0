@@ -13,7 +13,7 @@ body{
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
-    overflow: hidden;
+    overflow-y: scroll;
 }
 .wrapper{
     display: flex;
@@ -184,10 +184,13 @@ body{
     }
 }
 .center-area{
-    width: 80%;
+    width: 90%;
+    padding-top: 12vh;
+    padding-bottom: 5vh;
 }
 .register-students {
-    height: 330px;
+    padding-top: 35px !important;
+    height: fit-content;
     width: 90%;
     max-width: 600px;  /* Limit the maximum width */
     /* border-radius: 30px; */
@@ -197,12 +200,12 @@ body{
     padding-top: 10px; 
     padding-left: 30px; /* Add padding inside the container */
     padding-right: 30px;
+    padding-bottom: 30px;
     box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2);  /* Add a subtle shadow */
     margin: 0 auto;  /* Center the form horizontally */
 }
 
 .register-students header {
-    margin-top: 30px;
     font-size: 30px;
     text-align: center;
     color: #333;  /* Darker color for the header */
@@ -257,7 +260,7 @@ label.input-group-text:hover {
 .submit-container {
     display: flex;
     justify-content: center;  /* Center the button horizontally */
-    margin-top: 0px;  /* Add space above the button */
+    margin-top: 10px;  /* Add space above the button */
     font-size: 20px;
 }
 
@@ -288,6 +291,18 @@ label.input-group-text:hover {
     margin: 0 auto;
     margin-top:20px ; /* Dark text color for readability */
 }
+.notice-2 {
+    width: 40%;
+    background: rgba(255, 255, 255, 0.5); /* Light yellow background */
+    padding: 15px;
+    text-align: center;
+    /* border-radius: 20px; Rounded top corners */
+    font-size: 20px;
+    color: #000000;
+    margin: 0 auto;
+    margin-top:20px ; /* Dark text color for readability */
+ }
+ 
 
 .notice strong {
     font-weight: bold;
@@ -311,6 +326,27 @@ label.input-group-text:hover {
         flex-direction: column;
         gap: 0;
     }
+    .notice {
+        width: 90%;
+        max-width: 100%;
+    }
+    .register-students {
+        width: 90%;
+        max-width: 100%;
+    }
+
+    .drpdwn{
+        flex-direction: column !important;
+        select {
+            width: 83%;
+            border-radius: 10px;
+            margin-top: 5px;
+        }
+    }
+
+    .input-group-text {
+        text-wrap: pretty;
+    }
 }
 .drpdwn{
     display: flex;
@@ -321,4 +357,9 @@ label.input-group-text:hover {
     margin-left: 25px;
     margin-right: 25px ;
 
+}
+
+.admcd {
+    max-width: 70%;
+    margin: auto;
 }

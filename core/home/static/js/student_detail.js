@@ -1,29 +1,33 @@
 const data = document.currentScript.dataset
 students = JSON.parse(data.students)
+students_result = JSON.parse(data.result)
 
-function clearButtonClick() {
+function clearButtonClick(href) {
     console.log("Function clled")
-    window.location.replace('/Student Details/')
+    window.location.replace(href)
 }
-
+function dataToJson(data) {
+    return JSON.parse(data.replaceAll("'", '"').replace(' <ImageFieldFile: ', '"').replaceAll(">", '"').replaceAll("True", "true").replaceAll(": False", ": false").replaceAll("None", "null"))
+}
 
 function studentDetailFormSubmit(e) {
     console.log("called")
     $('#student-detail-form').submit();
-  }
-
+}
 
 function openModalOnClick(index, event_type) {
     console.log(Number(index))
     st = students[index-1].replaceAll("'", '"').replace(' <ImageFieldFile: ', '"').replaceAll(">", '"').replaceAll("True", "true").replaceAll(": False", ": false").replaceAll("None", "null")
-    student_object = JSON.parse(st);
+    student_object = dataToJson(students[index-1])
     console.log(student_object)
     $('#student-id').val(student_object["id"]);
     $('#student-image').attr('src', '/media/'+student_object['Photo'])
     $('#modal-student-name').html(student_object["Name"]);
     $('#modal-cbse-no').val(student_object["CBSE_No"]);
     $('#modal-full-name').val(student_object["Name"]).prop("readonly", event_type === 'view' ? true : false);
+    $('#modal-full-name-hindi').val(student_object["name_hindi"]).prop("readonly", event_type === 'view' ? true : false);
     $('#modal-father-name').val(student_object["Fathers_Name"]).prop("readonly", event_type === 'view' ? true : false);
+    $('#modal-father-name-hindi').val(student_object["fathers_name_hindi"]).prop("readonly", event_type === 'view' ? true : false);
     $('#modal-dob').val(student_object["DOB"]).prop("readonly", event_type === 'view' ? true : false);
     $('#modal-address').html(student_object["Home_Address"]).prop("readonly", event_type === 'view' ? true : false);
     $('#modal-unit').val(student_object["Unit"]).prop("readonly", event_type === 'view' ? true : false);

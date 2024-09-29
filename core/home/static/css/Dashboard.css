@@ -13,7 +13,7 @@ body{
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
-    overflow: hidden;
+    overflow: hidden; 
 }
 .wrapper{
     display: flex;
@@ -43,6 +43,9 @@ body{
 }
 .nav-menu ul li{
     list-style-type: none;
+}
+.nav-menu ul button {
+    display: none;
 }
 .nav-menu ul li .link{
     text-decoration: none;
@@ -86,7 +89,7 @@ body{
     justify-content: center;
     width: 512px;
     height: 420px;
-    overflow: hidden;
+    /* overflow: hidden; */
     z-index: 2;
 }
 .login-container{
@@ -187,16 +190,19 @@ header{
     text-decoration: underline;
 }
 
-@media only screen and (max-width: 786px){
+
+@media only screen and (max-width: 1200px){
     .nav-button{
         display: none;
     }
     .nav-menu.responsive{
-        top: 100px;
+        top: 80px;
+        overflow-y: scroll;
+        height: 80vh;
     }
     .nav-menu{
         position: absolute;
-        top: -800px;
+        top: -2000px;
         display: flex;
         justify-content: center;
         background: rgba(255, 255, 255, 0.2);
@@ -208,6 +214,10 @@ header{
     .nav-menu ul{
         flex-direction: column;
         text-align: center;
+    }
+
+    .nav-menu ul button {
+        display: block;
     }
     .nav-menu-btn{
         display: block;
@@ -336,8 +346,12 @@ header{
 }
 
 .side-content {
-    height: calc(100vh - 140px); /* Adjusted to fit within the sidebar */
-    overflow: auto;
+    height: calc(100vh - 80px); /* Adjusted to fit within the sidebar */
+    display: flex;
+    flex-direction: column;
+    button {
+        font-size: 14px;
+    }
 }
 
 
@@ -366,6 +380,7 @@ header{
 .profile {
     text-align: center;
     padding: 2rem 0rem;
+    flex-grow: 1;
 }
 .profile-img {
     width: 100px;  /* Adjust width as needed */
@@ -605,7 +620,7 @@ main {
     height: 10px;
     border-radius: 4px;
     background: #e9edf2;
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 
 .indicator {
@@ -789,6 +804,7 @@ table tbody tr {
     .main-content {
         margin-left: 0;
         width: 100%;
+        overflow-y: auto;
     }
     
     #menu-toggle:checked ~ .sidebar {
@@ -819,16 +835,64 @@ table tbody tr {
     table {
         width: 900px;
     }
+
+    .dashboard-juniors {
+        display: none;
+    }
 }
 
+#dashboard-cards {
+    overflow: auto;
+    height: 65vh;
+}
 
+.dashboard-juniors {
+    margin-top: 0.6rem;
+    height: 65vh;
+    overflow: auto;
+    margin-bottom: 50px;
+}
 
+.dashboard-juniors-dropdown {
+    display: none;
+}
 
+.dashboard-juniors-icon {
+    margin-top: 5px;
+    float: right;
+}
 
+@media only screen and (max-width: 768px) {
+    .dashboard-juniors-dropdown {
+        display: block;
+    }
+    .dropdown-toggle {
+        width: 100%;
+    }
 
+    .dropdown-menu {
+        width: 100%;
+        height: 30vh;
+        overflow: scroll;
+    }
 
+    .page-header {
+        background-color: #34425a;
+        color: white;
+        h1 {
+            color: white;
+        }
+        small {
+            color: white;
+        }
+    }
 
+    #dashboard-cards {
+        overflow: auto;
+        height: 55vh;
+    }
 
-
-
-
+    main {
+        margin-top: 0;
+    }
+}

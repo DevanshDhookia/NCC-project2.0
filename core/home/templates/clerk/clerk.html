@@ -1,198 +1,281 @@
-{% extends "Login_Page/login_base_template.html" %}
-{% load static %}
+{% extends "Login_Page/login_base_template.html" %} {% load static %} 
 {% block css_block %}
-    <link rel="stylesheet" href="{% static 'css/Dashboard.css' %}">
-{% endblock %}
-
+<link rel="stylesheet" href="{% static 'css/Dashboard.css' %}" />
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %} 
 {% block start %}
 <div class="sidebar">
   <div class="side-content">
-      <div class="profile">
-          <div class="profile-img bg-img" ></div>
-          <h4>{{request.user.username}}</h4>
-          <small>{% for group in request.user.groups.all %}
-            {{ group.name }}
-        {% endfor %}</small>
-      </div>
-      
-      <div class="side-menu">
-          
-      </div>
+    <div class="profile">
+      <div class="profile-img bg-img"></div>
+      <h4>{{request.user.username}}</h4>
+      <small>{% for group in request.user.groups.all %} {{ group.name }} {% endfor %}</small>
+    </div>
+    <button class='btn btn-secondary' onclick="window.location.href='/change-password/'">Change Password</button>
+    <div class="side-menu"></div>
   </div>
 </div>
 
 <div class="main-content">
-  
   <main>
-      
-      <div class="page-header">
-          <h1>Dashboard</h1>
-          <small>Home / Dashboard</small>
-      </div>
-      
-      <div class="page-content">
-      
-          <div class="analytics">
+    <div class="page-header">
+      <h1>Dashboard</h1>
+      <small>Home / Dashboard</small>
+    </div>
 
-              <div class="card">
-                  <div class="card-head">
-                      <h2>{{total_students.count}}</h2>
-                      <span class="las la-user-friends"></span>
-                  </div>
-                  <div class="card-progress">
-                      <larger>Total Registered Students</larger>
-                      <!-- <div class="card-indicator">
-                          <div class="indicator one" style="width: 60%"></div>
-                      </div> -->
-                  </div>
-              </div>
-
-              <div class="card">
-                  <div class="card-head">
-                      <h2>{{admitcard_generated_students}}</h2>
-                      <span class="las la-eye"></span>
-                  </div>
-                  <div class="card-progress">
-                      <larger>Admit Card Generated</larger>
-                  </div>
-              </div>
-
-              <div class="card">
-                  <div class="card-head">
-                      <h2>{{send_for_approval_students}}</h2>
-                      <span class="las la-shopping-cart"></span>
-                  </div>
-                  <div class="card-progress">
-                      <larger>Send for Approval</larger>
-                  </div>
-              </div>
-
-              <div class="card">
-                  <div class="card-head">
-                    <h2>{{reject_admit_card_students}}</h2>
-                      <span class="las la-envelope"></span>
-                  </div>
-                  <div class="card-progress">
-                      <larger>Rejected Admit Cards</larger>
-                  </div>
-              </div>
-          </div>
-          <div class="analytics">
-
-            <div class="card">
-                <div class="card-head">
-                    <h2>107,200</h2>
-                    <span class="las la-user-friends"></span>
+    <div class="page-content">
+      <div class="container">
+        <div class="row">
+          {% if juniors is not None or groupp != 'cl' %}
+            <div class="col-md-3 col-sm-0 dashboard-juniors">
+              <ul class="list-group">
+                <div class="list-group-item list-group-item-action">
+                  <a href="/user/" class="list-group-item"> Current User<i class="bx bx-chevron-right dashboard-juniors-icon"></i></a>
                 </div>
-                <div class="card-progress">
-                    <small>User activity this month</small>
-                    <div class="card-indicator">
-                        <div class="indicator one" style="width: 60%"></div>
-                    </div>
-                </div>
+                {% for junior in juniors %}
+                  <div class="list-group-item list-group-item-action">
+                    <a href="/user/{{junior.id}}" class="list-group-item"> {{junior.username}}<i class="bx bx-chevron-right dashboard-juniors-icon"></i> </a>
+                  </div>
+                {% endfor %}
+              </ul>
             </div>
-
-            <div class="card">
-                <div class="card-head">
-                    <h2>340,230</h2>
-                    <span class="las la-eye"></span>
-                </div>
-                <div class="card-progress">
-                    <small>Page views</small>
-                    <div class="card-indicator">
-                        <div class="indicator two" style="width: 80%"></div>
+            <div class="dashboard-juniors-dropdown">
+              <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Select Cadet
+                </button>
+                <ul class="dropdown-menu">
+                  <li>
+                    <div class="dropdown-item">
+                      <a href="/user/" class="list-group-item">Current User<i class="bx bx-chevron-right dashboard-juniors-icon"></i> </a>
                     </div>
-                </div>
+                  </li>
+                  {% for junior in juniors %}
+                    <li>
+                      <div class="dropdown-item">
+                        <a href="/user/{{junior.id}}" class="list-group-item"> {{junior.username}}<i class="bx bx-chevron-right dashboard-juniors-icon"></i> </a>
+                      </div>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
             </div>
-
-            <div class="card">
+          {% endif %}
+          {% if juniors is not None or groupp != 'cl' %}
+            <div class="col-md-9 col-sm-12" id="dashboard-cards">
+          {% else %}
+            <div class="col" id="dashboard-cards">
+          {% endif %}
+            {% if messages %}
+                <div class="alert alert-primary alert-dismissible" id="success-alert">
+                    {% for message in messages %}
+                        {{message}}
+                    {% endfor %}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+            <div>
+              Student Details by Wing
+            </div>
+            <div class="analytics">
+              <div class="card">
                 <div class="card-head">
-                    <h2>$653,200</h2>
-                    <span class="las la-shopping-cart"></span>
-                </div>
-                <div class="card-progress">
-                    <small>Monthly revenue growth</small>
-                    <div class="card-indicator">
-                        <div class="indicator three" style="width: 65%"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-head">
-                    <h2>47,500</h2>
-                    <span class="las la-envelope"></span>
-                </div>
-                <div class="card-progress">
-                    <small>New E-mails received</small>
-                    <div class="card-indicator">
-                        <div class="indicator four" style="width: 90%"></div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-        <div class="analytics">
-
-          <div class="card">
-              <div class="card-head">
-                  <h2>107,200</h2>
+                  <h2>{{total_students.count}}</h2>
                   <span class="las la-user-friends"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Total Registered Students</larger>
+                  <!-- <div class="card-indicator">
+                                <div class="indicator one" style="width: 60%"></div>
+                            </div> -->
+                </div>
               </div>
-              <div class="card-progress">
-                  <small>User activity this month</small>
-                  <div class="card-indicator">
-                      <div class="indicator one" style="width: 60%"></div>
-                  </div>
-              </div>
-          </div>
-
-          <div class="card">
-              <div class="card-head">
-                  <h2>340,230</h2>
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{army_students}}</h2>
                   <span class="las la-eye"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Total Army Students</larger>
+                </div>
               </div>
-              <div class="card-progress">
-                  <small>Page views</small>
-                  <div class="card-indicator">
-                      <div class="indicator two" style="width: 80%"></div>
-                  </div>
-              </div>
-          </div>
 
-          <div class="card">
-              <div class="card-head">
-                  <h2>$653,200</h2>
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{navy_students}}</h2>
                   <span class="las la-shopping-cart"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Total Navy Students</larger>
+                </div>
               </div>
-              <div class="card-progress">
-                  <small>Monthly revenue growth</small>
-                  <div class="card-indicator">
-                      <div class="indicator three" style="width: 65%"></div>
-                  </div>
-              </div>
-          </div>
 
-          <div class="card">
-              <div class="card-head">
-                  <h2>47,500</h2>
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{air_force_students}}</h2>
                   <span class="las la-envelope"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Total Air-Force Students</larger>
+                </div>
               </div>
-              <div class="card-progress">
-                  <small>New E-mails received</small>
-                  <div class="card-indicator">
-                      <div class="indicator four" style="width: 90%"></div>
-                  </div>
+              
+            </div>
+            <div>
+              Admit Card Details
+            </div>
+            <div class="analytics">
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{admitcard_generated_students}}</h2>
+                  <span class="las la-eye"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Admit Card Generated</larger>
+                </div>
               </div>
+
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{send_for_approval_students}}</h2>
+                  <span class="las la-shopping-cart"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Pending Approval</larger>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{admit_card_approved}}</h2>
+                  <span class="las la-shopping-cart"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Admit Card Approved</larger>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{reject_admit_card_students}}</h2>
+                  <span class="las la-envelope"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Rejected Admit Cards</larger>
+                </div>
+              </div>
+            </div>
+            <div>
+              Certificate Details
+            </div>
+            <div class="analytics">
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{total_certificates}}</h2>
+                  <span class="las la-user-friends"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Total certificates generated</larger>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{total_cert_approved}}</h2>
+                  <span class="las la-eye"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Certificates Approved</small>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{total_cert_pending_approval}}</h2>
+                  <span class="las la-shopping-cart"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Certificates Pending Approval</larger>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{total_rejected_certs}}</h2>
+                  <span class="las la-shopping-cart"></span>
+                </div> 
+                <div class="card-progress">
+                  <larger>Certificates Rejected</larger>
+                </div>
+              </div>
+
+            </div>
+            Certificate Generated by Type
+            <div class="analytics">
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{a_cert_generated}}</h2>
+                  <span class="las la-user-friends"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Total A certificates Approved</larger>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{b_cert_generated}}</h2>
+                  <span class="las la-eye"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Total B certificates Approved</small>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{c_cert_generated}}</h2>
+                  <span class="las la-shopping-cart"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>Total C certificates Approved</larger>
+                </div>
+              </div>
+            </div>
+            <div class="analytics">
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{a_cert_pending_approval}}</h2>
+                  <span class="las la-user-friends"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>A certificates Pending Approval</larger>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{b_cert_pending_approval}}</h2>
+                  <span class="las la-eye"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>B certificates Pending Approval</small>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-head">
+                  <h2>{{c_cert_pending_approval}}</h2>
+                  <span class="las la-shopping-cart"></span>
+                </div>
+                <div class="card-progress">
+                  <larger>C certificates Pending Approval</larger>
+                </div>
+              </div>
+            </div>
           </div>
-
+        </div>
       </div>
-
-          
-      
-      </div>
-      
+    </div>
   </main>
-  
 </div>
 {% endblock %}
