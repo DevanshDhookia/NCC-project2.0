@@ -58,7 +58,7 @@
     <tbody>
       {% for student in result_data %}
       <tr>
-        <th scope="col"><center><input class="form-check-input sub-checkbox sub-checkbox-{{forloop.counter}}" type="checkbox" value="{{ student.student_id }}" name='{{ student.student_id }}' onchange="onSubCheckboxToggle('{{forloop.counter}}', '{{student.student_id}}')"></center></th>
+        <th scope="col"><center><input class="form-check-input {% if student.cert_generated == False %}sub-checkbox{% endif %} sub-checkbox-{{forloop.counter}}" type="checkbox" value="{{ student.student_id }}" name='{{ student.student_id }}' onchange="onSubCheckboxToggle('{{forloop.counter}}', '{{student.student_id}}')" {% if student.cert_generated == True %}disabled{%endif%}></center></th>
         <td>{{ student.student_id }}</td>
         <td>{{ student.student_name }}</td>
         <td>{{ student.p_1_total |floatformat:2 }}</td>

@@ -739,7 +739,7 @@ def Preview_Admit_Card(request, page):
                 last_record_index = len(pending_students)
             
             curr_pending_students = pending_students[offset: last_record_index]
-            pending_students = [student.CBSE_No for student in pending_students]
+            pending_students = [str(model_to_dict(student)) for student in pending_students]
             # Get the current student ID from the request or default to the first pending student
             context = {
                 "all_students": json.dumps(pending_students, cls=DjangoJSONEncoder),   
@@ -830,6 +830,7 @@ def generate_certificate_action(request, cbse_no, page):
             certificate_id = cbse_no+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year + "/" +id.zfill(5)
             certificate = Certificate.objects.filter(certificate_id=certificate_id)
             if certificate.exists():
+                print("Existing certificate found for student")
                 cert = certificate[0]
                 cert.certificate_generated = True
                 cert.Date = date.today()
@@ -935,7 +936,7 @@ def Preview_Certificates(request, page):
             last_record_index = len(pending_students)
             
         curr_pending_students = pending_students[offset: last_record_index]
-        pending_students = [student.CBSE_No for student in pending_students]
+        pending_students = [str(model_to_dict(student)) for student in pending_students]
         # Get the current student from request or default to the first in the list 
         
         context = {
@@ -1678,17 +1679,26 @@ def update_student(request, page):
         student.Date_camp_2 = get_value('Date_camp_2')
         student.Location_camp_2 = get_value('Location_camp_2')
         student.rejection_reason=None
-        student.certificate_id=None
-
+        print(pagee)
         # Save the student object
         student.save()
         generate_admit_card(student)
+        if student.certificate_id is not None and pagee=='cert_modify':
+            generate_certificate_action(request, student.CBSE_No, page)
+        else:
+            student.certificate_id = None
+            
         if pagee == 'result':
             return redirect('/Rejected Admit Cards/'+str(page)+"/")
         elif pagee == 'student':
             return redirect('/Student Details/'+str(page)+"/")  # Redirect after saving
         elif pagee == 'certificate':
             return redirect("/rejected-certificate/"+str(page)+"/")
+        elif pagee == 'admit_card':
+            return HttpResponse({"status": 200, "message": "success"}, content_type='application/json', status=200)
+        elif pagee == 'cert_modify':
+            return HttpResponse({"status": 200, "message": "success"}, content_type='application/json', status=200)
+
 
     return render(request, 'clerk/Student_Details.html', {'student': student})
 
