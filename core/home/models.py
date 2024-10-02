@@ -17,6 +17,10 @@ class Colonel(models.Model):
 class Clerk(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     colonel = models.ForeignKey(Colonel, on_delete=models.CASCADE, related_name="clerks")
+    certificate_no_start= models.IntegerField(null=True,default=-1)
+    certificate_no_end=models.IntegerField(null=True,default=-1)
+    certificate_no_current=models.IntegerField(null=True,default=-1)
+
 
 class BonusMarksCategories(models.Model):
     type = models.CharField(max_length=100, null=True)

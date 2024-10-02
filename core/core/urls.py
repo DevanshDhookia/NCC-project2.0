@@ -53,6 +53,7 @@ urlpatterns = [
     path('reject_admit_card/<str:cbse_no>/<int:page>/', reject_admit_card, name='reject_admit_card'),
     path('search/<int:page>/', search_student, name='search_student'),
     path('search-result/<int:page>/', search_result, name='search_result'),
+    path('add_certificate_range/',add_certificate_range,name="add_certificate_range"),
     path('search-admit-card/<int:page>/', search_admit_card, name='search_result'),
     path('search-certificate/<int:page>/', search_certificate, name='search_result'),
     path('update/<int:page>/', update_student, name='update_student'),

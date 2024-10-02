@@ -15,6 +15,16 @@
 {% block start %}
   <div class="content">
       <!-- Admit Card Preview Section -->
+      {% if perms.home.can_approve_certificate %}
+        <div class="rectangular-box">
+         <form class="form" method="POST"  enctype="multipart/form-data">
+          {% csrf_token %}
+          <label for="signature-file" class>Add Digital Signature:</label>
+          <input type="file" id="signature-file" name="signature_file" />
+          <button class="ctm-btn ctm-btn-3" type="submit">Manual Signature</button>
+        </form>
+  </div>
+  {% endif %}
       <div class="rectangular-box">
         <form class="form" method="GET" action="/search-certificate/1/">
           <input

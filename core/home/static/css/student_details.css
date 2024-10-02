@@ -135,6 +135,23 @@ body{
     border-style: none;
     /* border-color: rgb(19, 19, 19); */
 }
+.ctm-btn-3 {
+    margin-left: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+    height: 39px;
+    width: 160px;
+    border-radius: 10px;
+    color: rgb(0, 0, 0); 
+    border-style: none;
+    /* border-color: rgb(19, 19, 19); */
+}
+.ctm-btn-3:hover {
+    color: #e7e9e7; /* Green color on hover */
+    background-color: rgb(25, 189, 47);
+    border-style: none;
+
+}
 .ctm-btn:hover {
     color: #e7e9e7; /* Green color on hover */
     background-color: rgb(25, 189, 47);
