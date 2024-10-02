@@ -1291,6 +1291,8 @@ def generate_certificate(student):
     except KeyError:
         raise ValueError("Invalid Wing or Certificate Type.")
     cert_back = None  # Initialize cert_back
+    template = cv2.imread(template_path)
+    width, height = template.shape[1], template.shape[0]
     if student.Certificate_type == "B":
         cert_back = cv2.imread(cert_back_path)
     elif student.Certificate_type == "C":
@@ -1301,10 +1303,6 @@ def generate_certificate(student):
         cert_back_pil = Image.fromarray(cv2.cvtColor(cert_back, cv2.COLOR_BGR2RGB))
     else:
         cert_back_pil = cert_back
-    
-
-    template = cv2.imread(template_path)
-    width, height = template.shape[1], template.shape[0]
 
     
     if template is None or cert_back is None:
@@ -1490,6 +1488,8 @@ def _approve_admit_card(cbse_no):
 def reject_admit_card(request, cbse_no, page):
     if request.method == 'POST':
         _reject_admit_card(request, cbse_no, None)
+    if "vareject" in request.POST:
+        return HttpResponse({"status": 200, "message": "success"}, content_type='application/json', status=200)
     return redirect('/Preview Admit Card/'+str(page)+"/")
 
 def _reject_admit_card(request, cbse_no, reject_reason):
@@ -1900,10 +1900,12 @@ def search_certificate(request, page):
 
 @login_required
 def reject_certificate(request, cbse_no, page):
-   print("In reject certificate", cbse_no, page)
-   if request.method == 'POST':
-       _reject_certificate(request, cbse_no, None)
-   return redirect('/Preview Certificates/'+str(page)+"/")
+    print("In reject certificate", cbse_no, page)
+    if request.method == 'POST':
+        _reject_certificate(request, cbse_no, None)
+    if "vareject" in request.POST:
+        return HttpResponse({"status": 200, "message": "success"}, content_type='application/json', status=200)
+    return redirect('/Preview Certificates/'+str(page)+"/")
 
 def _reject_certificate(request, cbse_no, reject_reason):
     try:

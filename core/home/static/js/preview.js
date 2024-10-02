@@ -1,6 +1,6 @@
 let selectedCheckBoxes = []
 const data = document.currentScript.dataset
-students_certs = JSON.parse(data.students)
+var students_certs = JSON.parse(data.students)
 current_context = ''
 preview_all_index = 0;
 function clearButtonClick(href) {
@@ -69,15 +69,16 @@ function openModalOnClick(index, cbse_no, page, current_page){
     $("#form-container").hide()
     $("#admit-card-approval-form").show()
     $("#admit-card-send-approval-form").show()
-    $("#admit-card-reject-form").show()
+    $(".view-single-reject-form").show()
+    $(".view-all-reject-form").hide()
     if(page === 'cert') {
         $("#admit-card-approval-form").attr("action", "/approve_certificate/"+cbse_no+"/"+current_page.toString()+'/')
         $("#admit-card-send-approval-form").attr("action", "/approve_certificate/"+cbse_no+"/"+current_page.toString()+'/')
-        $("#admit-card-reject-form").attr("action", "/reject_certificate/"+cbse_no+"/"+current_page.toString()+'/')
+        $(".view-single-reject-form").attr("action", "/reject_certificate/"+cbse_no+"/"+current_page.toString()+'/')
     } else {
         $("#admit-card-approval-form").attr("action", "/approve_admit_card/"+cbse_no+"/"+current_page.toString()+'/')
         $("#admit-card-send-approval-form").attr("action", "/send_for_approval/"+cbse_no+"/"+current_page.toString()+'/')
-        $("#admit-card-reject-form").attr("action", "/reject_admit_card/"+cbse_no+"/"+current_page.toString()+'/')
+        $(".view-single-reject-form").attr("action", "/reject_admit_card/"+cbse_no+"/"+current_page.toString()+'/')
     }
     image_data = get_image_data(cbse_no, page)
     image_data.then(function(data) {
@@ -97,12 +98,40 @@ function openModalOnClick(index, cbse_no, page, current_page){
 }
 
 function get_image_data(cbse_no, type) {
+    console.log("URL to call:", `/get-admit-card/${type}/${cbse_no}`)
     var ax = $.ajax({
         type: "GET",
         url: `/get-admit-card/${type}/${cbse_no}`,
         async: false,
     });
     return ax
+}
+
+function view_all_reject_button(page, current_page) {
+    student_object = students_certs[preview_all_index].replaceAll("'", '"').replace(' <ImageFieldFile: ', '"').replaceAll(">", '"').replaceAll("True", "true").replaceAll(": False", ": false").replaceAll("None", "null")
+    student_object = JSON.parse(student_object)
+    url_to_call = null;
+    if (page === 'cert'){
+        url_to_call = `/reject_certificate/${student_object['CBSE_No']}/${current_page.toString()}/`
+    } else {
+        url_to_call = `/reject_admit_card/${student_object['CBSE_No']}/${current_page.toString()}/`
+    }
+    console.log("CAlling url", url_to_call)
+    $.ajax({
+        type: "POST",
+        url: url_to_call,
+        data: $(".view-all-reject-form").serialize(),
+        dataType: "json",
+        complete: function(data) {
+            students_certs.splice(preview_all_index, 1)
+            $("#rejection-reason-va").val("")
+            $("#reject-btn-va").prop('disabled', true)
+            view_all_function(page, current_page);
+        },
+        error: function(xhr, status, error) {
+          // Handle error
+        }
+      });
 }
 
 function view_all_function(page, current_page) {
@@ -117,15 +146,18 @@ function view_all_function(page, current_page) {
     $("#preview_next_button").show()
     $("#admit-card-approval-form").hide()
     $("#admit-card-send-approval-form").hide()
-    $("#admit-card-reject-form").hide()
+    $(".view-single-reject-form").hide()
+    $(".view-all-reject-form").show()
+    if (students_certs.length > 0){
     student_object = students_certs[preview_all_index].replaceAll("'", '"').replace(' <ImageFieldFile: ', '"').replaceAll(">", '"').replaceAll("True", "true").replaceAll(": False", ": false").replaceAll("None", "null")
     student_object = JSON.parse(student_object)
-    if (preview_all_index === 0) {
+    console.log(preview_all_index, students_certs)
+    if (preview_all_index <= 0) {
         $("#preview_prev_button").hide();
     }else{
         $("#preview_prev_button").show();
     }
-    if(preview_all_index === students_certs.length-1) {
+    if(preview_all_index >= students_certs.length-1) {
         $("#preview_next_button").hide();
     } else {
         $("#preview_next_button").show();
@@ -133,11 +165,11 @@ function view_all_function(page, current_page) {
     if(page === 'cert') {
         $("#admit-card-approval-form").attr("action", "/approve_certificate/"+student_object['CBSE_No']+"/"+current_page.toString()+'/')
         $("#admit-card-send-approval-form").attr("action", "/approve_certificate/"+student_object['CBSE_No']+"/"+current_page.toString()+'/')
-        $("#admit-card-reject-form").attr("action", "/reject_certificate/"+student_object['CBSE_No']+"/"+current_page.toString()+'/')
+        $(".view-single-reject-form").attr("action", "/reject_certificate/"+student_object['CBSE_No']+"/"+current_page.toString()+'/')
     } else {
         $("#admit-card-approval-form").attr("action", "/approve_admit_card/"+student_object['CBSE_No']+"/"+current_page.toString()+'/')
         $("#admit-card-send-approval-form").attr("action", "/send_for_approval/"+student_object['CBSE_No']+"/"+current_page.toString()+'/')
-        $("#admit-card-reject-form").attr("action", "/reject_admit_card/"+student_object['CBSE_No']+"/"+current_page.toString()+'/')
+        $(".view-single-reject-form").attr("action", "/reject_admit_card/"+student_object['CBSE_No']+"/"+current_page.toString()+'/')
     }
     image = get_image_data(student_object['CBSE_No'], page)
     image.then(function(data) {
@@ -156,6 +188,12 @@ function view_all_function(page, current_page) {
         $(".card-container").html("<div><center>Not found</center></div>")
     })
     set_form_data(student_object);
+    }else{
+        $("#preview_prev_button").hide()
+        $("#preview_next_button").hide()
+        $(".view-all-reject-form").hide()
+        $(".card-container").html("<div><center>Not found</center></div>")
+    }
 }
 
 function set_form_data(student_object) {
@@ -215,12 +253,12 @@ function backButtonClick() {
     $("#student-submit-button").hide()
     $("#form-container").hide()
     $("#image-container").show()
-    if (preview_all_index === 0 || current_context==='vs') {
+    if (preview_all_index <= 0 || current_context==='vs') {
         $("#preview_prev_button").hide();
     }else{
         $("#preview_prev_button").show();
     }
-    if(preview_all_index === students_certs.length-1 || current_context==='vs') {
+    if(preview_all_index >= students_certs.length-1 || current_context==='vs') {
         $("#preview_next_button").hide();
     } else {
         $("#preview_next_button").show();

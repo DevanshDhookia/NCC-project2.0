@@ -558,18 +558,43 @@
               </form>
             {% endif %}
             {% if perms.home.can_approve_certificate %}
+            <form id="admit-card-reject-form" class="view-all-reject-form">
+              {% csrf_token %}
+              <input name="vareject" hidden/>
+              <div class="reject-bar">
+                <textarea id="rejection-reason-va" name="rejection_reason" placeholder="Enter reason for rejection" class="reject-textarea"></textarea>
+                <button type="button" id="reject-btn-va" class="btn red-btn reject-btn" disabled onclick="view_all_reject_button('cert', '{{current_page}}')">Reject</button>
+              </div>
+            </form>
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                const rejectionReason = document.getElementById('rejection-reason-va');
+                const rejectBtn = document.getElementById('reject-btn-va');
+
+                // Enable the button if the textarea is not empty
+                rejectionReason.addEventListener('input', function() {
+                  if (rejectionReason.value.trim().length > 0) {
+                    rejectBtn.disabled = false;  // Enable the button
+                  } else {
+                    rejectBtn.disabled = true;  // Disable the button
+                  }
+                });
+              });
+            </script>
+            {% endif %}
+            {% if perms.home.can_approve_certificate %}
               <!-- Rejection Form -->
-              <form id="admit-card-reject-form" method="post">
+              <form id="admit-card-reject-form" class="view-single-reject-form" method="post">
                 {% csrf_token %}
                 <div class="reject-bar">
-                  <textarea id="rejection-reason" name="rejection_reason" placeholder="Enter reason for rejection" class="reject-textarea"></textarea>
-                  <button type="submit" id="reject-btn" class="btn red-btn reject-btn" disabled>Reject</button>
+                  <textarea id="rejection-reason-vs" name="rejection_reason" placeholder="Enter reason for rejection" class="reject-textarea"></textarea>
+                  <button type="submit" id="reject-btn-vs" class="btn red-btn reject-btn" disabled>Reject</button>
                 </div>
               </form>
               <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                  const rejectionReason = document.getElementById('rejection-reason');
-                  const rejectBtn = document.getElementById('reject-btn');
+                  const rejectionReason = document.getElementById('rejection-reason-vs');
+                  const rejectBtn = document.getElementById('reject-btn-vs');
 
                   // Enable the button if the textarea is not empty
                   rejectionReason.addEventListener('input', function() {
