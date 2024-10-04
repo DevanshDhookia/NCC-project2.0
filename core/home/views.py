@@ -50,31 +50,27 @@ def custom_404_view(request):
     return render(request, '404.html', status=404)
 
 def SignIn(request):
-    if not request.user.is_authenticated:
-        try:
-            if request.user is None:
-                return redirect('/user/')
-            if request.method == 'POST':
-                data = request.POST
-                user = authenticate(username=data.get("username"), password=data.get("password"))
-                if user is not None:
-                    token = jwt_utility.get_jwt_token({
-                        "username": user.username
-                    })
-                    request.user = user
-                    request.session["token"] = token
-                    login(request, user)
+    if request.user.is_authenticated:  # If the user is already authenticated, avoid signing in again
+        return redirect("/admin/" if request.user.is_superuser else "/user/")  # Admin panel for admin user, else user panel
 
-                    return redirect("/user/")
-                else:
-                    messages.info(request, "Invalid Login Credentials")
-                    return redirect("/SignIn/")
+    if request.method == 'POST':
+        try:
+            data = request.POST
+            user = authenticate(username=data.get("username"), password=data.get("password"))
+            if user is not None:
+                login(request, user)
+                token = jwt_utility.get_jwt_token({"username": user.username})
+                request.session["token"] = token
+                return redirect("/admin/" if user.is_superuser else "/user/")
+            else:
+                messages.error(request, "Invalid login credentials")
+                return redirect("/SignIn/")
         except Exception as e:
-            print("Some exception occurred: ", e)
-            messages.error(request, "Some error occurred")
-        return render(request, "Login_Page/SignIn.html", {"page_name": "Ludiflex | Login & Registration"})
-    else:
-        return redirect("/index/")
+            print(f"An error occurred: {e}")
+            messages.error(request, "Some error occurred. Please try again.")
+    
+    return render(request, "Login_Page/SignIn.html", {"page_name": "Ludiflex | Login & Registration"})
+
     
 def forgot_password(request):
     if request.user.is_authenticated:
@@ -875,7 +871,7 @@ def generate_certificate_action(request, cbse_no, page):
             cert.delete()
             messages.info(request, "Error while generating certificate")
             return redirect("/view-results/"+str(page)+"/")
-        messages.info(request, "Certificate Sent for Approval")
+        messages.info(request, "Certificate generated")
     else:
         messages.error(request, "Student not found with provided CBSE No.")
     return redirect("/view-results/"+str(page)+"/")
@@ -1277,8 +1273,8 @@ def generate_admit_card(student):
 def generate_certificate(student):
     # Define template paths based on the student's Wing and Certificate_Type
     template_filenames = {
-        'Army': {'A': 'Army_A.png', 'B': 'Army_B.png', 'C': 'c_cert.jpeg'},
-        'Navy': {'A': 'Navy_A.png', 'B': 'Navy_B.png', 'C': 'c_cert.jpeg'},
+        'Army': {'A': 'Army_A.png', 'B': 'Army_B.png', 'C': 'c_cert.jpg'},
+        'Navy': {'A': 'Navy_A.png', 'B': 'Navy_B.png', 'C': 'c_cert.jpg'},
         'Air Force': {'A': 'Air_Force_A.png', 'B': 'Air_Force_B.png', 'C': 'c_cert.jpg'},
     }
 
@@ -1330,20 +1326,19 @@ def generate_certificate(student):
             (student.Rank, (431, 394)),
             (student.Name, (141, 465)),
             (student.name_hindi, (128,444)),
-            (student.fathers_name_hindi, (492, 444)),
+            (student.fathers_name_hindi, (492, 450)),
             (student.DOB, (498, 515)),
-            (student.Fathers_Name, (518, 465)),
+            (student.Fathers_Name, (518, 470)),
             (student.Certificate_type, (491, 360)),
-            (student.Certificate_type, (243, 717)),
-            (hindi_certificate_type,(464,638)),
+            (student.result.Grade,(464,638)),
             (student.certificate.Place, (141, 848)),
             (student.certificate.Date, (141, 906)),
             (student.Year, (210, 633)),
-            (student.Year, (426, 717)),
+            (student.Year, (426, 710)),
             (student.Directorate, (224, 561)),
-            (student.certificate.certificate_id, (430, 10)),
+            (student.certificate.certificate_id, (500, 10)),
             (hindi_certificate_type,(444,321)),
-             (student.result.Grade,(182,597))
+            (student.result.Grade,(243, 710))
         ]
     else:
         hindi_certificate_type=utility.translate_names("hi", student.Certificate_type)
@@ -1384,8 +1379,8 @@ def generate_certificate(student):
             try:
                 insert_image_path = student.Photo.path
                 insert_image = Image.open(insert_image_path)
-                insert_image = insert_image.resize((130, 130))
-                image_position = (545, 35)
+                insert_image = insert_image.resize((130, 170))
+                image_position = (595, 85)
                 template_pil.paste(insert_image, image_position)
             except Exception as e:
                 raise ValueError(f"Could not process the student's photo. Error: {e}, Photo Path: {insert_image_path}")

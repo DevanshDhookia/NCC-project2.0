@@ -238,6 +238,10 @@ body{
     /* justify-content: center;  */
     margin-top: 100px; /* Add margin-top to push the box below the navbar */
 }
+.rectangular-box-2{
+    background: rgba(255, 255, 255, 0.7);
+}
+
 
 /* Optional: style the text inside the box */
 .rectangular-box p {
@@ -273,4 +277,68 @@ body{
 
 .center-heading {
     align-content: start;
+}
+
+.rectangular-box-2 {
+    background-color: #f4f4f4; /* Light grey background */
+    padding: 20px; /* Padding inside the box */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    max-width: 400px; /* Maximum width of the box */
+    margin: 20px auto; /* Center the box */
+    border: 1px solid #ccc; /* Light border */
+}
+
+.rectangular-box-2 .form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Spacing between elements */
+}
+
+.rectangular-box-2 label {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333; /* Darker font color */
+    margin-bottom: 5px;
+}
+
+.rectangular-box-2 input[type="file"] {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff; /* White background for the file input */
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.rectangular-box-2 .ctm-btn {
+    background-color: #5cb85c; /* Green background for the button */
+    color: white; /* White text */
+    padding: 10px 20px; /* Padding inside the button */
+    border: none; /* Remove default border */
+    border-radius: 4px; /* Rounded button */
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+}
+
+.rectangular-box-2 .ctm-btn:hover {
+    background-color: #4cae4c; /* Darker green on hover */
+}
+
+.rectangular-box-2 .ctm-btn-3 {
+    width: 100%; /* Full width of the button */
+}
+
+.rectangular-box-2 input[type="file"]::-webkit-file-upload-button {
+    background: #5cb85c; /* Green button on file upload input */
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.rectangular-box-2 input[type="file"]::-webkit-file-upload-button:hover {
+    background: #4cae4c; /* Darker green on hover */
 }
