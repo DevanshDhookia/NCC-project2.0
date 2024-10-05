@@ -133,26 +133,56 @@ def index(request):
     return render(request, "Login_Page/index.html")
 
 @login_required
-def clerk_page(request):
+def clerk_page(request, user_id='default'):
     if login_validator.is_user_logged_in(request) and request.user.is_authenticated:
+        # user_id = request.GET.get("user_id")
         admitcard_generated_students = 0
         send_for_approval_students = 0
         reject_admit_card_students = 0
+        juniors = None
+        students_list = None
+        if request.user.groups.filter(name='Director_General').exists():
+            juniors = Brigadier.objects.filter(director_general_id = request.user.id)
+            if user_id != 'default':
+                students_list = Student.objects.filter(brigadier_id = user_id, director_general_id = request.user.id)
+            else:
+                students_list = Student.objects.filter(director_general_id = request.user.id)
+        
+        if request.user.groups.filter(name='Brigadier').exists():
+            juniors = Colonel.objects.filter(brigadier_id = request.user.id)
+            if user_id != 'default':
+                students_list = Student.objects.filter(colonel_id = user_id, brigadier_id = request.user.id)
+            else:
+                students_list = Student.objects.filter(brigadier_id = request.user.id)
 
-        for student in Student.objects.all():
+        if request.user.groups.filter(name='Colonel').exists():
+            print("Searching for juniors")
+            print(request.user.id)
+            juniors = Clerk.objects.filter(colonel_id = Colonel.objects.get(user_id=request.user.id).id)
+            if user_id != 'default':
+                students_list = Student.objects.filter(clerk_id = Clerk.objects.get(user_id=user_id), colonel_id = Colonel.objects.get(user_id=request.user.id).id)
+            else:
+                students_list = Student.objects.filter(colonel_id = Colonel.objects.get(user_id=request.user.id).id)
+        if request.user.groups.filter(name='Clerk').exists():
+            juniors = None
+            students_list = Student.objects.filter(clerk_id = request.user.id)
+        juniors = [User.objects.get(id = junior.user_id) for junior in juniors]
+        for student in students_list:
             if student.admit_card_generated:
                 admitcard_generated_students += 1
             if student.sent_for_approval:
                 send_for_approval_students += 1
             if student.rejection_reason:  # This checks if rejection_reason is not None and not an empty string
                 reject_admit_card_students += 1
-
+        print(students_list)
         context = {
-            'total_students': Student.objects.all(),
+            'total_students': students_list,
             'admitcard_generated_students': admitcard_generated_students,
             'send_for_approval_students': send_for_approval_students,
             'reject_admit_card_students': reject_admit_card_students,
+            "juniors": juniors
         }
+
 
         return render(request, "clerk/clerk.html", context)
     else:
