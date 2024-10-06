@@ -50,31 +50,27 @@ def custom_404_view(request):
     return render(request, '404.html', status=404)
 
 def SignIn(request):
-    if not request.user.is_authenticated:
-        try:
-            if request.user is None:
-                return redirect('/user/')
-            if request.method == 'POST':
-                data = request.POST
-                user = authenticate(username=data.get("username"), password=data.get("password"))
-                if user is not None:
-                    token = jwt_utility.get_jwt_token({
-                        "username": user.username
-                    })
-                    request.user = user
-                    request.session["token"] = token
-                    login(request, user)
+    if request.user.is_authenticated:  # If the user is already authenticated, avoid signing in again
+        return redirect("/admin/" if request.user.is_superuser else "/user/")  # Admin panel for admin user, else user panel
 
-                    return redirect("/user/")
-                else:
-                    messages.info(request, "Invalid Login Credentials")
-                    return redirect("/SignIn/")
+    if request.method == 'POST':
+        try:
+            data = request.POST
+            user = authenticate(username=data.get("username"), password=data.get("password"))
+            if user is not None:
+                login(request, user)
+                token = jwt_utility.get_jwt_token({"username": user.username})
+                request.session["token"] = token
+                return redirect("/admin/" if user.is_superuser else "/user/")
+            else:
+                messages.error(request, "Invalid login credentials")
+                return redirect("/SignIn/")
         except Exception as e:
-            print("Some exception occurred: ", e)
-            messages.error(request, "Some error occurred")
-        return render(request, "Login_Page/SignIn.html", {"page_name": "Ludiflex | Login & Registration"})
-    else:
-        return redirect("/index/")
+            print(f"An error occurred: {e}")
+            messages.error(request, "Some error occurred. Please try again.")
+    
+    return render(request, "Login_Page/SignIn.html", {"page_name": "Ludiflex | Login & Registration"})
+
     
 def forgot_password(request):
     if request.user.is_authenticated:
@@ -773,7 +769,7 @@ def bulk_generate_certs(request):
                 year = str(date.today().year)
                 try:
                     cert = None
-                    certificate_id = cbse_no+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year + "/" +id.zfill(5)
+                    certificate_id = cbse_no[0:2]+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year+ "/" + str(student.clerk.certificate_no_current)
                     certificate = Certificate.objects.filter(certificate_id=certificate_id)
                     if certificate.exists():
                         cert = certificate[0]
@@ -787,13 +783,15 @@ def bulk_generate_certs(request):
                         cert.save()
                     else:
                         cert = Certificate.objects.create(
-                            certificate_id = cbse_no+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year + "/" +id.zfill(5), 
+                            certificate_id = cbse_no[0:2]+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year+ "/" + str(student.clerk.certificate_no_current),
                             certificate_generated = True,
                             Date = date.today(),
                             Approval_stage='0',
                             Generation_date = date.today(),
                             Place = "Kanpur"
                         )
+                        student.clerk.certificate_no_current+=1
+                        student.clerk.save()
                 except Exception as error:
                     print(error)
                     messages.error(request, "Certificate already generated for the student")
@@ -826,14 +824,17 @@ def generate_certificate_action(request, cbse_no, page):
         id = str(student.id)
         year = str(date.today().year)
         try:
+            if(student.clerk.certificate_no_current>student.clerk.certificate_no_end):
+                messages.error(request, "Certificate range is exhausted.")
+                return redirect("/view-results/"+str(page)+"/")
             cert = None
-            certificate_id = cbse_no+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year + "/" +id.zfill(5)
+            certificate_id = cbse_no[0:2]+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year+ "/" + str(student.clerk.certificate_no_current)
             certificate = Certificate.objects.filter(certificate_id=certificate_id)
             if certificate.exists():
                 print("Existing certificate found for student")
                 cert = certificate[0]
                 cert.certificate_generated = True
-                cert.Date = date.today()
+                cert.Date = date.today().strftime("%d %m %Y")
                 cert.Approval_stage='0'
                 cert.Generation_date = date.today()
                 cert.Place = "Kanpur"
@@ -842,13 +843,15 @@ def generate_certificate_action(request, cbse_no, page):
                 cert.save()
             else:
                 cert = Certificate.objects.create(
-                    certificate_id = cbse_no+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year + "/" +id.zfill(5), 
+                    certificate_id = cbse_no[0:2]+"/"+student.Certificate_type + " Cert/"+student.Unit+"/"+year+ "/" + str(student.clerk.certificate_no_current),
                     certificate_generated = True,
                     Date = date.today(),
                     Approval_stage='0',
                     Generation_date = date.today(),
                     Place = "Kanpur"
-                )
+                    )
+                student.clerk.certificate_no_current+=1
+                student.clerk.save()
         except Exception as error:
             print(error)
             messages.error(request, "Certificate already generated for the student")
@@ -868,7 +871,7 @@ def generate_certificate_action(request, cbse_no, page):
             cert.delete()
             messages.info(request, "Error while generating certificate")
             return redirect("/view-results/"+str(page)+"/")
-        messages.info(request, "Certificate Sent for Approval")
+        messages.info(request, "Certificate generated")
     else:
         messages.error(request, "Student not found with provided CBSE No.")
     return redirect("/view-results/"+str(page)+"/")
@@ -1124,7 +1127,7 @@ def check_generated_by_cbse_no(cbse_no, rtype, user):
 def generate_qr_code(student):
     # The data to encode in the QR code
     # data = "www.google.com"
-    data = student.certificate.certificate_id + "," + student.Wing + ", " + student.Location_camp_1 + "," + student.Certificate_type + ", " + str(student.certificate.Date) + ", " +student.School_College_Class
+    data = student.CBSE_No + "," + student.Name + "," + student.Fathers_Name + ", " + student.Unit + "," + student.School_College_Class + ", " + str(student.Year) + ", " + student.result.Grade + "," + "Certified By ACG Software"
     # Generate the QR code
     qr = pyqrcode.create(data)
 
@@ -1270,24 +1273,39 @@ def generate_admit_card(student):
 def generate_certificate(student):
     # Define template paths based on the student's Wing and Certificate_Type
     template_filenames = {
-        'Army': {'A': 'Army_A.png', 'B': 'Army_B.png', 'C': 'c_cert.jpeg'},
-        'Navy': {'A': 'Navy_A.png', 'B': 'Navy_B.png', 'C': 'c_cert.jpeg'},
+        'Army': {'A': 'Army_A.png', 'B': 'Army_B.png', 'C': 'c_cert.jpg'},
+        'Navy': {'A': 'Navy_A.png', 'B': 'Navy_B.png', 'C': 'c_cert.jpg'},
         'Air Force': {'A': 'Air_Force_A.png', 'B': 'Air_Force_B.png', 'C': 'c_cert.jpg'},
     }
 
     try:
         template_path = os.path.join(settings.MEDIA_ROOT, 'Template_images', template_filenames[student.Wing][student.Certificate_type])
+        if student.Certificate_type == "B":
+            cert_back_path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'B_cert_back.png')
+        if student.Certificate_type == "C":
+            cert_back_path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'C_cert_back.png')
     except KeyError:
         raise ValueError("Invalid Wing or Certificate Type.")
-
+    cert_back = None  # Initialize cert_back
     template = cv2.imread(template_path)
     width, height = template.shape[1], template.shape[0]
-    if template is None:
-        raise ValueError("Could not load the certificate template image.")
+    if student.Certificate_type == "B":
+        cert_back = cv2.imread(cert_back_path)
+    elif student.Certificate_type == "C":
+        cert_back = cv2.imread(cert_back_path)
+    elif student.Certificate_type == "A":
+        cert_back = Image.fromarray(np.ones((height, width, 3), dtype=np.uint8) * 255)
+    if isinstance(cert_back, np.ndarray):
+        cert_back_pil = Image.fromarray(cv2.cvtColor(cert_back, cv2.COLOR_BGR2RGB))
+    else:
+        cert_back_pil = cert_back
 
+    
+    if template is None or cert_back is None:
+        raise ValueError("Could not load the certificate template or back image.")
     # Convert the template image from OpenCV format (BGR) to PIL format (RGB)
     template_pil = Image.fromarray(cv2.cvtColor(template, cv2.COLOR_BGR2RGB))
-    cert_back = Image.fromarray(np.ones((height, width, 3), dtype=np.uint8) * 255)
+    
     # Initialize ImageDraw object
     draw = ImageDraw.Draw(template_pil)
 
@@ -1308,41 +1326,40 @@ def generate_certificate(student):
             (student.Rank, (431, 394)),
             (student.Name, (141, 465)),
             (student.name_hindi, (128,444)),
-            (student.fathers_name_hindi, (492, 444)),
+            (student.fathers_name_hindi, (492, 450)),
             (student.DOB, (498, 515)),
-            (student.Fathers_Name, (518, 465)),
+            (student.Fathers_Name, (518, 470)),
             (student.Certificate_type, (491, 360)),
-            (student.Certificate_type, (243, 717)),
-            (hindi_certificate_type,(464,638)),
+            (student.result.Grade,(464,638)),
             (student.certificate.Place, (141, 848)),
             (student.certificate.Date, (141, 906)),
             (student.Year, (210, 633)),
-            (student.Year, (426, 717)),
+            (student.Year, (426, 710)),
             (student.Directorate, (224, 561)),
-            (student.certificate.certificate_id, (430, 10)),
+            (student.certificate.certificate_id, (500, 10)),
             (hindi_certificate_type,(444,321)),
-             (student.result.Grade,(182,597))
+            (student.result.Grade,(243, 710))
         ]
     else:
         hindi_certificate_type=utility.translate_names("hi", student.Certificate_type)
         texts_with_positions = [
-            (student.Unit, (152, 394)),
-            (student.CBSE_No, (152, 323)),
-            (student.Rank, (431, 323)),
-            (student.Name, (152, 360)),
-            (student.name_hindi, (152,345)),
-            (student.fathers_name_hindi, (456, 340)),
-            (student.DOB, (465, 390)),
-            (student.Fathers_Name, (488, 356)),
-            (student.Certificate_type, (233, 547)),
-            (student.certificate.Place, (150, 647)),
-            (student.certificate.Date, (150, 683)),
-            (student.Year, (257, 503)),
-            (student.Year, (507, 547)),
-            (student.Directorate, (218, 449)),
-            (student.certificate.certificate_id, (430, 10)),
-            (hindi_certificate_type,(380,502)),
-            (student.result.Grade,(182,597))
+            (student.Unit, (160, 423)),
+            (student.CBSE_No, (160, 340)),
+            (student.Rank, (470, 330)),
+            (student.Name, (170, 386)),
+            (student.name_hindi, (165,370)),
+            (student.fathers_name_hindi, (515, 365)),
+            (student.DOB, (530, 420)),
+            (student.Fathers_Name, (555, 381)),
+            (student.Certificate_type, (270, 595)),
+            (student.certificate.Place, (170, 710)),
+            (student.certificate.Date, (165, 750)),
+            (student.Year, (295, 545)),
+            (student.Year, (575, 595)),
+            (student.Directorate, (255, 487)),
+            (student.certificate.certificate_id, (510, 15)),
+            (hindi_certificate_type,(435,545)),
+            (student.result.Grade,(210,647))
 
         ]
 
@@ -1356,15 +1373,28 @@ def generate_certificate(student):
             draw.text((x, y), str(text), font=font, fill=(0, 0, 0))  # Draw the main text
 
     # Add the student's photo to the certificate
-    if student.Photo:
-        try:
-            insert_image_path = student.Photo.path
-            insert_image = Image.open(insert_image_path)
-            insert_image = insert_image.resize((120, 120))
-            image_position = (545, 35)
-            template_pil.paste(insert_image, image_position)
-        except Exception as e:
-            raise ValueError(f"Could not process the student's photo. Error: {e}, Photo Path: {insert_image_path}")
+
+    if student.Certificate_type == "C":
+        if student.Photo:
+            try:
+                insert_image_path = student.Photo.path
+                insert_image = Image.open(insert_image_path)
+                insert_image = insert_image.resize((130, 170))
+                image_position = (595, 85)
+                template_pil.paste(insert_image, image_position)
+            except Exception as e:
+                raise ValueError(f"Could not process the student's photo. Error: {e}, Photo Path: {insert_image_path}")
+    else :
+        if student.Photo:
+            try:
+                insert_image_path = student.Photo.path
+                insert_image = Image.open(insert_image_path)
+                insert_image = insert_image.resize((130, 130))
+                image_position = (593, 40)
+                template_pil.paste(insert_image, image_position)
+            except Exception as e:
+                raise ValueError(f"Could not process the student's photo. Error: {e}, Photo Path: {insert_image_path}")
+
 
     # Generate and insert QR code
     qr_image_path = generate_qr_code(student)
@@ -1372,7 +1402,7 @@ def generate_certificate(student):
         try:
             qr_image = Image.open(qr_image_path)
             qr_image = qr_image.resize((120, 120))  # Resize QR code as needed
-            qr_position = (45, 35)  # Set QR code position
+            qr_position = (45, 40)  # Set QR code position
             template_pil.paste(qr_image, qr_position)
         except Exception as e:
             raise ValueError(f"Could not process the QR code image. Error: {e}, QR Code Path: {qr_image_path}")
@@ -1385,7 +1415,7 @@ def generate_certificate(student):
 
     try:
         template_pil.save(final_image_path)
-        cert_back.save(final_back_image_path)
+        cert_back_pil.save(final_back_image_path)
         print(f"Certificate saved at: {final_image_path}")
     except Exception as e:
         raise ValueError(f"Could not save the certificate image. Error: {e}")
@@ -1453,6 +1483,8 @@ def _approve_admit_card(cbse_no):
 def reject_admit_card(request, cbse_no, page):
     if request.method == 'POST':
         _reject_admit_card(request, cbse_no, None)
+    if "vareject" in request.POST:
+        return HttpResponse({"status": 200, "message": "success"}, content_type='application/json', status=200)
     return redirect('/Preview Admit Card/'+str(page)+"/")
 
 def _reject_admit_card(request, cbse_no, reject_reason):
@@ -1471,6 +1503,10 @@ def _reject_admit_card(request, cbse_no, reject_reason):
 def Register_Students(request):
     if request.user.has_perm('home.can_create_new_candidates'):
         try:
+            clerk = Clerk.objects.get(user=request.user)  # Get the Clerk associated with the user
+            if clerk.certificate_no_start == -1:
+                messages.info(request, "Please provide the range for certificate number")
+                return render(request, "clerk/Register_Students.html")
             if request.method == 'POST':
                 certificate_type=request.POST.get('certificate_type')
                 wing=request.POST.get('wing')
@@ -1693,18 +1729,20 @@ def update_student(request, page):
         student.rejection_reason=None
         print(pagee)
         # Save the student object
-        student.save()
+        
         generate_admit_card(student)
         if student.certificate_id is not None and pagee=='cert_modify':
             generate_certificate_action(request, student.CBSE_No, page)
         else:
             student.certificate_id = None
+        student.save()
             
         if pagee == 'result':
             return redirect('/Rejected Admit Cards/'+str(page)+"/")
         elif pagee == 'student':
             return redirect('/Student Details/'+str(page)+"/")  # Redirect after saving
         elif pagee == 'certificate':
+            
             return redirect("/rejected-certificate/"+str(page)+"/")
         elif pagee == 'admit_card':
             return HttpResponse({"status": 200, "message": "success"}, content_type='application/json', status=200)
@@ -1857,10 +1895,12 @@ def search_certificate(request, page):
 
 @login_required
 def reject_certificate(request, cbse_no, page):
-   print("In reject certificate", cbse_no, page)
-   if request.method == 'POST':
-       _reject_certificate(request, cbse_no, None)
-   return redirect('/Preview Certificates/'+str(page)+"/")
+    print("In reject certificate", cbse_no, page)
+    if request.method == 'POST':
+        _reject_certificate(request, cbse_no, None)
+    if "vareject" in request.POST:
+        return HttpResponse({"status": 200, "message": "success"}, content_type='application/json', status=200)
+    return redirect('/Preview Certificates/'+str(page)+"/")
 
 def _reject_certificate(request, cbse_no, reject_reason):
     try:
@@ -2124,4 +2164,25 @@ def get_admit_card(request, page_type, cbse_no):
     data = json.dumps(data, cls=DjangoJSONEncoder)
     response = HttpResponse(data, content_type='application/json', status=200)
     return response
-            
+@login_required  
+def add_certificate_range(request):
+    if request.method == 'POST':
+       
+        certificate_no_start = request.POST.get('certificate_number_start')
+        certificate_no_end = request.POST.get('certificate_number_end')
+
+        # Assuming user has a related Profile model to store certificate numbers
+        try:
+            clerk = Clerk.objects.get(user=request.user)
+        except Clerk.DoesNotExist:
+            messages.error(request, "Clerk profile not found.")
+            return redirect('Register_Students')
+
+        clerk.certificate_no_start = certificate_no_start
+        clerk.certificate_no_end = certificate_no_end
+        clerk.certificate_no_current=certificate_no_start
+        clerk.save()
+
+        return redirect('Register_Students')
+
+    return render(request, 'Register_Students.html')

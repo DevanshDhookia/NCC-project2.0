@@ -35,7 +35,34 @@
 {% endblock script %}
 
 {% block start %}
+
     <div class="center-area">
+            <div class="notice-3">
+                <div><strong>Enter Certificate Range</strong></div>
+                <form class="form" method="POST" action="/add_certificate_range/">
+                    <input
+                        class="input-group-text"
+                        id="search-students-box"
+                        type="number"
+                        name="certificate_number_start"
+                        placeholder="{% if request.user.clerk %}{{ request.user.clerk.certificate_no_start }}{% else %}Enter Starting Number{% endif %}"
+                        aria-label="Enter Starting Number"
+                        required
+                    />
+                    <input
+                        class="input-group-text"
+                        id="search-students-box"
+                        type="number"
+                        name="certificate_number_end"
+                        placeholder="{% if request.user.clerk %}{{ request.user.clerk.certificate_no_end }}{% else %}Enter Ending Number{% endif %}"
+                        aria-label="Enter Ending Number"
+                        required
+                    />
+                    {% csrf_token %}
+                    <button class="submit-btn" type="submit">Submit</button>
+                </form>
+            </div>
+         
         <form class="register-students" method="post" enctype="multipart/form-data" action="{% url 'Register_Students' %}">
             {% csrf_token %}
             <header>Register New Students</header>
