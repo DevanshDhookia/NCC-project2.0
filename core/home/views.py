@@ -637,6 +637,63 @@ def add_result_data(request):
         return redirect("/index/")
 
 @login_required
+def update_practical_page(request, page):
+    try:
+        if request.user.has_perm("home.view_result"):
+            current_page = int(page)
+            if request.method == 'POST' and request.user.has_perm("home.change_result"):
+                request_data = request.POST
+                st_id = request_data.get("id")
+                student = Student.objects.filter(id=st_id).first()
+                if student:
+                    st_result = Result.objects.filter(id=student.result.id)[0]
+                    st_result.Parade_attendance = request_data.get("attandance")
+                    st_result.Paper1_W = request_data.get("result_p1_w")
+                    st_result.Paper1_P = request_data.get("result_p1_p")
+                    st_result.Paper1_T = request_data.get("result_p1_t")
+                    st_result.Paper2_W = request_data.get("result_p2_w")
+                    st_result.Paper2_P = request_data.get("result_p2_p")
+                    st_result.Paper2_T = request_data.get("result_p2_t")
+                    st_result.Paper3_W = request_data.get("result_p3_w")
+                    st_result.Paper4_W = request_data.get("result_p4_w")
+                    st_result.Paper4_P = request_data.get("result_p4_p")
+                    st_result.Paper4_T = request_data.get("result_p4_t")
+                    st_result.bonus_marks_cat = BonusMarksCategories.objects.get(id=request_data.get("bonus_marks_cat"))
+                    st_result.Bonus_marks = request_data.get("bonus_marks")
+                    st_result.Final_total = request_data.get("modal_total")
+                    st_result.Pass = True if request_data.get("Fresh_Failure") == 'true' else False
+                    st_result.Grade = request_data.get("grade")
+                    st_result.save()
+                else:
+                    return redirect("/index/")
+            results_data = _get_student_results(request, 'update-practical')
+            print(results_data)
+            total_pages = len(results_data) // 10 if len(results_data) % 10 == 0 else (len(results_data) // 10) + 1
+            if total_pages == 0:
+                total_pages = 1
+            if current_page == 0:
+                current_page = 1
+            elif current_page > total_pages:
+                current_page = total_pages
+            offset = ((current_page-1) * 10)
+            last_record_index = (current_page * 10)
+            if last_record_index > len(results_data):
+                last_record_index = len(results_data)
+            
+            results_data = results_data[offset: last_record_index]
+            
+            bonus_marks_cat = BonusMarksCategories.objects.all()
+            bonus_marks_ser = json.dumps([model_to_dict(item) for item in bonus_marks_cat], cls=DjangoJSONEncoder)
+            return_data = [{"id": student.id,"student_id": student.CBSE_No, "result": model_to_dict(student.result), "student_name": student.Name, "college": student.School_College_Class, "unit": student.Unit,"rank": student.Rank, "p_1_total": student.result.Paper1_T, "p_2_total": student.result.Paper2_T, "p_3_total": student.result.Paper3_W, "p_4_total": student.result.Paper4_T, "cert_generated": student.certificate_id != None} for student in results_data]
+            serialized_return_data = json.dumps(list(return_data), cls=DjangoJSONEncoder)
+            return render(request, "clerk/add_practical_marks.html", {"result_data": return_data, "serialized_result_data": serialized_return_data, "bonus_marks_ser": bonus_marks_ser, "bonus_marks": bonus_marks_cat, 'current_page': current_page, 'total_pages': total_pages, 'disable_prev': current_page == 1, 'disable_next': current_page >= total_pages, 'prev_page': current_page - 1, 'next_page': current_page + 1, 'page_range': range(1, total_pages+1)})
+    except Exception as e:
+        print("Some exception occurred while fetching records", e)
+        messages.error(request, "Some error occurred")
+        return redirect("/index/")
+
+
+@login_required
 def results(request, page):
     try:
         if request.user.has_perm("home.view_result"):
@@ -667,14 +724,8 @@ def results(request, page):
                     st_result.save()
                 else:
                     return redirect("/index/")
-            if request.user.groups.filter(name='Colonel').exists():
-                results_data = Student.objects.filter(result__isnull=False, colonel=Colonel.objects.get(user_id=request.user.id)).order_by('id')
-            elif request.user.groups.filter(name='Clerk').exists():
-                results_data = Student.objects.filter(result__isnull=False, clerk=Clerk.objects.get(user_id=request.user.id)).order_by('id')
-            elif request.user.groups.filter(name='Brigadier').exists():
-                results_data = Student.objects.filter(result__isnull=False, brigadier=Brigadier.objects.get(user_id=request.user.id)).order_by('id')
-            elif request.user.groups.filter(name='Director_General').exists():
-                results_data = Student.objects.filter(result__isnull=False, director_general=Director_General.objects.get(user_id=request.user.id)).order_by('id')
+            
+            results_data = _get_student_results(request, 'view-result')
             
             total_pages = len(results_data) // 10 if len(results_data) % 10 == 0 else (len(results_data) // 10) + 1
             if total_pages == 0:
@@ -702,6 +753,21 @@ def results(request, page):
         messages.error(request, "Some error occurred")
         return redirect('/index/')
 
+def _get_student_results(request, page):
+    results_data = []
+    if request.user.groups.filter(name='Colonel').exists():
+        results_data = Student.objects.filter(result__isnull=False, colonel=Colonel.objects.get(user_id=request.user.id)).order_by('id')
+    elif request.user.groups.filter(name='Clerk').exists():
+        results_data = Student.objects.filter(result__isnull=False, clerk=Clerk.objects.get(user_id=request.user.id)).order_by('id')
+    elif request.user.groups.filter(name='Brigadier').exists():
+        results_data = Student.objects.filter(result__isnull=False, brigadier=Brigadier.objects.get(user_id=request.user.id)).order_by('id')
+    elif request.user.groups.filter(name='Director_General').exists():
+        results_data = Student.objects.filter(result__isnull=False, director_general=Director_General.objects.get(user_id=request.user.id)).order_by('id')
+    if page == 'update-practical':
+        results_data = [data for data in results_data if data.result.Paper1_P == 0 and data.result.Paper2_P == 0 and data.result.Paper4_P == 0]
+    elif page == 'view-result':
+        results_data = [data for data in results_data if data.result.Paper1_P != 0 or data.result.Paper2_P != 0 or data.result.Paper4_P != 0]
+    return results_data
 
 @login_required
 def Preview_Admit_Card(request, page):
@@ -976,7 +1042,7 @@ def print_certificate(request):
                         else:
                             cbse_no = "_".join(file.split("_")[0:-1])
                             
-                            if check_generated_by_cbse_no(cbse_no, 'c', request.user)[0]:
+                            if check_generated_by_cbse_no(request, cbse_no, 'c', request.user)[0]:
                                 print("processing for ", file)
                                 file_path = os.path.join(root, file)
                                 file_back_path = os.path.join(root, cbse_no+"_back_certificate.png")
@@ -1010,7 +1076,7 @@ def print_certificate(request):
             return response
         if request.method == 'POST' and 'single' in request.POST:
             cbse_no = request.POST.get("cbse_no")
-            st_check_result = check_generated_by_cbse_no(cbse_no, 'c', request.user)
+            st_check_result = check_generated_by_cbse_no(request, cbse_no, 'c', request.user)
             if st_check_result[0]:
                 file_path = os.path.join(folder_path, cbse_no + "_certificate.png")
                 file_back_path = os.path.join(folder_path, cbse_no + "_back_certificate.png")
@@ -1038,7 +1104,7 @@ def print_certificate(request):
                 messages.error(request, st_check_result[1])
         if request.method == 'POST' and 'duplicate' in request.POST:
             cbse_no = request.POST.get("cbse_no")
-            st_check_result = check_generated_by_cbse_no(cbse_no, 'c', request.user)
+            st_check_result = check_generated_by_cbse_no(request, cbse_no, 'c', request.user)
             if st_check_result[0]:
                 new_file_name=cbse_no+"_dup_certificate.png"
                 file_path = os.path.join(folder_path, cbse_no + "_certificate.png")
@@ -1073,7 +1139,7 @@ def print_certificate(request):
         # Render the template for GET requests
     return render(request, "clerk/print_certificate.html")
 
-def check_generated_by_cbse_no(cbse_no, rtype, user):
+def check_generated_by_cbse_no(request, cbse_no, rtype, user):
     student_data = None
     if user.groups.filter(name='Director_General').exists():
         director_general_id = Director_General.objects.get(user_id=user.id).id
@@ -1155,7 +1221,7 @@ def Print_Admit_Cards(request):
             for root, dirs, files in os.walk(folder_path):
                 for file in files:
                     cbse_no = "_".join(file.split("_")[0:-2])
-                    if check_generated_by_cbse_no(cbse_no, 'a', request.user)[0]:
+                    if check_generated_by_cbse_no(request, cbse_no, 'a', request.user)[0]:
                         file_path = os.path.join(root, file)
                         zipf.write(file_path, os.path.relpath(file_path, folder_path))
 
@@ -1177,7 +1243,7 @@ def Print_Admit_Cards(request):
         return response
     if request.method == 'POST' and 'single' in request.POST:
         cbse_no = request.POST.get("cbse_no")
-        gene_check = check_generated_by_cbse_no(cbse_no, 'a', request.user)
+        gene_check = check_generated_by_cbse_no(request, cbse_no, 'a', request.user)
         if gene_check[0]:
             file_path = os.path.join(folder_path, cbse_no + "_admit_card.png")
             if os.path.exists(file_path):
@@ -1985,8 +2051,8 @@ def _approve_certificate(request, cbse_no):
        student = get_object_or_404(Student, CBSE_No=cbse_no)
        certificate = student.certificate
        certificate.Approval_stage = 2
-       if(student.Certificate_type=='A') :
-           certificate.Approved = True
+    #    if(student.Certificate_type=='A') :
+       certificate.Approved = True
        certificate.save()
    elif request.user.groups.filter(name='Brigadier').exists():
        student = get_object_or_404(Student, CBSE_No=cbse_no)
