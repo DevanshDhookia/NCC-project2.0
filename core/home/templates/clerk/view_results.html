@@ -24,6 +24,7 @@
     <button class="ctm-btn" type="submit">Search</button>
   </form>
   <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/view-results/{{current_page}}/')">Clear <i class="bx bx-message-square-x"></i></button>
+  <a class="btn btn-primary mx-2" id="download-result" href="/download-result/">Download Result</a>
 </div>
 <form class="form m-1" id="bulk-approve-form" hidden>
   {% if perms.home.can_generate_certificate %}

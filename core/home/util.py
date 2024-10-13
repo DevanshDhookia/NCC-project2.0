@@ -59,3 +59,10 @@ class Util():
     def translate_names(self, language_code, name):
         translation = self.translator.translate(name, dest=language_code)
         return translation.text
+    
+    def excel_col_to_num(self, col_name):
+        alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        if len(col_name) == 1:
+            return ord(col_name[0]) - 64
+        else:
+            return (26 ** (len(col_name) - 1)) + self.excel_col_to_num(col_name[1:])

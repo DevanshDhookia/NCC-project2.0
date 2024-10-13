@@ -78,6 +78,13 @@
                                     >
                                     </li>
                                 {% endif %}
+                                {% if perms.home.can_add_student_results %}
+                                    <li>
+                                    <a class="dropdown-i" href="/upload-omr/"
+                                        >Upload OMR Result</a
+                                    >
+                                    </li>
+                                {% endif %}
                                 {% if perms.home.view_result or perms.home.change_result %}
                                     <li>
                                     <a class="dropdown-i" href="/view-update-practical-marks/1/"

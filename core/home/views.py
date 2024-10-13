@@ -29,10 +29,14 @@ from django.db.models import Q
 import pyqrcode 
 import png
 from datetime import date
+from datetime import datetime
 from .util import Util
 import base64
 import pymupdf
 import fitz
+from openpyxl import load_workbook
+from openpyxl.drawing.image import Image
+from openpyxl.styles import Font, Color, Alignment, Border, Side
 
 
 login_validator = LoginValidator()
@@ -612,10 +616,6 @@ def add_result_data(request):
                 #     print(e)
                 #     messages.info(request, "Unable to process record")
                 #     return redirect("/Add Result/")
-                        
-
-                        
-
         elif request.method == 'GET':
             request_data = request.GET
             student = Student.objects.filter(CBSE_No=request_data.get('cbse_no')).first()
@@ -635,6 +635,164 @@ def add_result_data(request):
         print("Exception occurred: ", e)
         messages.error(request, "Some error occurred")
         return redirect("/index/")
+
+def upload_omr_result(request):
+
+    if request.method == 'POST':
+        print("Starting to prcess the result upload file")
+        try:
+            excel_file = request.FILES.get("excel_file")
+            if excel_file:
+                file_extension = os.path.splitext(excel_file.name)[1]
+                df = None
+                if file_extension in ['.csv']:
+                    df = pd.read_csv(excel_file)
+                elif file_extension in ['.xls', '.xlsx']:
+                    df = pd.read_excel(excel_file)
+                # else:
+                #     messages.info(request, "The uploaded file format is not supproted")
+                #     return redirect("/upload-omr/")
+                print("Excel file read complete")
+
+                data = request.POST
+                drill_cell_start = data.get("drill-cell-start")
+                drill_cell_end = data.get("drill-cell-end")
+                drill_marks = data.get("drill-marks")
+                wt_cell_start = data.get("wt-cell-start")
+                wt_cell_end = data.get("wt-cell-end")
+                wt_marks = data.get("wt-marks")
+                misc_cell_start = data.get("misc-cell-start")
+                misc_cell_end = data.get("misc-cell-end")
+                misc_marks = data.get("misc-marks")
+                stc_cell_start = data.get("stc-cell-start")
+                stc_cell_end = data.get("stc-cell-end")
+                stc_marks = data.get("stc-marks")
+                regimental_no = data.get("regimental_no")
+                total_p1_w = 0
+                total_p2_w = 0
+                total_p3_w = 0
+                total_p4_w = 0
+                column_indices = {
+                    'CBSE_No': [],
+                    'Parade_attendance': [],
+                    'Paper1_W': [],
+                    'Paper1_P': 0,
+                    'Paper1_T': [],
+                    'Paper2_W': [],
+                    'Paper2_P': 0,
+                    'Paper2_T': [],
+                    'Paper3_W': [],
+                    'Paper4_W': [],
+                    'Paper4_P': 0,
+                    'Paper4_T': [],
+                    'Bonus_marks': 0,
+                    'Final_total': [],
+                    'Grade': 'C'
+                }
+                result_data = {
+                    'CBSE_No': "",
+                    'Parade_attendance': 0,
+                    'Paper1_W': 0,
+                    'Paper1_P': 0,
+                    'Paper1_T': 0,
+                    'Paper2_W': 0,
+                    'Paper2_P': 0,
+                    'Paper2_T': 0,
+                    'Paper3_W': 0,
+                    'Paper4_W': 0,
+                    'Paper4_P': 0,
+                    'Paper4_T': 0,
+                    'Bonus_marks': 0,
+                    'Final_total': 0,
+                    'Grade': 'C'
+                }
+                col_count = 0
+                headers = list(df.columns.values)
+                column_indices["CBSE_No"] = utility.excel_col_to_num(regimental_no)-1
+                for i in headers:
+                    if i == 'Question'+str(drill_cell_start):
+                        start = col_count
+                    elif i == 'Question'+str(drill_cell_end):
+                        column_indices["Paper1_W"] = [start, col_count]
+                        column_indices["Paper1_T"] = [start, col_count]
+                        start = 0
+                    elif i == 'Question'+str(wt_cell_start):
+                        start = col_count
+                    elif i == 'Question'+str(wt_cell_end):
+                        column_indices["Paper2_W"] = [start, col_count]
+                        column_indices["Paper2_T"] = [start, col_count]
+                        start = 0 
+                    elif i == 'Question'+str(misc_cell_start):
+                        start = col_count
+                    elif i == 'Question'+str(misc_cell_end):
+                        column_indices["Paper3_W"] = [start, col_count]
+                        start = 0 
+                    elif i == 'Question'+str(stc_cell_start):
+                        start = col_count
+                    elif i == 'Question'+str(stc_cell_end):
+                        column_indices["Paper4_W"] = [start, col_count]
+                        column_indices["Paper4_T"] = [start, col_count]
+                        start = 0 
+                    col_count += 1
+                column_indices["Final_total"] = [column_indices["Paper1_W"][0], col_count-1]
+
+                for _, row in df.iterrows():
+                    row_data = list(row.values)
+                    if row_data[column_indices["CBSE_No"]]:
+                        result_data["CBSE_No"] = row_data[column_indices["CBSE_No"]]
+                        res_d = row_data[int(column_indices["Paper1_W"][0]): int(column_indices["Paper1_W"][1])+1]
+                        result_data["Paper1_W"] = int(res_d.count(1)) * float(drill_marks)
+                        total_p1_w = len(res_d) * float(drill_marks)
+                        res_d = row_data[int(column_indices["Paper1_T"][0]): int(column_indices["Paper1_T"][1])+1]
+                        result_data["Paper1_T"] = int(res_d.count(1)) * float(drill_marks)
+                        res_d = row_data[int(column_indices["Paper2_W"][0]): int(column_indices["Paper2_W"][1])+1]
+                        result_data["Paper2_W"] = int(res_d.count(1)) * float(wt_marks)
+                        total_p2_w = len(res_d) * float(wt_marks)
+                        res_d = row_data[int(column_indices["Paper2_T"][0]): int(column_indices["Paper2_T"][1])+1]
+                        result_data["Paper2_T"] = int(res_d.count(1)) * float(wt_marks)
+                        res_d = row_data[int(column_indices["Paper3_W"][0]): int(column_indices["Paper3_W"][1])+1]
+                        result_data["Paper3_W"] = int(res_d.count(1)) * float(misc_marks)
+                        total_p3_w = len(res_d) * float(misc_marks)
+                        res_d = row_data[int(column_indices["Paper4_W"][0]): int(column_indices["Paper4_W"][1])+1]
+                        result_data["Paper4_W"] = int(res_d.count(1)) * float(stc_marks)
+                        total_p4_w = len(res_d) * float(stc_marks)
+                        res_d = row_data[int(column_indices["Paper4_T"][0]): int(column_indices["Paper4_T"][1])+1]
+                        result_data["Paper4_T"] = int(res_d.count(1)) * float(stc_marks)
+                        res_d = row_data[int(column_indices["Final_total"][0]): int(column_indices["Final_total"][1])+1]
+                        result_data["Final_total"] = result_data["Paper1_T"] + result_data["Paper2_T"] + result_data["Paper3_W"] + result_data["Paper4_T"]
+                        pass_paper_1 = ((float(result_data['Paper1_T']) / total_p1_w) * 100) >= 33
+                        pass_paper_2 = ((float(result_data['Paper2_T']) / total_p2_w) * 100) >= 33
+                        pass_paper_3 = ((float(result_data['Paper3_W']) / total_p3_w) * 100) >= 33
+                        pass_paper_4 = ((float(result_data['Paper4_T']) / total_p4_w) * 100) >= 33
+                        percentage_obt = ((float(result_data['Final_total']) / 500) * 100)
+                        result_data["Grade"] = "A" if percentage_obt >= 70 else "B" if percentage_obt >= 55 else "C" if percentage_obt >= 33 else "F"
+                        if pass_paper_1 and pass_paper_2 and pass_paper_3 and pass_paper_4 and percentage_obt >= 33:
+                            result_data["Pass"] = True
+                        else:
+                            result_data["Pass"] = False
+                        cbse_no = result_data["CBSE_No"]
+                        student = Student.objects.filter(CBSE_No = cbse_no).first()
+                        result_data.pop("CBSE_No")
+                        if student:
+                            result = Result.objects.create(
+                                **result_data
+                            )
+                            student.result = result
+                            student.save()
+                        else:
+                            print("Student record not available for cbse no: ", cbse_no)
+
+                    print(result_data)
+                print("End of file parsing")
+                messages.info(request, "Student results added successfully")
+                return redirect("/upload-omr/")
+            else:
+                messages.info(request, "Not able to read the uploaded file")
+                return redirect("/upload-omr/")
+        except Exception as e:
+            print("Some exception occurred", e)
+            return render(request, "clerk/omr_result_upload.html")
+    return render(request, "clerk/omr_result_upload.html")
 
 @login_required
 def update_practical_page(request, page):
@@ -692,6 +850,153 @@ def update_practical_page(request, page):
         messages.error(request, "Some error occurred")
         return redirect("/index/")
 
+def download_results(request):
+    try:
+        students = []
+        if request.user.groups.filter(name='Colonel').exists():
+            students = Student.objects.filter(result__Pass=True, colonel_id=Colonel.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+        elif request.user.groups.filter(name='Clerk').exists():
+            students = Student.objects.filter(result__Pass=True, clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+        print(students)
+        if students.exists():
+            path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'result.xlsx')
+            workbook = load_workbook(path)
+            sheet = workbook.active
+
+            sheet_col = {
+                "ser_no": "A",
+                "Regimental_No": "B",
+                "Rank": "C",
+                "Name": "D",
+                "Fathers_Name": "E",
+                "Date_of_birth": "F",
+                "Date_Of_Enrollment": "G",
+                "Date_of_discharge": "H",
+                "Details_of_camp": "I",
+                "parade_attandence1": "J",
+                "parade_attandence2": "K",
+                "P_W_1": "L",
+                "P_P_1": "M",
+                "P_T_1": "N",
+                "P_W_2": "O",
+                "P_P_2": "P",
+                "P_T_2": "Q",
+                "P_W_3": "R",
+                "P_W_4": "S",
+                "P_P_4": "T",
+                "P_T_4": "U",
+                "Total": "V",
+                "Bonus": "W",
+                "Grand_total": "X",
+                "Grading": "Y",
+                "Photo": "Z"
+            }
+            border_style = Side(border_style='thin')
+            border = Border(top=border_style, right=border_style, left=border_style, bottom=border_style)
+            alignment = Alignment(horizontal="center", vertical="center")
+            start_row = 16
+            for student in students:
+                sheet.row_dimensions[start_row].height =120
+                sheet[sheet_col["ser_no"]+str(start_row)] = student.id
+                sheet[sheet_col["ser_no"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["ser_no"]+str(start_row)].border = border
+                sheet[sheet_col["Regimental_No"]+str(start_row)] = student.CBSE_No
+                sheet[sheet_col["Regimental_No"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["Regimental_No"]+str(start_row)].border = border
+                sheet[sheet_col["Rank"]+str(start_row)] = student.Rank
+                sheet[sheet_col["Rank"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["Rank"]+str(start_row)].border = border
+                sheet[sheet_col["Name"]+str(start_row)] = student.Name
+                sheet[sheet_col["Name"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["Name"]+str(start_row)].border = border
+                sheet[sheet_col["Fathers_Name"]+str(start_row)] = student.Fathers_Name
+                sheet[sheet_col["Fathers_Name"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["Fathers_Name"]+str(start_row)].border = border
+                sheet[sheet_col["Date_of_birth"]+str(start_row)] = student.DOB
+                sheet[sheet_col["Date_of_birth"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["Date_of_birth"]+str(start_row)].border = border
+                sheet[sheet_col["Date_Of_Enrollment"]+str(start_row)] = ""
+                sheet[sheet_col["Date_Of_Enrollment"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["Date_Of_Enrollment"]+str(start_row)].border = border
+                sheet[sheet_col["Date_of_discharge"]+str(start_row)] = ""
+                sheet[sheet_col["Date_of_discharge"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["Date_of_discharge"]+str(start_row)].border = border
+                sheet[sheet_col["Details_of_camp"]+str(start_row)] = student.Name_of_camp_attended_1 + " " + student.Date_camp_1 + ", " + student.Name_of_camp_attended_2 + " " + student.Date_camp_2
+                sheet[sheet_col["Details_of_camp"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["Details_of_camp"]+str(start_row)].border = border
+                sheet[sheet_col["parade_attandence1"]+str(start_row)] = student.Attendance_1st_year
+                sheet[sheet_col["parade_attandence1"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["parade_attandence1"]+str(start_row)].border = border
+                sheet[sheet_col["parade_attandence2"]+str(start_row)] = student.Attendance_2nd_year
+                sheet[sheet_col["parade_attandence2"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["parade_attandence2"]+str(start_row)].border = border
+                sheet[sheet_col["P_W_1"]+str(start_row)] = student.result.Paper1_W
+                sheet[sheet_col["P_W_1"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["P_W_1"]+str(start_row)].border = border
+                sheet[sheet_col["P_P_1"]+str(start_row)] = student.result.Paper1_P
+                sheet[sheet_col["P_P_1"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["P_P_1"]+str(start_row)].border = border
+                sheet[sheet_col["P_T_1"]+str(start_row)] = student.result.Paper1_T
+                sheet[sheet_col["P_T_1"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["P_T_1"]+str(start_row)].border = border
+                sheet[sheet_col["P_W_2"]+str(start_row)] = student.result.Paper2_W
+                sheet[sheet_col["P_W_2"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["P_W_2"]+str(start_row)].border = border
+                sheet[sheet_col["P_P_2"]+str(start_row)] = student.result.Paper2_P
+                sheet[sheet_col["P_P_2"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["P_P_2"]+str(start_row)].border = border
+                sheet[sheet_col["P_T_2"]+str(start_row)] = student.result.Paper2_T
+                sheet[sheet_col["P_T_2"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["P_T_2"]+str(start_row)].border = border
+                sheet[sheet_col["P_W_3"]+str(start_row)] = student.result.Paper3_W
+                sheet[sheet_col["P_W_3"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["P_W_3"]+str(start_row)].border = border
+                sheet[sheet_col["P_W_4"]+str(start_row)] = student.result.Paper4_W
+                sheet[sheet_col["P_W_4"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["P_W_4"]+str(start_row)].border = border
+                sheet[sheet_col["P_P_4"]+str(start_row)] = student.result.Paper4_P
+                sheet[sheet_col["P_P_4"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["P_P_4"]+str(start_row)].border = border
+                sheet[sheet_col["P_T_4"]+str(start_row)] = student.result.Paper4_T
+                sheet[sheet_col["P_T_4"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["P_T_4"]+str(start_row)].border = border
+                sheet[sheet_col["Total"]+str(start_row)] = student.result.Final_total - student.result.Bonus_marks
+                sheet[sheet_col["Total"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["Total"]+str(start_row)].border = border
+                sheet[sheet_col["Bonus"]+str(start_row)] = student.result.Bonus_marks
+                sheet[sheet_col["Bonus"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["Bonus"]+str(start_row)].border = border
+                sheet[sheet_col["Grand_total"]+str(start_row)] = student.result.Final_total
+                sheet[sheet_col["Grand_total"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["Grand_total"]+str(start_row)].border = border
+                sheet[sheet_col["Grading"]+str(start_row)] = student.result.Grade
+                sheet[sheet_col["Grading"]+str(start_row)].alignment = alignment
+                sheet[sheet_col["Grading"]+str(start_row)].border = border
+                print(student.Photo.path)
+                start_row += 1
+                photo_path = os.path.join(settings.MEDIA_ROOT, 'student_photos', f'{student.CBSE_No}.jpeg')
+                photo_image = Image(photo_path)
+                photo_image.height = 150
+                photo_image.width = 150
+                sheet.add_image(photo_image, sheet_col["Photo"]+str(start_row-1))
+                sheet[sheet_col["Photo"]+str(start_row-1)].alignment = alignment
+                sheet[sheet_col["Photo"]+str(start_row-1)].border = border
+            dt = datetime.now()
+            file_name = "result_sheet_"+dt.strftime("%Y%m%d%H%M%S") + ".xlsx"
+            workbook.save(filename=file_name)
+            with open(file_name, "rb") as result_sheet:
+                response = HttpResponse(result_sheet.read(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                response['Content-Disposition'] = f'attachment; filename={file_name}'
+            response.close()
+            os.remove(file_name)
+
+        # Redirect back to the same page after download
+            return response
+        return redirect("/view-results/1/")
+    except Exception as e:
+        print("Some exception occurred", e)
+        messages.success(request, 'Some error occurred.')
+        return redirect("/view-results/1/")
 
 @login_required
 def results(request, page):
@@ -1069,9 +1374,6 @@ def print_certificate(request):
             # Delete the ZIP file from the server after the download
             os.remove(zip_file_path)
 
-            # Set a success message
-            messages.success(request, 'The Certificates folder has been successfully downloaded.')
-
             # Redirect back to the same page after download
             return response
         if request.method == 'POST' and 'single' in request.POST:
@@ -1236,9 +1538,6 @@ def Print_Admit_Cards(request):
         # Delete the ZIP file from the server after the download
         os.remove(zip_file_path)
 
-        # Set a success message
-        messages.success(request, 'The Admit Cards folder has been successfully downloaded.')
-
         # Redirect back to the same page after download
         return response
     if request.method == 'POST' and 'single' in request.POST:
@@ -1251,7 +1550,6 @@ def Print_Admit_Cards(request):
                     response = HttpResponse(admit_card.read(), content_type="image/png")
                     response['Content-Disposition'] = f'attachment; filename={cbse_no}s_admit_card.png'
                 response.close()
-                messages.success(request, "Admin card downloaded successfully")
                 return response
             else:
                 messages.error(request, "Admit card not available for this CBSE No.")

@@ -12,6 +12,19 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+import sys
+import socket
+
+wlan_ip = ""
+try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))  # Establish a temporary connection
+    wlan_ip = s.getsockname()[0]
+    s.close()
+except Exception as e:
+    print("Unable to connect to internet, please check your connection and try later")
+    sys.exit(1)
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +39,7 @@ SECRET_KEY = "django-insecure-x(4opzhqg&^-+0!i!sx!ik1reqgm*otg#jm&d9=yb%y(-*=url
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.126.219', "localhost","192.168.126.219", "3.209.232.7","127.0.0.1"]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1'] + [wlan_ip]
 
 
 # Application definition
