@@ -8,6 +8,7 @@ import zipfile
 import pandas as pd
 import cv2
 import numpy as np
+import PIL
 from PIL import Image, ImageDraw, ImageFont
 from django.shortcuts import get_object_or_404
 from home.models import Student , Clerk , Colonel , Brigadier ,Director_General, Result, BonusMarksCategories, Certificate
@@ -1414,7 +1415,7 @@ def print_certificate(request):
                 if os.path.exists(file_path):
                     
                     certificate_image = cv2.imread(file_path)
-                    template_pil = Image.fromarray(cv2.cvtColor(certificate_image, cv2.COLOR_BGR2RGB))
+                    template_pil = PIL.Image.fromarray(cv2.cvtColor(certificate_image, cv2.COLOR_BGR2RGB))
                     draw = ImageDraw.Draw(template_pil)
                     # Load the font
                     font_path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'Saans2.ttf')
@@ -1567,7 +1568,7 @@ def generate_admit_card(student):
         raise ValueError("Could not load the admit card template image.")
 
     # Convert the template image from OpenCV format (BGR) to PIL format (RGB)
-    template_pil = Image.fromarray(cv2.cvtColor(template, cv2.COLOR_BGR2RGB))
+    template_pil = PIL.Image.fromarray(cv2.cvtColor(template, cv2.COLOR_BGR2RGB))
 
     # Initialize ImageDraw object
     draw = ImageDraw.Draw(template_pil)
@@ -1613,7 +1614,7 @@ def generate_admit_card(student):
     if student.Photo:
         try:
             insert_image_path = student.Photo.path
-            insert_image = Image.open(insert_image_path)
+            insert_image = PIL.Image.open(insert_image_path)
             insert_image = insert_image.resize((170, 170))
             image_position = (870, 274)
             template_pil.paste(insert_image, image_position)
@@ -1658,9 +1659,9 @@ def generate_certificate(student):
     elif student.Certificate_type == "C":
         cert_back = cv2.imread(cert_back_path)
     elif student.Certificate_type == "A":
-        cert_back = Image.fromarray(np.ones((height, width, 3), dtype=np.uint8) * 255)
+        cert_back = PIL.Image.fromarray(np.ones((height, width, 3), dtype=np.uint8) * 255)
     if isinstance(cert_back, np.ndarray):
-        cert_back_pil = Image.fromarray(cv2.cvtColor(cert_back, cv2.COLOR_BGR2RGB))
+        cert_back_pil = PIL.Image.fromarray(cv2.cvtColor(cert_back, cv2.COLOR_BGR2RGB))
     else:
         cert_back_pil = cert_back
 
@@ -1668,7 +1669,7 @@ def generate_certificate(student):
     if template is None or cert_back is None:
         raise ValueError("Could not load the certificate template or back image.")
     # Convert the template image from OpenCV format (BGR) to PIL format (RGB)
-    template_pil = Image.fromarray(cv2.cvtColor(template, cv2.COLOR_BGR2RGB))
+    template_pil = PIL.Image.fromarray(cv2.cvtColor(template, cv2.COLOR_BGR2RGB))
     
     # Initialize ImageDraw object
     draw = ImageDraw.Draw(template_pil)
@@ -1742,7 +1743,7 @@ def generate_certificate(student):
         if student.Photo:
             try:
                 insert_image_path = student.Photo.path
-                insert_image = Image.open(insert_image_path)
+                insert_image = PIL.Image.open(insert_image_path)
                 insert_image = insert_image.resize((130, 170))
                 image_position = (595, 85)
                 template_pil.paste(insert_image, image_position)
@@ -1752,7 +1753,7 @@ def generate_certificate(student):
         if student.Photo:
             try:
                 insert_image_path = student.Photo.path
-                insert_image = Image.open(insert_image_path)
+                insert_image = PIL.Image.open(insert_image_path)
                 insert_image = insert_image.resize((130, 130))
                 image_position = (593, 40)
                 template_pil.paste(insert_image, image_position)
@@ -1764,7 +1765,7 @@ def generate_certificate(student):
     qr_image_path = generate_qr_code(student)
     if qr_image_path:
         try:
-            qr_image = Image.open(qr_image_path)
+            qr_image = PIL.Image.open(qr_image_path)
             qr_image = qr_image.resize((120, 120))  # Resize QR code as needed
             qr_position = (45, 40)  # Set QR code position
             template_pil.paste(qr_image, qr_position)
