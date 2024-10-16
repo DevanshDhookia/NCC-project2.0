@@ -61,8 +61,9 @@ class Util():
         return translation.text
     
     def excel_col_to_num(self, col_name):
-        alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        if len(col_name) == 1:
-            return ord(col_name[0]) - 64
-        else:
-            return (26 ** (len(col_name) - 1)) + self.excel_col_to_num(col_name[1:])
+        result = 0
+        for i in range(len(col_name)):
+            letter_value = ord(col_name[i]) - ord('A') + 1
+            position = len(col_name) - i - 1
+            result += letter_value * (26 ** position)
+        return result
