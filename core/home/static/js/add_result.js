@@ -15,6 +15,138 @@ function calculateTotalMarks(){
 
 }
 
+var titleToNumber = function(columnTitle) {
+    let result = 0;
+    let length = columnTitle.length;
+    for(let i = 0; i < length; i++){
+        result += (columnTitle.charCodeAt(i) - 64) * Math.pow(26, length - (i + 1));
+    }
+    return result;
+};
+
+var convertToTitle = function (columnNumber) {
+
+    const Letter = "ZABCDEFGHIJKLMNOPQRSTUVWXY"
+    let str = ""
+    while (columnNumber > 0) {
+        str = Letter.charAt(columnNumber % 26) + str
+        columnNumber -= columnNumber % 26 == 0 ? 26 : columnNumber % 26
+        columnNumber /= 26
+    }
+    return str
+};
+
+function returnNext(input) {
+    number = titleToNumber(input);
+    return convertToTitle(number+1);
+}
+
+$(document).ready(function() {
+    drillStart = "";
+    drillStartNextClmn = "";
+    drillEnd = "";
+    drillEndNextClmn = "";
+    wtStart = "";
+    wtStartNextClmn = "";
+    wtEnd = "";
+    wtEndNextClmn = "";
+    miscStart = "";
+    miscStartNextClmn = "";
+    miscEnd = "";
+    miscEndNextClmn = "";
+    stcStart = "";
+    stcStartNextClmn = "";
+    stcEnd = "";
+    stcEndNextClmn = "";
+    $("#drill-cell-start-id").on("change", function(event) {
+        inp = event.target.value;
+        drillStart = titleToNumber(inp);
+        drillStartNextClmn = returnNext(inp);
+    });
+    $("#drill-cell-end-id").on("change", function(event) {
+        inp = event.target.value;
+        drillEnd = titleToNumber(inp)
+        if(drillEnd <= drillStart) {
+            alert(`Input Column must be greater than previous value. Should be greater or equal to ${drillStartNextClmn}`);
+            $(this).val("");
+        }
+        drillEndNextClmn = returnNext(inp)
+    });
+    $("#wt-cell-start-id").on("change", function(event) {
+        inp = event.target.value;
+        wtStart = titleToNumber(inp);
+        if (wtStart <= drillEnd) {
+            alert(`Input Column must be greater than previous value. Should be equal to ${drillEndNextClmn}`);
+            $(this).val("");
+        } else if(wtStart - drillEnd > 1) {
+            alert(`Missing Column. Should be equal to ${drillEndNextClmn}`);
+            $(this).val("");
+        }
+        wtStartNextClmn = returnNext(inp);
+    });
+    $("#wt-cell-end-id").on("change", function(event) {
+        inp = event.target.value;
+        wtEnd = titleToNumber(inp)
+        if(wtEnd <= wtStart) {
+            alert(`Input Column must be greater than previous value. Should be greater or equal to ${wtStartNextClmn}`);
+            $(this).val("");
+        }
+        wtEndNextClmn = returnNext(inp)
+    });
+    $("#misc-cell-start-id").on("change", function(event) {
+        inp = event.target.value;
+        miscStart = titleToNumber(inp);
+        if (miscStart <= wtEnd) {
+            alert(`Input Column must be greater than previous value. Should be equal to ${wtEndNextClmn}`);
+            $(this).val("");
+        } else if(miscStart - wtEnd > 1) {
+            alert(`Missing Column. Should be equal to ${wtEndNextClmn}`);
+            $(this).val("");
+        }
+        miscStartNextClmn = returnNext(inp);
+    });
+    $("#misc-cell-end-id").on("change", function(event) {
+        inp = event.target.value;
+        miscEnd = titleToNumber(inp)
+        if(miscEnd <= miscStart) {
+            alert(`Input Column must be greater than previous value. Should be greater or equal to ${miscStartNextClmn}`);
+            $(this).val("");
+        }
+        miscEndNextClmn = returnNext(inp)
+    });
+    $("#stc-cell-start-id").on("change", function(event) {
+        inp = event.target.value;
+        stcStart = titleToNumber(inp);
+        if (stcStart <= miscEnd) {
+            alert(`Input Column must be greater than previous value. Should be equal to ${miscEndNextClmn}`);
+            $(this).val("");
+        } else if(stcStart - miscEnd > 1) {
+            alert(`Missing Column. Should be equal to ${miscEndNextClmn}`);
+            $(this).val("");
+        }
+        stcStartNextClmn = returnNext(inp);
+    });
+    $("#stc-cell-end-id").on("change", function(event) {
+        inp = event.target.value;
+        stcEnd = titleToNumber(inp)
+        if(stcEnd <= stcStart) {
+            alert(`Input Column must be greater than previous value. Should be greater or equal to ${stcStartNextClmn}`);
+            $(this).val("");
+        }
+        stcEndNextClmn = returnNext(inp)
+    });
+});
+
+
+
+
+
+
+
+
+
+
+
 function formSubmit(){
     $('#result-form').submit();
 }

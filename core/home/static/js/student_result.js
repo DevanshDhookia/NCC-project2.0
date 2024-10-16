@@ -91,7 +91,7 @@ function openModalOnClick(index, event_type) {
     $('#modal-unit').val(student_object["unit"]).prop("readonly", true);
     $('#modal-rank').val(student_object["rank"]).prop("readonly", true);
     $('#modal-grade').val(student_object["result"]["Grade"]).prop("readonly", event_type === 'view' ? true : false);
-    $('#modal-attandance').val(student_object["result"]["Parade_attendance"]).prop("readonly", event_type === 'view' ? true : false);
+    $('#modal-attandance').val(student_object["attendance"]).prop("readonly", event_type === 'view' ? true : false);
     $('#modal-school').html(student_object["college"]).prop("readonly", true);
     $('#res_p1_w').val(student_object["result"]["Paper1_W"]).prop("readonly", true);
     $('#res_p1_p').val(student_object["result"]["Paper1_P"]).prop("readonly", event_type === 'view' ? true : false);
