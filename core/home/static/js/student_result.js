@@ -94,14 +94,14 @@ function openModalOnClick(index, event_type) {
     $('#modal-attandance').val(student_object["attendance"]).prop("readonly", event_type === 'view' ? true : false);
     $('#modal-school').html(student_object["college"]).prop("readonly", true);
     $('#res_p1_w').val(student_object["result"]["Paper1_W"]).prop("readonly", true);
-    $('#res_p1_p').val(student_object["result"]["Paper1_P"]).prop("readonly", event_type === 'view' ? true : false);
+    $('#res_p1_p').val(student_object["result"]["Paper1_P"]).prop("readonly", true);
     $('#res_p1_t').val(student_object["result"]["Paper1_T"]).prop("readonly", true);
     $('#res_p2_w').val(student_object["result"]["Paper2_W"]).prop("readonly", true);
-    $('#res_p2_p').val(student_object["result"]["Paper2_P"]).prop("readonly", event_type === 'view' ? true : false);
+    $('#res_p2_p').val(student_object["result"]["Paper2_P"]).prop("readonly", true);
     $('#res_p2_t').val(student_object["result"]["Paper2_T"]).prop("readonly", true);
     $('#res_p3_w').val(student_object["result"]["Paper3_W"]).prop("readonly", true);
     $('#res_p4_w').val(student_object["result"]["Paper4_W"]).prop("readonly", true);
-    $('#res_p4_p').val(student_object["result"]["Paper4_P"]).prop("readonly", event_type === 'view' ? true : false);
+    $('#res_p4_p').val(student_object["result"]["Paper4_P"]).prop("readonly", true);
     $('#res_p4_t').val(student_object["result"]["Paper4_T"]).prop("readonly", true);
     $('#modal-bonus-marks').val(student_object["result"]["Bonus_marks"]).prop("readonly", true);
     $('#form-total-marks').val(student_object["result"]["Final_total"]).prop("readonly", true);

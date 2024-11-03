@@ -831,6 +831,80 @@ def update_practical_page(request, page):
         messages.error(request, "Some error occurred")
         return redirect("/index/")
 
+def upload_practical_marks(request):
+    try:
+        if request.method == 'POST':
+            print("Start parsing practical sheet")
+            excel_file = request.FILES.get("excel_file")
+            df = None
+            if excel_file:
+                file_extension = os.path.splitext(excel_file.name)[1]
+                df = None
+                if file_extension in ['.csv']:
+                    df = pd.read_csv(excel_file)
+                elif file_extension in ['.xls', '.xlsx']:
+                    df = pd.read_excel(excel_file)
+                # else:
+                #     messages.info(request, "The uploaded file format is not supproted")
+                #     return redirect("/upload-omr/")
+                print("Excel file read complete")
+
+                column_indices = {
+                    "regimental_no": 1,
+                    "wt": 4,
+                    "drill": 5,
+                    "spc": 6
+                }
+
+                for _, row in df.iterrows():
+                    row_data = list(row.values)
+                    regimental_no = row_data[column_indices["regimental_no"]]
+                    print("The user id is: ", request.user.id)
+                    student = Student.objects.filter(CBSE_No = regimental_no, clerk=Clerk.objects.get(user_id=request.user.id))
+                    if student.exists():
+                        student = student[0]
+                        result = student.result
+                        if result:
+                            result.Paper1_P = row_data[column_indices["wt"]]
+                            result.Paper2_P = row_data[column_indices["drill"]]
+                            result.Paper4_P = row_data[column_indices["spc"]]
+                            result.Paper1_T = result.Paper1_W + result.Paper1_P
+                            result.Paper2_T = result.Paper2_W + result.Paper2_P
+                            result.Paper4_T = result.Paper4_W + result.Paper4_P
+                            result.Final_total = result.Paper1_T + result.Paper2_T + result.Paper4_T + result.Paper3_W
+                            result.save()
+                        else:
+                            print("Result does not exists for: ", regimental_no)
+                    else:
+                        print(f"Student with regimental number: {regimental_no} does not exists.")
+            else:
+                print("Unable to read excel file.")
+        return redirect("/upload-omr/")
+    except Exception as e:
+        print(e)
+        messages.error(request, "Some error ")
+        return redirect("/upload-omr/")
+
+@login_required
+def download_practical_template(request):
+    try:
+        path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'practical_marks_template.xlsx')
+        if os.path.exists(path):
+            response = None
+            with open(path, "rb") as result_sheet:
+                response = HttpResponse(result_sheet.read(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                response['Content-Disposition'] = 'attachment; filename=practical_marks_template.xlsx'
+            response.close()
+            return response
+        else:
+            messages.error(request, "Some error occurred")
+            return redirect("/upload-omr/")
+    except Exception as e:
+        print(e)
+        messages.error(request, "Some error ")
+        return redirect("/upload-omr/")
+
+@login_required
 def download_results(request):
     try:
         students = []
@@ -1052,9 +1126,9 @@ def _get_student_results(request, page):
     elif request.user.groups.filter(name='Director_General').exists():
         results_data = Student.objects.filter(result__isnull=False, director_general=Director_General.objects.get(user_id=request.user.id)).order_by('id')
     if page == 'update-practical':
-        results_data = [data for data in results_data if data.result.Paper1_P == 0 and data.result.Paper2_P == 0 and data.result.Paper4_P == 0]
+        results_data = [data for data in results_data if data.result.Bonus_marks == 0]
     elif page == 'view-result':
-        results_data = [data for data in results_data if data.result.Paper1_P != 0 or data.result.Paper2_P != 0 or data.result.Paper4_P != 0]
+        results_data = [data for data in results_data if data.result.Bonus_marks != 0]
     return results_data
 
 @login_required
