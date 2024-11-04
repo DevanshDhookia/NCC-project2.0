@@ -1977,7 +1977,7 @@ def Register_Students(request):
                         'School_College_Class': 4,
                         'Home_Address': 5,
                         'Admit_Card_No': 6,
-                        'Unit': 7,
+                        # 'Unit': 7,
                         'Rank': 8,
                         'Fresh_Failure': 9,
                         'Year_of_passing_B_Certificate':10,
@@ -2004,6 +2004,7 @@ def Register_Students(request):
                         student_data["colonel"] = clerk.colonel
                         student_data["brigadier"] = clerk.colonel.brigadier
                         student_data["director_general"] = clerk.colonel.brigadier.director_general
+                        student_data["Unit"]="2 UP CTR NCC"
                         # Ensure CBSE_No is not missing
                         if pd.isna(student_data['CBSE_No']):
                             return HttpResponseBadRequest("CBSE_No is missing for some records.")
