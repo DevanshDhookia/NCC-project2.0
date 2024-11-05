@@ -11,7 +11,7 @@ import numpy as np
 import PIL
 from PIL import Image, ImageDraw, ImageFont
 from django.shortcuts import get_object_or_404
-from home.models import Student , Clerk , Colonel , Brigadier ,Director_General, Result, BonusMarksCategories, Certificate
+from home.models import Student , Clerk , Colonel , Brigadier ,Director_General, Result, BonusMarksCategories, Certificate, OTP
 from django.conf import settings
 from django.urls import reverse
 from django.contrib.auth import login, logout, authenticate, get_backends
@@ -55,13 +55,14 @@ def custom_404_view(request):
     return render(request, '404.html', status=404)
 
 def SignIn(request):
-    if request.user.is_authenticated:  # If the user is already authenticated, avoid signing in again
-        return redirect("/admin/" if request.user.is_superuser else "/user/")  # Admin panel for admin user, else user panel
+    # if request.user.is_authenticated:  # If the user is already authenticated, avoid signing in again
+    #     return redirect("/admin/" if request.user.is_superuser else "/user/")  # Admin panel for admin user, else user panel
 
     if request.method == 'POST':
         try:
             data = request.POST
-            user = authenticate(username=data.get("username"), password=data.get("password"))
+            userData = User.objects.get(email = data.get("username"))
+            user = authenticate(username=userData.username, password=data.get("password"))
             if user is not None:
                 login(request, user)
                 token = jwt_utility.get_jwt_token({"username": user.username})
@@ -72,7 +73,7 @@ def SignIn(request):
                 return redirect("/SignIn/")
         except Exception as e:
             print(f"An error occurred: {e}")
-            messages.error(request, "Some error occurred. Please try again.")
+            messages.error(request, "Invalid login credentials.")
     
     return render(request, "Login_Page/SignIn.html", {"page_name": "Ludiflex | Login & Registration"})
 
@@ -179,6 +180,10 @@ def register(request):
             lastname = request.POST.get('lastName')
             email = request.POST.get('email')
             otp = request.POST.get("otp")
+            existing_user = User.objects.filter(email=email).exists()
+            if(existing_user):
+                messages.error(request, "User email already exists.")
+                return redirect('/register/')
             # Basic validation
             if not username or not email:
                 messages.error(request, "Username and Email required to generate OTP.")
@@ -2638,3 +2643,32 @@ def add_certificate_range(request):
         return redirect('Register_Students')
 
     return render(request, 'Register_Students.html')
+
+@login_required
+def clean_database(request):
+    try:
+        print("Deleting the students data")
+        print(Student.objects.all().delete())
+        print("Deleted the students data")
+        print("Deleting the results data")
+        print(Result.objects.all().delete())
+        print("Deleted the results data")
+        print("Deleting the certificate data")
+        print(Certificate.objects.all().delete())
+        print("Deleted the certificate data")
+        print("Deleting the otp data")
+        print(OTP.objects.all().delete())
+        print("Deleted the otp data")
+        data = {
+            "status": 200,
+            "message": "Success",
+        }
+    except Exception as e:
+        print("Exception is: ", e)
+        data = {
+            "status": 500,
+            "message": "Failed",
+        }
+    data = json.dumps(data, cls=DjangoJSONEncoder)
+    response = HttpResponse(data, content_type='application/json', status=200)
+    return response

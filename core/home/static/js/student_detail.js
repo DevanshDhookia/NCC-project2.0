@@ -50,3 +50,25 @@ function openModalOnClick(index, event_type) {
         $('#student-submit-button').show()
     }
 }
+$.confirm({
+    title: 'Custom Title',
+    content: 'Are you sure?',
+    confirmButtonClass: 'btn-primary',
+    cancelButtonClass: 'btn-secondary'
+  });
+function onDeleteButtonClick() {
+    
+    result = confirm("Are you sure you want to clean the database?")
+
+    console.log(result)
+
+    if(result) {
+        $.ajax({
+            type: "GET",
+            url: "/clean-db/",
+            complete: function(data) {
+                console.log("DB Cleaned successfully")
+            }
+        });
+    }
+}

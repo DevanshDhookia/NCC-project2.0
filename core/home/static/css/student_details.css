@@ -342,3 +342,7 @@ body{
 .rectangular-box-2 input[type="file"]::-webkit-file-upload-button:hover {
     background: #4cae4c; /* Darker green on hover */
 }
+
+.delete-button {
+    text-align: right;
+}

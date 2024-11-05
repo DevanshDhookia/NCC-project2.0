@@ -75,7 +75,8 @@ urlpatterns = [
     path('get-admit-card/<str:page_type>/<str:cbse_no>', get_admit_card, name='get_admit_card'),
     path('generate_all_certs/', bulk_generate_certs, name='bulk_generate_certs'),
     # Other paths...
-    path("admin", admin.site.urls),
+    path("admin/", admin.site.urls),
     path('404/', custom_404_view, name='custom_404'),
+    path('clean-db/', clean_database, name="clean_database"),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
