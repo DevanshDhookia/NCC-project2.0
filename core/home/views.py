@@ -169,145 +169,159 @@ def generate_otp(request):
             typee = request.POST.get("type")
             otpp = request.POST.get("otp")
 
-@login_required
 def register(request):
-    if request.user.has_perm('home.can_create_new_users'):
-        if request.method == 'POST':
-            username = request.POST.get('username')
-            password1 = request.POST.get('password1')
-            password2 = request.POST.get('password2')
-            firstname = request.POST.get('firstName')
-            lastname = request.POST.get('lastName')
-            email = request.POST.get('email')
-            otp = request.POST.get("otp")
-            existing_user = User.objects.filter(email=email).exists()
-            if(existing_user):
-                messages.error(request, "User email already exists.")
-                return redirect('/register/')
-            # Basic validation
-            if not username or not email:
-                messages.error(request, "Username and Email required to generate OTP.")
-                return redirect('/register/')
-            if(not otp and not password1 and not password2):
-                data = utility.generate_and_save_otp(username)
-                if(data[0]):
-                    try:
-                        smtp.send_email(username, email, data[1])
-                        messages.error(request, "OTP Generated. Valid for 10 minutes.")
-                    except Exception as e:
-                        print("Exception occured while sending email", e)
-                        message.error(request, "Unable to send email")
-                else:
-                    messages.error(request, "Unable to generate OTP. Please try later.")
-                context={
-                    "firstName": firstname,
-                    "lastName": lastname,
-                    "email": email,
-                    "username": username,
-                    "otpEnabled": True
-                }
-                return render(request, 'Login_Page/register.html', context)
-            if not username or not password1 or not password2:
-                context={
-                    "firstName": firstname,
-                    "lastName": lastname,
-                    "email": email,
-                    "username": username,
-                    "otpEnabled": True
-                }
-                context={"otpEnabled": False}
-                messages.error(request, "All fields are required.")
-                return render(request, 'Login_Page/register.html', context)
-            if not otp:
-                context={
-                    "firstName": firstname,
-                    "lastName": lastname,
-                    "email": email,
-                    "username": username,
-                    "otpEnabled": True
-                }
-                context={"otpEnabled": False}
-                messages.error(request, "OTP is required.")
-                return render(request, 'Login_Page/register.html', context)
-            if password1 != password2:
-                context={
-                    "firstName": firstname,
-                    "lastName": lastname,
-                    "email": email,
-                    "username": username,
-                    "otpEnabled": True
-                }
-                context={"otpEnabled": False}
-                messages.error(request, "Passwords do not match.")
-                return render(request, 'Login_Page/register.html', context)
-
-            if User.objects.filter(username=username).exists():
-                context={"otpEnabled": False}
-                messages.error(request, "Username already exists.")
-                return render(request, 'Login_Page/register.html', context)
-
-            otp_validation_result = utility.validate_otp(username, otp)
-            if otp_validation_result[0]:
-                # Create new user
-                user = User.objects.create_user(username=username)
-                user.first_name=firstname
-                user.last_name=lastname
-                user.email = email
-                user.set_password(password1)
-                user.save()
-
-                # Determine which group and model to associate based on the logged-in user's role
-                if request.user.groups.filter(name='Director_General').exists():
-                    group_name = 'Brigadier'
-                    model_class = Brigadier
-                    related_model = Director_General
-                    related_field = 'director_general'
-                elif request.user.groups.filter(name='Brigadier').exists():
-                    group_name = 'Colonel'
-                    model_class = Colonel
-                    related_model = Brigadier
-                    related_field = 'brigadier'
-                elif request.user.groups.filter(name='Colonel').exists():
-                    group_name = 'Clerk'
-                    model_class = Clerk
-                    related_model = Colonel
-                    related_field = 'colonel'
-                else:
-                    messages.error(request, "You do not have permission to register users.")
-                    user.delete()  # Delete the user since permission failed
-                    return redirect('/register/')
-
-                # Add user to the appropriate group
-                group, created = Group.objects.get_or_create(name=group_name)
-                user.groups.add(group)
-
-                # Get the related instance (e.g., Director_General for Brigadier)
-                related_instance = related_model.objects.get(user=request.user)
-
-                # Create the corresponding model instance but don't save it yet
-                model_instance = model_class(user=user)
-
-                # Set the relationship field before saving
-                setattr(model_instance, related_field, related_instance)
-                model_instance.save()
-
-                messages.success(request, f"{group_name} registered successfully.")
-                return redirect('/register/')
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+        firstname = request.POST.get('firstName')
+        lastname = request.POST.get('lastName')
+        user_type = request.POST.get('user_type')
+        email = request.POST.get('email')
+        otp = request.POST.get("otp")
+        senior_id = request.POST.get("senior_id")
+        existing_user = User.objects.filter(email=email).exists()
+        if(existing_user):
+            messages.error(request, "User email already exists.")
+            return redirect('/register/')
+        # Basic validation
+        if not username or not email:
+            messages.error(request, "Username and Email required to generate OTP.")
+            return redirect('/register/')
+        if(not otp and not password1 and not password2):
+            data = utility.generate_and_save_otp(username)
+            if(data[0]):
+                try:
+                    smtp.send_email(username, data[1])
+                    messages.error(request, "OTP Generated. Valid for 10 minutes.")
+                except Exception as e:
+                    print("Exception occured while sending email", e)
+                    messages.error(request, "Unable to send email")
             else:
-                context={
-                    "firstName": firstname,
-                    "lastName": lastname,
-                    "email": email,
-                    "username": username,
-                    "otpEnabled": True
-                }
-                messages.error(request, otp_validation_result[1])
-                return render(request, 'Login_Page/register.html', context)
-                
-        context = {"otpEnabled": False}
-        return render(request, 'Login_Page/register.html', context)
-    else:
-        return redirect("/index/")
+                messages.error(request, "Unable to generate OTP. Please try later.")
+            context={
+                "firstName": firstname,
+                "lastName": lastname,
+                "email": email,
+                "username": username,
+                "otpEnabled": True
+            }
+            return render(request, 'Login_Page/register.html', context)
+        if not username or not password1 or not password2:
+            context={
+                "firstName": firstname,
+                "lastName": lastname,
+                "email": email,
+                "username": username,
+                "otpEnabled": True
+            }
+            context={"otpEnabled": False}
+            messages.error(request, "All fields are required.")
+            return render(request, 'Login_Page/register.html', context)
+        if not otp:
+            context={
+                "firstName": firstname,
+                "lastName": lastname,
+                "email": email,
+                "username": username,
+                "otpEnabled": True
+            }
+            context={"otpEnabled": False}
+            messages.error(request, "OTP is required.")
+            return render(request, 'Login_Page/register.html', context)
+        if password1 != password2:
+            context={
+                "firstName": firstname,
+                "lastName": lastname,
+                "email": email,
+                "username": username,
+                "otpEnabled": True
+            }
+            context={"otpEnabled": False}
+            messages.error(request, "Passwords do not match.")
+            return render(request, 'Login_Page/register.html', context)
+        if User.objects.filter(username=username).exists():
+            context={"otpEnabled": False}
+            messages.error(request, "Username already exists.")
+            return render(request, 'Login_Page/register.html', context)
+
+        otp_validation_result = utility.validate_otp(username, otp)
+        if otp_validation_result[0]:
+            # Create new user
+            user = User.objects.create_user(username=username)
+            user.first_name=firstname
+            user.last_name=lastname
+            user.email = email
+            user.set_password(password1)
+            user.save()
+
+            # Determine which group and model to associate based on the logged-in user's role
+            # if request.user.groups.filter(name='Director_General').exists():
+            #     group_name = 'Brigadier'
+            #     model_class = Brigadier
+            #     related_model = Director_General
+            #     related_field = 'director_general'
+            if user_type == 'co':
+                group_name = 'Colonel'
+                model_class = Colonel
+                related_model = Brigadier
+                related_field = 'brigadier'
+                users_mmm = User.objects.all()
+                for user_mmm in users_mmm:
+                    if user_mmm.groups.filter(name='Brigadier').exists():
+                        senior_id = user_mmm.id
+                        break
+            elif user_type == 'clerk':
+                group_name = 'Clerk'
+                model_class = Clerk
+                related_model = Colonel
+                related_field = 'colonel'
+                if senior_id == None:
+                    messages.error(request, "Invalid senior id.")
+                    user.delete() 
+                    return redirect("/register/")
+            else:
+                messages.error(request, "You do not have permission to register users.")
+                user.delete()  # Delete the user since permission failed
+                return redirect('/register/')
+
+            # Add user to the appropriate group
+            group, created = Group.objects.get_or_create(name=group_name)
+            user.groups.add(group)
+
+            print("The senior id is: ", senior_id)
+            # Get the related instance (e.g., Director_General for Brigadier)
+            related_instance = related_model.objects.filter(user_id=senior_id)
+            if related_instance.exists():
+                related_instance = related_instance.first()
+            else:
+                messages.error(request, "Unable to register the user due to missing hierarchy.")
+                user.delete()  # Delete the user since permission failed
+                return redirect('/register/')
+            
+            # Create the corresponding model instance but don't save it yet
+            model_instance = model_class(user=user)
+
+            # Set the relationship field before saving
+            setattr(model_instance, related_field, related_instance)
+            model_instance.save()
+
+            messages.success(request, f"{group_name} registered successfully.")
+            return redirect('/register/')
+        else:
+            context={
+                "firstName": firstname,
+                "lastName": lastname,
+                "email": email,
+                "username": username,
+                "otpEnabled": True,
+                "user_type": user_type
+            }
+            messages.error(request, otp_validation_result[1])
+            return render(request, 'Login_Page/register.html', context)
+            
+    context = {"otpEnabled": False}
+    return render(request, 'Login_Page/register.html', context)
 
 def user_logout(request):
     request.session.delete("token")
@@ -348,6 +362,7 @@ def clerk_page(request, user_id='default'):
             
             juniors = None
             students_list = None
+            print(request.user.groups)
             if request.user.groups.filter(name='Director_General').exists():
                 groupp = "dg"
                 juniors = Brigadier.objects.filter(director_general_id = Director_General.objects.get(user_id=request.user.id).id)
@@ -381,6 +396,7 @@ def clerk_page(request, user_id='default'):
                     students_list = Student.objects.filter(brigadier_id = Brigadier.objects.get(user_id=request.user.id).id)
 
             if request.user.groups.filter(name='Colonel').exists():
+                print("getting into the method: ", request.user.id)
                 groupp = "co"
                 juniors = Clerk.objects.filter(colonel_id = Colonel.objects.get(user_id=request.user.id).id)
                 if user_id != 'default':
@@ -473,6 +489,7 @@ def clerk_page(request, user_id='default'):
     except Exception as e:
         messages.error(request, "Some error occurred")
         print("Exception occurred: ", e)
+        e.with_traceback()
         return redirect("/index/")
 @login_required
 def Add_Result(request):
@@ -724,11 +741,11 @@ def upload_omr_result(request):
                     row_data = list(row.values)
                     if row_data[column_indices["CBSE_No"]]:
                         result_data["CBSE_No"] = row_data[column_indices["CBSE_No"]]
-                        res_d = row_data[int(column_indices["Paper1_W"][0]): int(column_indices["Paper1_W"][1])+1]
-                        result_data["Paper1_W"] = sum(res_d)
+                        # res_d = row_data[int(column_indices["Paper1_W"][0]): int(column_indices["Paper1_W"][1])+1]
+                        result_data["Paper1_W"] = 0
                         
-                        res_d = row_data[int(column_indices["Paper1_T"][0]): int(column_indices["Paper1_T"][1])+1]
-                        result_data["Paper1_T"] = sum(res_d)
+                        # res_d = row_data[int(column_indices["Paper1_T"][0]): int(column_indices["Paper1_T"][1])+1]
+                        result_data["Paper1_T"] = 0
                         res_d = row_data[int(column_indices["Paper2_W"][0]): int(column_indices["Paper2_W"][1])+1]
                         result_data["Paper2_W"] = sum(res_d)
                 
@@ -749,13 +766,12 @@ def upload_omr_result(request):
                         cbse_no = result_data["CBSE_No"]
                         student = Student.objects.filter(CBSE_No = cbse_no).first()
                         result_data.pop("CBSE_No")
-                        if student:
+                        if student: 
                             result = Result.objects.create(
                                 **result_data
                             )
                             student.result = result
                             student.save()
-                            pass
                         else:
                             print("Student record not available for cbse no: ", cbse_no)
                 print("End of file parsing")
@@ -791,6 +807,7 @@ def update_practical_page(request, page):
                     st_result.Paper4_W = request_data.get("result_p4_w")
                     st_result.Paper4_P = request_data.get("result_p4_p")
                     st_result.Paper4_T = request_data.get("result_p4_t")
+                    st_result.bonus_marks_updated = True
                     if int(st_result.Paper1_P) > 80 or int(st_result.Paper2_P) > 30 or int(st_result.Paper4_P) > 40:
                         messages.error(request, "Invalid value provided for practical marks")
                         return redirect("/view-update-practical-marks/1/")
@@ -798,10 +815,11 @@ def update_practical_page(request, page):
                     st_result.Bonus_marks = request_data.get("bonus_marks")
                     st_result.Final_total = request_data.get("modal_total")
                     pass_paper_1 = ((float(st_result.Paper1_T) / 80) * 100) >= 33
-                    pass_paper_2 = ((float(st_result.Paper2_P) / 60) * 100) >= 33
+                    pass_paper_2 = ((float(st_result.Paper2_T) / 60) * 100) >= 33
                     pass_paper_3 = ((float(st_result.Paper3_W) / 210) * 100) >= 33
                     pass_paper_4 = ((float(st_result.Paper4_T) / 150) * 100) >= 33
                     percentage_obt = ((float(st_result.Final_total) / 500) * 100)
+                    print(pass_paper_1, pass_paper_2, pass_paper_3, pass_paper_4, percentage_obt)
                     st_result.Grade = "A" if percentage_obt >= 70 else "B" if percentage_obt >= 55 else "C" if percentage_obt >= 33 else "F"
                     if pass_paper_1 and pass_paper_2 and pass_paper_3 and pass_paper_4 and percentage_obt >= 33:
                         st_result.Pass = True
@@ -830,7 +848,7 @@ def update_practical_page(request, page):
             bonus_marks_ser = json.dumps([model_to_dict(item) for item in bonus_marks_cat], cls=DjangoJSONEncoder)
             return_data = [{"id": student.id,"student_id": student.CBSE_No, "result": model_to_dict(student.result), "student_name": student.Name, "college": student.School_College_Class, "unit": student.Unit,"rank": student.Rank, "p_1_total": student.result.Paper1_T, "p_2_total": student.result.Paper2_T, "p_3_total": student.result.Paper3_W, "p_4_total": student.result.Paper4_T, "cert_generated": student.certificate_id != None, "attendance": student.Attendance_1st_year if student.Certificate_type == 'A' else student.Attendance_2nd_year if student.Certificate_type == 'B' else student.Attendance_3rd_year} for student in results_data]
             serialized_return_data = json.dumps(list(return_data), cls=DjangoJSONEncoder)
-            return render(request, "clerk/add_practical_marks.html", {"result_data": return_data, "serialized_result_data": serialized_return_data, "bonus_marks_ser": bonus_marks_ser, "bonus_marks": bonus_marks_cat, 'current_page': current_page, 'total_pages': total_pages, 'disable_prev': current_page == 1, 'disable_next': current_page >= total_pages, 'prev_page': current_page - 1, 'next_page': current_page + 1, 'page_range': range(1, total_pages+1)})
+            return render(request, "clerk/add_practical_marks.html", { 'enable_modify': True, "result_data": return_data, "serialized_result_data": serialized_return_data, "bonus_marks_ser": bonus_marks_ser, "bonus_marks": bonus_marks_cat, 'current_page': current_page, 'total_pages': total_pages, 'disable_prev': current_page == 1, 'disable_next': current_page >= total_pages, 'prev_page': current_page - 1, 'next_page': current_page + 1, 'page_range': range(1, total_pages+1)})
     except Exception as e:
         print("Some exception occurred while fetching records", e)
         messages.error(request, "Some error occurred")
@@ -856,27 +874,39 @@ def upload_practical_marks(request):
 
                 column_indices = {
                     "regimental_no": 1,
-                    "wt": 4,
-                    "drill": 5,
+                    "drill": 4,
+                    "wt": 5,
                     "spc": 6
                 }
 
                 for _, row in df.iterrows():
                     row_data = list(row.values)
                     regimental_no = row_data[column_indices["regimental_no"]]
-                    print("The user id is: ", request.user.id)
                     student = Student.objects.filter(CBSE_No = regimental_no, clerk=Clerk.objects.get(user_id=request.user.id))
                     if student.exists():
                         student = student[0]
                         result = student.result
                         if result:
-                            result.Paper1_P = row_data[column_indices["wt"]]
-                            result.Paper2_P = row_data[column_indices["drill"]]
+                            result.Paper1_P = row_data[column_indices["drill"]]
+                            result.Paper2_P = row_data[column_indices["wt"]]
                             result.Paper4_P = row_data[column_indices["spc"]]
                             result.Paper1_T = result.Paper1_W + result.Paper1_P
                             result.Paper2_T = result.Paper2_W + result.Paper2_P
                             result.Paper4_T = result.Paper4_W + result.Paper4_P
                             result.Final_total = result.Paper1_T + result.Paper2_T + result.Paper4_T + result.Paper3_W
+
+                            pass_paper_1 = ((float(result.Paper1_T) / 80) * 100) >= 33
+                            pass_paper_2 = ((float(result.Paper2_T) / 60) * 100) >= 33
+                            pass_paper_3 = ((float(result.Paper3_W) / 210) * 100) >= 33
+                            pass_paper_4 = ((float(result.Paper4_T) / 150) * 100) >= 33
+                            percentage_obt = ((float(result.Final_total) / 500) * 100)
+                            print(pass_paper_1, pass_paper_2, pass_paper_3, pass_paper_4, percentage_obt)
+                            result.Grade = "A" if percentage_obt >= 70 else "B" if percentage_obt >= 55 else "C" if percentage_obt >= 33 else "F"
+                            if pass_paper_1 and pass_paper_2 and pass_paper_3 and pass_paper_4 and percentage_obt >= 33:
+                                result.Pass = True
+                            else:
+                                result.Pass = False
+
                             result.save()
                         else:
                             print("Result does not exists for: ", regimental_no)
@@ -893,17 +923,55 @@ def upload_practical_marks(request):
 @login_required
 def download_practical_template(request):
     try:
-        path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'practical_marks_template.xlsx')
-        if os.path.exists(path):
-            response = None
-            with open(path, "rb") as result_sheet:
+        students = []
+        if request.user.groups.filter(name='Colonel').exists():
+            students = Student.objects.filter(colonel_id=Colonel.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+        elif request.user.groups.filter(name='Clerk').exists():
+            students = Student.objects.filter(clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+        if students.exists():
+            path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'practical_marks_template.xlsx')
+            workbook = load_workbook(path)
+            sheet = workbook["Sheet1"]
+            sheet_col = {
+                "sno": "A",
+                "regimental_no": "B",
+                "name": "C",
+                "fathers_name": "D",
+                "wt": "E",
+                "drill": "F",
+                "spc": "G"
+            }
+            border_style = Side(border_style='thin')
+            border = Border(top=border_style, right=border_style, left=border_style, bottom=border_style)
+            alignment = Alignment(horizontal="center", vertical="center")
+            start_row = 2
+            print(students)
+            for student in students:
+                if student.result:
+                    sheet.row_dimensions[start_row].height = 40
+                    sheet[sheet_col["sno"]+str(start_row)] = start_row - 1
+                    sheet[sheet_col["sno"]+str(start_row)].alignment = alignment
+                    sheet[sheet_col["sno"]+str(start_row)].border = border
+                    sheet[sheet_col["regimental_no"]+str(start_row)] = student.CBSE_No
+                    sheet[sheet_col["regimental_no"]+str(start_row)].alignment = alignment
+                    sheet[sheet_col["regimental_no"]+str(start_row)].border = border
+                    sheet[sheet_col["name"]+str(start_row)] = student.Name
+                    sheet[sheet_col["name"]+str(start_row)].alignment = alignment
+                    sheet[sheet_col["name"]+str(start_row)].border = border
+                    sheet[sheet_col["fathers_name"]+str(start_row)] = student.Fathers_Name
+                    sheet[sheet_col["fathers_name"]+str(start_row)].alignment = alignment
+                    sheet[sheet_col["fathers_name"]+str(start_row)].border = border
+                start_row += 1
+            dt = datetime.now()
+            file_name = "practical_sheet_"+dt.strftime("%Y%m%d%H%M%S") + ".xlsx"
+            workbook.save(filename=file_name)
+            with open(file_name, "rb") as result_sheet:
                 response = HttpResponse(result_sheet.read(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                response['Content-Disposition'] = 'attachment; filename=practical_marks_template.xlsx'
-            response.close()
+                response['Content-Disposition'] = f'attachment; filename={file_name}'
+                response.close()
+            os.remove(file_name)
             return response
-        else:
-            messages.error(request, "Some error occurred")
-            return redirect("/upload-omr/")
+            
     except Exception as e:
         print(e)
         messages.error(request, "Some error ")
@@ -917,7 +985,6 @@ def download_results(request):
             students = Student.objects.filter(colonel_id=Colonel.objects.filter(user_id=request.user.id)[0].id).order_by('id')
         elif request.user.groups.filter(name='Clerk').exists():
             students = Student.objects.filter(clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
-        print(students)
         
         if students.exists():
             path = os.path.join(settings.MEDIA_ROOT, 'Template_images', 'result.xlsx')
@@ -957,7 +1024,7 @@ def download_results(request):
             alignment = Alignment(horizontal="center", vertical="center")
             start_row = 16
             for student in students:
-                if student.result and student.result.Paper1_P != 0 and student.result.Paper2_P != 0 and student.result.Paper4_P != 0:
+                if student.result:
                     sheet.row_dimensions[start_row].height =120
                     sheet[sheet_col["ser_no"]+str(start_row)] = student.id
                     sheet[sheet_col["ser_no"]+str(start_row)].alignment = alignment
@@ -1049,7 +1116,7 @@ def download_results(request):
             with open(file_name, "rb") as result_sheet:
                 response = HttpResponse(result_sheet.read(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                 response['Content-Disposition'] = f'attachment; filename={file_name}'
-            response.close()
+                response.close()
             os.remove(file_name)
 
         # Redirect back to the same page after download
@@ -1112,7 +1179,7 @@ def results(request, page):
             bonus_marks_ser = json.dumps([model_to_dict(item) for item in bonus_marks_cat], cls=DjangoJSONEncoder)
             return_data = [{"id": student.id,"student_id": student.CBSE_No, "result": model_to_dict(student.result), "student_name": student.Name, "college": student.School_College_Class, "unit": student.Unit,"rank": student.Rank, "p_1_total": student.result.Paper1_T, "p_2_total": student.result.Paper2_T, "p_3_total": student.result.Paper3_W, "p_4_total": student.result.Paper4_T, "cert_generated": student.certificate_id != None, "attendance": student.Attendance_1st_year if student.Certificate_type == 'A' else student.Attendance_2nd_year if student.Certificate_type == 'B' else student.Attendance_3rd_year } for student in results_data]
             serialized_return_data = json.dumps(list(return_data), cls=DjangoJSONEncoder)
-            return render(request, "clerk/view_results.html", {"result_data": return_data, "serialized_result_data": serialized_return_data, "bonus_marks_ser": bonus_marks_ser, "bonus_marks": bonus_marks_cat, 'current_page': current_page, 'total_pages': total_pages, 'disable_prev': current_page == 1, 'disable_next': current_page >= total_pages, 'prev_page': current_page - 1, 'next_page': current_page + 1, 'page_range': range(1, total_pages+1)})
+            return render(request, "clerk/view_results.html", { 'enable_modify': False, "result_data": return_data, "serialized_result_data": serialized_return_data, "bonus_marks_ser": bonus_marks_ser, "bonus_marks": bonus_marks_cat, 'current_page': current_page, 'total_pages': total_pages, 'disable_prev': current_page == 1, 'disable_next': current_page >= total_pages, 'prev_page': current_page - 1, 'next_page': current_page + 1, 'page_range': range(1, total_pages+1)})
         else:
             return redirect('/index/')
     except Exception as e:
@@ -1120,7 +1187,7 @@ def results(request, page):
         messages.error(request, "Some error occurred")
         return redirect('/index/')
 
-def _get_student_results(request, page):
+def  _get_student_results(request, page):
     results_data = []
     if request.user.groups.filter(name='Colonel').exists():
         results_data = Student.objects.filter(result__isnull=False, colonel=Colonel.objects.get(user_id=request.user.id)).order_by('id')
@@ -1130,14 +1197,15 @@ def _get_student_results(request, page):
         results_data = Student.objects.filter(result__isnull=False, brigadier=Brigadier.objects.get(user_id=request.user.id)).order_by('id')
     elif request.user.groups.filter(name='Director_General').exists():
         results_data = Student.objects.filter(result__isnull=False, director_general=Director_General.objects.get(user_id=request.user.id)).order_by('id')
-    if page == 'update-practical':
-        results_data = [data for data in results_data if data.result.Bonus_marks == 0]
-    elif page == 'view-result':
-        results_data = [data for data in results_data if data.result.Bonus_marks != 0]
+    
+    # if page == 'update-practical':
+    #     results_data = [data for data in results_data if data.result.bonus_marks_updated]
+    # elif page == 'view-result':
+    #     results_data = [data for data in results_data if data.result.bonus_marks_updated]
     return results_data
 
 @login_required
-def Preview_Admit_Card(request, page):
+def Preview_Admit_Card(request, cert_type, page):
     try:
         if login_validator.is_user_logged_in(request) and request.user.is_authenticated:
             current_page = int(page)
@@ -1145,16 +1213,16 @@ def Preview_Admit_Card(request, page):
             # Retrieve all pending students ordered by ID
             pending_students = []
             if request.user.groups.filter(name='Colonel').exists():
-                pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, admit_card_send_for_approval=True, colonel_id=Colonel.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+                pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, admit_card_send_for_approval=True, colonel_id=Colonel.objects.filter(user_id=request.user.id)[0].id, Certificate_type=cert_type).order_by('id')
             elif request.user.groups.filter(name='Clerk').exists():
-                pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, admit_card_send_for_approval=False, clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
+                pending_students = Student.objects.filter(admit_card_approved=False, rejection_reason=None, admit_card_send_for_approval=False, clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id, Certificate_type=cert_type).order_by('id')
                 # pending_students = Student.objects.filter(clerk_id=Clerk.objects.filter(user_id=request.user.id)[0].id).order_by('id')
             else:
                 messages.error(request, "You do not have permission to perform this action.")
                 return redirect('/user/')
-            if not pending_students.exists():
-                # If no students are left to preview, render the "All Students Previewed" page
-                return render(request, "clerk/All_Students_Previewed.html")
+            # if not pending_students.exists():
+            #     # If no students are left to preview, render the "All Students Previewed" page
+            #     return render(request, "clerk/All_Students_Previewed.html")
             total_pages = len(pending_students) // 10 if len(pending_students) % 10 == 0 else (len(pending_students) // 10) + 1
             if total_pages == 0:
                 total_pages = 1
@@ -1184,7 +1252,8 @@ def Preview_Admit_Card(request, page):
                 'disable_next': current_page >= total_pages,
                 'prev_page': current_page - 1,
                 'next_page': current_page + 1,
-                'page_range': range(1, total_pages+1)
+                'page_range': range(1, total_pages+1),
+                'cert_type': cert_type
             }
             return render(request, "clerk/Preview_Admit_Card.html", context)
         else:
@@ -1316,7 +1385,7 @@ def generate_certificate_action(request, cbse_no, page):
 
 @login_required
 @never_cache
-def Preview_Certificates(request, page):
+def Preview_Certificates(request, page, cert_type):
     try:
         current_page = int(page)
         # Determine the user's role and fetch pending students accordingly
@@ -1327,7 +1396,8 @@ def Preview_Certificates(request, page):
                 certificate__Approval_stage=3,
                 certificate__Rejected_reason=None,
                 director_general_id=director_general_id,
-                certificate__certificate_generated=True
+                certificate__certificate_generated=True, 
+                Certificate_type=cert_type
             ).order_by('id')
 
         elif request.user.groups.filter(name='Brigadier').exists():
@@ -1337,7 +1407,8 @@ def Preview_Certificates(request, page):
                 certificate__Approval_stage=2,
                 certificate__Rejected_reason=None,
                 brigadier_id=brigadier_id,
-                certificate__certificate_generated=True
+                certificate__certificate_generated=True, 
+                Certificate_type=cert_type
             ).order_by('id')
 
         elif request.user.groups.filter(name='Colonel').exists():
@@ -1347,7 +1418,8 @@ def Preview_Certificates(request, page):
                 certificate__Approval_stage=1,
                 certificate__Rejected_reason=None,
                 colonel_id=colonel_id,
-                certificate__certificate_generated=True
+                certificate__certificate_generated=True, 
+                Certificate_type=cert_type
             ).order_by('id')
         elif request.user.groups.filter(name='Clerk').exists():
             clerk_id = Clerk.objects.get(user_id=request.user.id).id
@@ -1356,14 +1428,15 @@ def Preview_Certificates(request, page):
                 certificate__Approval_stage=0,
                 certificate__Rejected_reason=None,
                 clerk_id=clerk_id,
-                certificate__certificate_generated=True
+                certificate__certificate_generated=True, 
+                Certificate_type=cert_type
             ).order_by('id')
         else:
             messages.error(request, "You do not have permission to perform this action.")
             return redirect('/user/')
 
-        if not pending_students.exists():
-            return render(request, "clerk/All_Students_Previewed.html")
+        # if not pending_students.exists():
+        #     return render(request, "clerk/All_Students_Previewed.html")
         
         total_pages = len(pending_students) // 10 if len(pending_students) % 10 == 0 else (len(pending_students) // 10) + 1
         if total_pages == 0:
@@ -1406,7 +1479,8 @@ def Preview_Certificates(request, page):
             'disable_next': current_page >= total_pages,
             'prev_page': current_page - 1,
             'next_page': current_page + 1,
-            'page_range': range(1, total_pages+1)
+            'page_range': range(1, total_pages+1),
+            'cert_type': cert_type
         }
         return render(request, "clerk/Preview_Certificates.html", context)
     except Exception as e:
@@ -1871,9 +1945,9 @@ def generate_certificate(student):
     return final_image_path
 
 @login_required
-def send_for_approval(request, cbse_no, page):
+def send_for_approval(request, cbse_no, page, cert_type):
     _send_for_approval(cbse_no, request.user)
-    return redirect('/Preview Admit Card/'+str(page)+"/")
+    return redirect('/Preview Admit Card/'+cert_type+"/"+str(page)+"/")
 
 def _send_for_approval(cbse_no, user):
     try:
@@ -1914,9 +1988,9 @@ def bulk_approve_admit_card(request):
         return HttpResponse({"status": 500, "message": "failed"}, content_type='application/json', status=200)
 
 @login_required
-def approve_admit_card(request, cbse_no, page):
+def approve_admit_card(request, cbse_no, page, cert_type):
     _approve_admit_card(cbse_no)
-    return redirect('/Preview Admit Card/'+str(page)+"/")
+    return redirect('/Preview Admit Card/'+cert_type+"/"+str(page)+"/")
 
 def _approve_admit_card(cbse_no):
     try:
@@ -1930,12 +2004,12 @@ def _approve_admit_card(cbse_no):
         print("Unable to approve admit card for student with CBSE No. ", cbse_no, " due to exception: ", e)
 
 @login_required
-def reject_admit_card(request, cbse_no, page):
+def reject_admit_card(request, cbse_no, page, cert_type):
     if request.method == 'POST':
         _reject_admit_card(request, cbse_no, None)
     if "vareject" in request.POST:
         return HttpResponse({"status": 200, "message": "success"}, content_type='application/json', status=200)
-    return redirect('/Preview Admit Card/'+str(page)+"/")
+    return redirect('/Preview Admit Card/'+cert_type+"/"+str(page)+"/")
 
 def _reject_admit_card(request, cbse_no, reject_reason):
     try:
@@ -2178,15 +2252,15 @@ def update_student(request, page):
         student.Date_camp_2 = get_value('Date_camp_2')
         student.Location_camp_2 = get_value('Location_camp_2')
         student.rejection_reason=None
-        print(pagee)
         # Save the student object
-        
+        student.save()
         generate_admit_card(student)
         if student.certificate_id is not None and pagee=='cert_modify':
             generate_certificate_action(request, student.CBSE_No, page)
         else:
             student.certificate_id = None
         student.save()
+        
             
         if pagee == 'result':
             return redirect('/Rejected Admit Cards/'+str(page)+"/")
@@ -2221,7 +2295,7 @@ def search_student(request, page):
 
 
 @login_required
-def search_result(request, page):
+def search_result(request, type, page):
     cbse_no = request.POST.get("cbse_no")
     if cbse_no:
         if request.user.groups.filter(name='Colonel').exists():
@@ -2234,12 +2308,15 @@ def search_result(request, page):
             results_data = Student.objects.filter(result__isnull=False, director_general=Director_General.objects.get(user_id=request.user.id), CBSE_No = cbse_no).order_by('id')
         return_data = [{"id": student.id,"student_id": student.CBSE_No, "result": model_to_dict(student.result), "student_name": student.Name, "college": student.School_College_Class, "unit": student.Unit,"rank": student.Rank, "p_1_total": student.result.Paper1_T, "p_2_total": student.result.Paper2_T, "p_3_total": student.result.Paper3_W, "p_4_total": student.result.Paper4_T, "cert_generated": student.certificate_id != None, "attendance": student.Attendance_1st_year if student.Certificate_type == 'A' else student.Attendance_2nd_year if student.Certificate_type == 'B' else student.Attendance_3rd_year} for student in results_data]
         serialized_return_data = json.dumps(list(return_data), cls=DjangoJSONEncoder)
-        return render(request, "clerk/view_results.html", {"result_data": return_data, "serialized_result_data": serialized_return_data, 'current_page': 1 })
+        if type == 'practical':
+            return render(request, "clerk/add_practical_marks.html", {"enable_modify": True, "result_data": return_data, "serialized_result_data": serialized_return_data, 'current_page': 1 })
+        elif type == 'view':
+            return render(request, "clerk/view_results.html", {"enable_modify": False, "result_data": return_data, "serialized_result_data": serialized_return_data, 'current_page': 1 })
     else:
         return redirect("/view-results/"+str(page)+"/")
     
 @login_required
-def search_admit_card(request, page):
+def search_admit_card(request, page, cert_type):
     cbse_no = request.GET.get("cbse_no")
     pending_students = []
     if request.user.groups.filter(name='Colonel').exists():
@@ -2268,11 +2345,12 @@ def search_admit_card(request, page):
     context = {
         "certificates": json.dumps(certificates, cls=DjangoJSONEncoder),   
         'pending_students': pending_students,
+        "cert_type": cert_type
     }
     return render(request, "clerk/Preview_Admit_Card.html", context)
 
 @login_required
-def search_certificate(request, page):
+def search_certificate(request, page, cert_type):
     cbse_no = request.GET.get("cbse_no")
     pending_students=[]
     if request.user.groups.filter(name='Director_General').exists():
@@ -2339,19 +2417,20 @@ def search_certificate(request, page):
     
     context = {
         "certificates": json.dumps(certificates, cls=DjangoJSONEncoder),   
-        'pending_students': pending_students
+        'pending_students': pending_students,
+        'cert_type': cert_type
     }
     return render(request, "clerk/Preview_Certificates.html", context)
     
 
 @login_required
-def reject_certificate(request, cbse_no, page):
+def reject_certificate(request, cbse_no, page, cert_type):
     print("In reject certificate", cbse_no, page)
     if request.method == 'POST':
         _reject_certificate(request, cbse_no, None)
     if "vareject" in request.POST:
         return HttpResponse({"status": 200, "message": "success"}, content_type='application/json', status=200)
-    return redirect('/Preview Certificates/'+str(page)+"/")
+    return redirect('/Preview Certificates/'+cert_type+"/"+str(page)+"/")
 
 def _reject_certificate(request, cbse_no, reject_reason):
     try:
@@ -2422,9 +2501,9 @@ def approve_cert_no_red(request, cbse_no, page):
     return HttpResponse({"status": 200, "message": "success"}, content_type='application/json', status=200)
 
 @login_required
-def approve_certificate(request, cbse_no, page):
+def approve_certificate(request, cbse_no, page, cert_type):
    _approve_certificate(request, cbse_no)
-   return redirect('/Preview Certificates/'+str(page)+"/")
+   return redirect('/Preview Certificates/'+cert_type+"/"+str(page)+"/")
 
 def _approve_certificate(request, cbse_no):
     if request.user.groups.filter(name='Clerk').exists():
@@ -2659,7 +2738,44 @@ def clean_database(request):
         print("Deleting the otp data")
         print(OTP.objects.all().delete())
         print("Deleted the otp data")
+        directories_to_delete = ['Admit_Cards', 'Certificates', 'Qrcode', 'student_photos']
+        for directory in directories_to_delete:
+            print("Deleting the ", directory)
+            folder_path = os.path.join(settings.MEDIA_ROOT, directory)
+            for root, dirs, files in os.walk(folder_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    os.remove(file_path)
+            print("Deleted the ", directory)
         data = {
+            "status": 200,
+            "message": "Success",
+        }
+    except Exception as e:
+        print("Exception is: ", e)
+        data = {
+            "status": 500,
+            "message": "Failed",
+        }
+    data = json.dumps(data, cls=DjangoJSONEncoder)
+    response = HttpResponse(data, content_type='application/json', status=200)
+    return response
+
+def get_seniors(request, user_type):
+    print("user type: ", user_type)
+    try:
+        data = []
+        if user_type == 'clerk':
+            users = User.objects.all()
+            for user in users:
+                if user.groups.filter(name='Colonel').exists():
+                    data.append({
+                        "id": user.id,
+                        "username": user.username
+                    })
+    
+        data = {
+            "data": data,
             "status": 200,
             "message": "Success",
         }

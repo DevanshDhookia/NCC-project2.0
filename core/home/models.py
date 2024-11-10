@@ -40,6 +40,7 @@ class Result(models.Model):
     Paper4_T = models.FloatField()
     bonus_marks_cat = models.ForeignKey(BonusMarksCategories, on_delete=models.CASCADE, related_name="bonus_marks", default=0, blank=True)
     Bonus_marks=models.FloatField(default=0)
+    bonus_marks_updated = models.BooleanField(default=False)
     Final_total=models.FloatField()
     Pass=models.BooleanField(default=False)
     Grade=models.CharField(max_length=100, null=True)

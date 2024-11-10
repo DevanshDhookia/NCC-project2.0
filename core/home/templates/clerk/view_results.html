@@ -10,7 +10,7 @@
 {% block start %}
 
 <div class="rectangular-box">
-  <form class="form" method="POST" action="/search-result/{{current_page}}/">
+  <form class="form" method="POST" action="/search-result/view/{{current_page}}/">
     <input
       class="form-control mr-sm-2"
       id="search-students-box"
@@ -88,7 +88,7 @@
               Generate Certificate
             </a>
           {% endif %}
-          {% if perms.home.change_result and student.result.Pass == False %}
+          {% if perms.home.change_result and enable_modify == True %}
           <button
             class="btn btn-info"
             data-bs-toggle="modal"

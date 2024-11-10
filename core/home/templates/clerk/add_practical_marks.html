@@ -10,7 +10,7 @@
 {% block start %}
 
 <div class="rectangular-box">
-  <form class="form" method="POST" action="/search-result/{{current_page}}/">
+  <form class="form" method="POST" action="/search-result/practical/{{current_page}}/">
     <input
       class="form-control mr-sm-2"
       id="search-students-box"
@@ -23,7 +23,7 @@
     {% csrf_token %}
     <button class="ctm-btn" type="submit">Search</button>
   </form>
-  <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/view-results/{{current_page}}/')">Clear <i class="bx bx-message-square-x"></i></button>
+  <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/view-update-practical-marks/{{current_page}}/')">Clear <i class="bx bx-message-square-x"></i></button>
 </div>
 <form class="form m-1" id="bulk-approve-form" hidden>
   {% if perms.home.can_generate_certificate %}
@@ -76,7 +76,7 @@
           >
             View
           </button>
-          {% if perms.home.change_result and student.result.Pass == False %}
+          {% if perms.home.change_result and enable_modify == True %}
           <button
             class="btn btn-info"
             data-bs-toggle="modal"
@@ -531,15 +531,15 @@
   <nav aria-label="Page navigation example">
     <ul class="pagination">
       <li class="page-item {% if disable_prev %}disabled{% endif %}">
-        <a class="page-link" href="/view-results/{{prev_page}}/" aria-label="Previous">
+        <a class="page-link" href="/view-update-practical-marks/{{prev_page}}/" aria-label="Previous">
           <span aria-hidden="true">&laquo;</span>
         </a>
       </li>
       {% for i in page_range %}
-        <li class="page-item {% if i == current_page %}active{% endif %}"><a class="page-link" href="/view-results/{{i}}/">{{i}}</a></li>
+        <li class="page-item {% if i == current_page %}active{% endif %}"><a class="page-link" href="/view-update-practical-marks/{{i}}/">{{i}}</a></li>
       {% endfor %}
       <li class="page-item {% if disable_next%}disabled{% endif %}">
-        <a class="page-link" href="/view-results/{{next_page}}/" aria-label="Next">
+        <a class="page-link" href="/view-update-practical-marks/{{next_page}}/" aria-label="Next">
           <span aria-hidden="true">&raquo;</span>
         </a>
       </li>

@@ -157,3 +157,7 @@ USE_TZ = False
 handler404 = 'myapp.views.custom_404_view'
 
 APPEND_SLASH=False
+
+SENDER_EMAIL_ADDRESS = "mahia020005@gmail.com"
+# UNIT_EMAIL_ADDRESS = 'ncc2upctr7219@gmail.com'
+UNIT_EMAIL_ADDRESS = 'mahia000003@gmail.com'

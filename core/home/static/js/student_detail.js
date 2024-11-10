@@ -68,6 +68,7 @@ function onDeleteButtonClick() {
             url: "/clean-db/",
             complete: function(data) {
                 console.log("DB Cleaned successfully")
+                window.location.reload;
             }
         });
     }

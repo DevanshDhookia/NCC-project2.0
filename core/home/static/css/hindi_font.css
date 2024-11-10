@@ -1,0 +1,9 @@
+@font-face {
+    font-family: Kruti Dev;
+    src: url(../../../media/Template_images/KRDEV010.TTF);
+}
+
+.hindi-text-field {
+    font-family: Kruti Dev !important;
+    font-size: 18px !important;
+}

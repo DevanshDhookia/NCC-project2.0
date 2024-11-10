@@ -27,7 +27,7 @@
     
   {% endif %}
       <div class="rectangular-box">
-        <form class="form" method="GET" action="/search-certificate/1/">
+        <form class="form" method="GET" action="/search-certificate/{{cert_type}}/1/">
           <input
             class="form-control mr-sm-2"
             id="search-students-box"
@@ -39,7 +39,12 @@
           />
           <button class="ctm-btn" type="submit">Search</button>
         </form>
-        <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/Preview Certificates/1/')">Clear</button>
+        <button class="ctm-btn" id='student-clear-filter' onclick="clearButtonClick('/Preview Certificates/{{cert_type}}/1/')">Clear</button>
+        <select name='cert_type' id="cert_type_drpdwn" onchange="onCertTypeChange('cert')">
+          <option value='A' {% if cert_type == 'A' %}selected {% endif %}>A</option>
+          <option value='B' {% if cert_type == 'B' %}selected {% endif %}>B</option>
+          <option value='C' {% if cert_type == 'C' %}selected {% endif %}>C</option>
+        </select>
         <button class="ctm-btn" id="view-all-btn"  onclick="view_all_function('cert', '{{current_page}}')"
         data-bs-toggle="modal"
         data-bs-target="#staticBackdrop">View All</button>
@@ -47,10 +52,10 @@
       </div>
       <form class="form m-1" id="bulk-approve-form" hidden>
         {% if perms.home.can_send_admit_card_for_approval %}
-          <button class="btn btn-primary m-2" type="button" onclick="bulk_action('send', '{{csrf_token}}', 'cert', {{current_page}})">Send for Approval</button>
+          <button class="btn btn-primary m-2" type="button" onclick="bulk_action('send', '{{csrf_token}}', 'cert', {{current_page}}, '{{cert_type}}')">Send for Approval</button>
         {% endif %}
         {% if perms.home.can_approve_certificate %}
-          <button class="btn btn-success m-2" type="button" onclick="bulk_action('approve', '{{csrf_token}}', 'cert', {{current_page}})">Approve</button>
+          <button class="btn btn-success m-2" type="button" onclick="bulk_action('approve', '{{csrf_token}}', 'cert', {{current_page}}, '{{cert_type}}')">Approve</button>
         {% endif %} 
       </form>
       <div class="table-container">
@@ -83,7 +88,7 @@
                   data-bs-toggle="modal"
                   data-bs-target="#staticBackdrop"
                   {% comment %} onclick="view_student({{student}}, 'view')" {% endcomment %}
-                  onclick="openModalOnClick('{{forloop.counter}}', '{{student.CBSE_No}}', 'cert', {{current_page}})"
+                  onclick="openModalOnClick('{{forloop.counter}}', '{{student.CBSE_No}}', 'cert', {{current_page}}, '{{cert_type}}')"
                 >
                   View
                 </button> 
@@ -118,7 +123,7 @@
               class="btn-close"
               data-bs-dismiss="modal"
               aria-label="Close"
-              onclick="window.location='/Preview Certificates/{{current_page}}/'"
+              onclick="window.location='/Preview Certificates/{{cert_type}}/{{current_page}}/'"
             ></button>
           </div>
           <div class="modal-body">
@@ -136,6 +141,7 @@
                           id="student-detail-form"
                           method="POST"
                           action="/update/{{current_page}}/"
+                          accept-charset="utf-8"
                         >
                           {% csrf_token %}
                           <div class="e-profile">
@@ -260,11 +266,12 @@
                                           <div class="form-group">
                                             <label>Full Name Hindi</label>
                                             <input
-                                              class="form-control"
+                                              class="form-control hindi-text-field"
                                               id="modal-full-name-hindi"
                                               type="text"
                                               name="Name_Hindi"
                                               value=""
+                                              lang="hi"
                                             />
                                           </div>
                                         </div>
@@ -272,11 +279,12 @@
                                           <div class="form-group">
                                             <label>Father's Name Hindi</label>
                                             <input
-                                              class="form-control"
+                                              class="form-control hindi-text-field"
                                               id="modal-father-name-hindi"
                                               type="text"
                                               name="Fathers_Name_Hindi"
                                               value=""
+                                              lang="hi"
                                             />
                                           </div>
                                         </div>
@@ -542,7 +550,7 @@
             <button type="button" class="btn btn-secondary" id="preview_next_button" onclick="nextButtonClick('cert', '{{current_page}}')">
               Next
             </button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="window.location='/Preview Certificates/{{current_page}}/'">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="window.location='/Preview Certificates/{{cert_type}}/{{current_page}}/'">
               Close
             </button>
             {% if perms.home.can_approve_certificate %}
@@ -616,15 +624,15 @@
       <nav aria-label="Page navigation example">
         <ul class="pagination">
           <li class="page-item {% if disable_prev %}disabled{% endif %}">
-            <a class="page-link" href="/Preview Certificates/{{prev_page}}/" aria-label="Previous">
+            <a class="page-link" href="/Preview Certificates/{{cert_type}}/{{prev_page}}/" aria-label="Previous">
               <span aria-hidden="true">&laquo;</span>
             </a>
           </li>
           {% for i in page_range %}
-            <li class="page-item {% if i == current_page %}active{% endif %}"><a class="page-link" href="/Preview Certificates/{{i}}/">{{i}}</a></li>
+            <li class="page-item {% if i == current_page %}active{% endif %}"><a class="page-link" href="/Preview Certificates/{{cert_type}}/{{i}}/">{{i}}</a></li>
           {% endfor %}
           <li class="page-item {% if disable_next%}disabled{% endif %}">
-            <a class="page-link" href="/Preview Certificates/{{next_page}}/" aria-label="Next">
+            <a class="page-link" href="/Preview Certificates/{{cert_type}}/{{next_page}}/" aria-label="Next">
               <span aria-hidden="true">&raquo;</span>
             </a>
           </li>

@@ -14,7 +14,7 @@
 
 <div class="form-box">
     <div class="login-container" id="register">
-        <form method='POST' id="register-form">
+        <form method='POST' id="register-form" action="/register/">
             {% csrf_token %}
             {% if messages %}
                 <div class="alert alert-primary" id="success-alert">
@@ -54,6 +54,16 @@
                 <div class="input-box">
                     <button type="submit" class="btn btn-success generate-otp-button" id="generate-otp-btn">Generate OTP</button>
                 </div>
+            </div>
+            <div class='two-forms'>
+                <select class="form-select-register" id="user_type" name="user_type" onchange="onUserTypeChange()">
+                    <option {% if user_type != 'clerk' and user_type != 'co' %}selected{% endif %} value="" disabled>User Type</option>
+                    <option {% if user_type == 'clerk' %}selected{% endif %} value='clerk'>Clerk</option>
+                    <option {% if user_type == 'co' %}selected{% endif %} value='co'>Commanding Officer</option>
+                </select>
+                <select class="form-select-register" name="senior_id" id="senior">
+                    
+                </select>
             </div>
             <div class="two-forms">
                 <div class="input-box">

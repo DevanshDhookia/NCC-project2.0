@@ -42,16 +42,16 @@ function display_bulk_form() {
     }
 }
 
-function bulk_action(action, csrf_token, page, current_page) {
+function bulk_action(action, csrf_token, page, current_page, cert_type) {
     $.ajax({
         type: "POST",
         url: "/bulk_action/",
         data: { checkedBoxes: selectedCheckBoxes, action, csrfmiddlewaretoken: csrf_token, page},
         complete: function(data) {
             if(page==='cert'){
-                window.location.href="/Preview Certificates/"+current_page+"/"
+                window.location.href="/Preview Certificates/"+cert_type+"/"+current_page+"/"
             } else {
-                window.location.href="/Preview Admit Card/"+current_page+"/"
+                window.location.href="/Preview Admit Card/"+cert_type+"/"+current_page+"/"
             }
         }
       });
@@ -59,7 +59,7 @@ function bulk_action(action, csrf_token, page, current_page) {
     $(".sub-cbeckbox").prop('checked', false);
 }
 
-function openModalOnClick(index, cbse_no, page, current_page){
+function openModalOnClick(index, cbse_no, page, current_page, cert_type){
     current_context = "vs"
     $("#preview_next_button").hide()
     $("#preview_prev_button").hide()
@@ -72,13 +72,13 @@ function openModalOnClick(index, cbse_no, page, current_page){
     $(".view-single-reject-form").show()
     $(".view-all-reject-form").hide()
     if(page === 'cert') {
-        $("#admit-card-approval-form").attr("action", "/approve_certificate/"+cbse_no+"/"+current_page.toString()+'/')
-        $("#admit-card-send-approval-form").attr("action", "/approve_certificate/"+cbse_no+"/"+current_page.toString()+'/')
-        $(".view-single-reject-form").attr("action", "/reject_certificate/"+cbse_no+"/"+current_page.toString()+'/')
+        $("#admit-card-approval-form").attr("action", "/approve_certificate/"+cbse_no+"/"+current_page.toString()+'/'+cert_type+"/")
+        $("#admit-card-send-approval-form").attr("action", "/approve_certificate/"+cbse_no+"/"+current_page.toString()+'/'+cert_type+"/")
+        $(".view-single-reject-form").attr("action", "/reject_certificate/"+cbse_no+"/"+current_page.toString()+'/'+cert_type+"/")
     } else {
-        $("#admit-card-approval-form").attr("action", "/approve_admit_card/"+cbse_no+"/"+current_page.toString()+'/')
-        $("#admit-card-send-approval-form").attr("action", "/send_for_approval/"+cbse_no+"/"+current_page.toString()+'/')
-        $(".view-single-reject-form").attr("action", "/reject_admit_card/"+cbse_no+"/"+current_page.toString()+'/')
+        $("#admit-card-approval-form").attr("action", "/approve_admit_card/"+cbse_no+"/"+current_page.toString()+'/'+cert_type+"/")
+        $("#admit-card-send-approval-form").attr("action", "/send_for_approval/"+cbse_no+"/"+current_page.toString()+'/'+cert_type+"/")
+        $(".view-single-reject-form").attr("action", "/reject_admit_card/"+cbse_no+"/"+current_page.toString()+'/'+cert_type+"/")
     }
     image_data = get_image_data(cbse_no, page)
     image_data.then(function(data) {
@@ -266,7 +266,6 @@ function backButtonClick() {
 }
 
 function studentDetailFormSubmit(page, current_page) {
-    console.log("called")
     formdata = new FormData($("#student-detail-form")[0])
     $.ajax({
         type: "POST",
@@ -289,4 +288,12 @@ function studentDetailFormSubmit(page, current_page) {
           // Handle error
         }
       });
+}
+
+function onCertTypeChange(page) {
+    if (page === 'cert'){
+        window.location.href=`/Preview Certificates/${$("#cert_type_drpdwn").val()}/1/`
+    }else {
+        window.location.href=`/Preview Admit Card/${$("#cert_type_drpdwn").val()}/1/`   
+    }
 }

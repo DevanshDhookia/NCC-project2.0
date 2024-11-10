@@ -376,11 +376,7 @@ label.input-group-text:hover {
     flex-direction: row;
     margin-top: 10px;
 }
-.form-select{
-    margin-left: 25px;
-    margin-right: 25px ;
 
-}
 
 .admcd {
     max-width: 70%;

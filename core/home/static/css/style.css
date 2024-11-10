@@ -304,3 +304,22 @@ header{
 .generate-otp-button {
     font-size: 14px;
 }
+
+.nav-button-grp {
+    display: flex;
+    flex-direction: row;
+    gap: 16px
+}
+
+.form-select{
+    margin-left: 25px;
+    margin-right: 25px ;
+}
+
+.form-select-register {
+    width: 50%;
+    height: 50px;
+    border-radius: 30px;
+    padding: 10px;
+    margin-top: 5px;
+}
